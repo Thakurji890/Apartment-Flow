@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -185,8 +186,17 @@ fun HomeScreen(
                         }
 
                         // Due/Owed status badge
-                        val badgeColor = if (userBalance < 0) Color(0xFFBA1A1A) else Color(0xFF386A20)
-                        val badgeBg = if (userBalance < 0) Color(0xFFFFDAD6) else Color(0xFFE8F5E9)
+                        val isDark = isSystemInDarkTheme()
+                        val badgeColor = if (userBalance < 0) {
+                            if (isDark) Color(0xFFFFB4AB) else Color(0xFFBA1A1A)
+                        } else {
+                            if (isDark) Color(0xFFC8E6C9) else Color(0xFF386A20)
+                        }
+                        val badgeBg = if (userBalance < 0) {
+                            if (isDark) Color(0xFF410002) else Color(0xFFFFDAD6)
+                        } else {
+                            if (isDark) Color(0xFF0F3815) else Color(0xFFE8F5E9)
+                        }
                         val badgeText = if (userBalance < 0) {
                             stringResource(R.string.home_due, viewModel.formatCurrency(-userBalance, currentCurrency))
                         } else if (userBalance > 0) {

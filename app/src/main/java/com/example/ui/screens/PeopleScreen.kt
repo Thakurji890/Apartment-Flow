@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -127,8 +128,21 @@ fun PeopleScreen(
                 }
 
                 items(roommates, key = { it.id }) { roommate ->
-                    val balanceColor = if (roommate.balance > 0.0) Color(0xFF386A20) else if (roommate.balance < 0.0) Color(0xFFBA1A1A) else Color.Gray
-                    val balanceBg = if (roommate.balance > 0.0) Color(0xFFE8F5E9) else if (roommate.balance < 0.0) Color(0xFFFFDAD6) else Color(0xFFF3F4F9)
+                    val isDark = isSystemInDarkTheme()
+                    val balanceColor = if (roommate.balance > 0.0) {
+                        if (isDark) Color(0xFFC8E6C9) else Color(0xFF386A20)
+                    } else if (roommate.balance < 0.0) {
+                        if (isDark) Color(0xFFFFB4AB) else Color(0xFFBA1A1A)
+                    } else {
+                        Color.Gray
+                    }
+                    val balanceBg = if (roommate.balance > 0.0) {
+                        if (isDark) Color(0xFF0F3815) else Color(0xFFE8F5E9)
+                    } else if (roommate.balance < 0.0) {
+                        if (isDark) Color(0xFF410002) else Color(0xFFFFDAD6)
+                    } else {
+                        if (isDark) Color(0xFF23252A) else Color(0xFFF3F4F9)
+                    }
 
                     Card(
                         modifier = Modifier

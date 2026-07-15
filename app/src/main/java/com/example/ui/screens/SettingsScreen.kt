@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -46,6 +47,12 @@ fun SettingsScreen(
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val currentUser = auth.currentUser
+
+    val isDark = isSystemInDarkTheme()
+    val warningColor = if (isDark) Color(0xFFFFD54F) else Color(0xFF856404)
+    val warningBg = if (isDark) Color(0xFF403B2B) else Color(0xFFFFF3CD)
+    val dangerColor = if (isDark) MaterialTheme.colorScheme.error else Color(0xFFBA1A1A)
+    val dangerBg = if (isDark) Color(0xFF410002) else Color(0xFFFFDAD6)
 
     var showLeaveConfirmation by remember { mutableStateOf(false) }
     var showLogoutConfirmation by remember { mutableStateOf(false) }
@@ -524,13 +531,13 @@ fun SettingsScreen(
                                 modifier = Modifier
                                     .size(40.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFFFF3CD)),
+                                    .background(warningBg),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ExitToApp,
                                     contentDescription = stringResource(R.string.cd_leave_icon),
-                                    tint = Color(0xFF856404)
+                                    tint = warningColor
                                 )
                             }
                             Column {
@@ -538,7 +545,7 @@ fun SettingsScreen(
                                     text = stringResource(R.string.settings_leave),
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         fontWeight = FontWeight.SemiBold,
-                                        color = Color(0xFF856404)
+                                        color = warningColor
                                     )
                                 )
                                 Text(
@@ -585,13 +592,13 @@ fun SettingsScreen(
                                 modifier = Modifier
                                     .size(40.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFFFDAD6)),
+                                    .background(dangerBg),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Logout,
                                     contentDescription = stringResource(R.string.cd_logout_icon),
-                                    tint = Color(0xFFBA1A1A)
+                                    tint = dangerColor
                                 )
                             }
                             Column {
@@ -599,7 +606,7 @@ fun SettingsScreen(
                                     text = stringResource(R.string.settings_logout),
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         fontWeight = FontWeight.SemiBold,
-                                        color = Color(0xFFBA1A1A)
+                                        color = dangerColor
                                     )
                                 )
                                 Text(
