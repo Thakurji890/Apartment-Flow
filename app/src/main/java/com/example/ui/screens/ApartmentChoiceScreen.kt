@@ -1,6 +1,8 @@
 package com.example.ui.screens
 
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,11 +12,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.AddBusiness
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import kotlinx.coroutines.launch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -53,6 +57,16 @@ fun ApartmentChoiceScreen(
     var inviteCodeInput by remember { mutableStateOf(prefilledInviteCode) }
     var localError by remember { mutableStateOf<String?>(null) }
 
+    val scope = rememberCoroutineScope()
+    var showMenu by remember { mutableStateOf(false) }
+
+    // Intercept system Back button predictably on sub-forms
+    BackHandler(enabled = showCreateForm || showJoinForm) {
+        showCreateForm = false
+        showJoinForm = false
+        localError = null
+    }
+
     // Auto-trigger join if prefilled code was provided and we land on this screen
     LaunchedEffect(prefilledInviteCode) {
         if (prefilledInviteCode.isNotEmpty()) {
@@ -61,19 +75,82 @@ fun ApartmentChoiceScreen(
         }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
-                        MaterialTheme.colorScheme.background
+    Scaffold(
+        modifier = modifier.fillMaxSize().testTag("apartment_choice_screen"),
+        topBar = {
+            if (!showCreateForm && !showJoinForm) {
+                TopAppBar(
+                    title = { },
+                    actions = {
+                        Box {
+                            IconButton(
+                                onClick = { showMenu = true },
+                                modifier = Modifier.testTag("account_menu_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AccountCircle,
+                                    contentDescription = "Account Options"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false },
+                                modifier = Modifier.testTag("account_dropdown_menu")
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Sign Out") },
+                                    onClick = {
+                                        showMenu = false
+                                        scope.launch {
+                                            viewModel.leaveApartment()
+                                            com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                                        }
+                                    },
+                                    modifier = Modifier.testTag("menu_sign_out")
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Switch Account") },
+                                    onClick = {
+                                        showMenu = false
+                                        scope.launch {
+                                            viewModel.leaveApartment()
+                                            com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                                            try {
+                                                val credentialManager = androidx.credentials.CredentialManager.create(context)
+                                                credentialManager.clearCredentialState(androidx.credentials.ClearCredentialStateRequest())
+                                            } catch (e: Exception) {
+                                                Log.e("ApartmentChoiceScreen", "Error clearing credential state", e)
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.testTag("menu_switch_account")
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
+            }
+        },
+        containerColor = Color.Transparent
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                            MaterialTheme.colorScheme.background
+                        )
+                    )
+                )
+                .padding(innerPadding),
+            contentAlignment = Alignment.Center
+        ) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -367,4 +444,5 @@ fun ApartmentChoiceScreen(
             }
         }
     }
+}
 }
