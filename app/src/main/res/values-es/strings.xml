@@ -197,4 +197,34 @@
     <string name="people_name_label">Nombre Completo del Compañero</string>
     <string name="people_name_hint">ej. Alex Rivera</string>
     <string name="people_name_empty_error">El nombre no puede estar vacío</string>
+
+    <!-- Additional Settings Screen Strings -->
+    <string name="settings_profile_demo_guest">Cuenta de Demostración/Invitado</string>
+    <string name="settings_profile_verified">Compañero de Cuarto Verificado</string>
+    <string name="settings_info_title">Motor en Tiempo Real de ApartmentFlow</string>
+    <string name="settings_info_desc">Esta aplicación ejecuta sincronización multiusuario en tiempo real a través de Firebase Auth, Firestore y está totalmente lista para funcionar sin conexión con Jetpack Compose.</string>
+    <string name="settings_info_version_template">Versión de Compilación: %1$s</string>
+    <string name="settings_info_env_template">Entorno: %1$s</string>
+    <string name="settings_leave_dialog_title">¿Salir del grupo de apartamentos?</string>
+    <string name="settings_leave_dialog_text">Esto lo desconectará del apartamento actual. Puede volver a unirse en cualquier momento si tiene el código de invitación de 6 caracteres.</string>
+    <string name="settings_leave_dialog_confirm">Salir</string>
+    <string name="settings_logout_dialog_title">¿Cerrar sesión?</string>
+    <string name="settings_logout_dialog_text">¿Está seguro de que desea cerrar la sesión de su cuenta de ApartmentFlow?</string>
+    <string name="settings_edit_apt_dialog_title">Editar nombre del apartamento</string>
+    <string name="settings_edit_apt_dialog_label">Nombre del apartamento</string>
+    <string name="settings_toast_left">Salió del apartamento</string>
+    <string name="settings_toast_logged_out">Sesión cerrada</string>
+    <string name="settings_toast_name_empty">El nombre no puede estar vacío</string>
+    <string name="settings_toast_name_updated">¡Nombre del apartamento actualizado con éxito!</string>
+    <string name="settings_toast_name_failed">Error al actualizar: %1$s</string>
+
+    <!-- Notifications Screen -->
+    <string name="notifications_title">Notificaciones</string>
+    <string name="notifications_empty">¡No hay notificaciones aún!</string>
+    <string name="notifications_empty_desc">Verá actualizaciones cuando se agreguen facturas o se registren liquidaciones.</string>
+    <string name="notifications_badge_content_description">%1$d notificaciones no leídas</string>
+    <string name="notification_bill_added_title">Nueva factura añadida</string>
+    <string name="notification_bill_added_msg">%1$s añadió una factura para %2$s (%3$s)</string>
+    <string name="notification_settlement_received_title">Liquidación recibida</string>
+    <string name="notification_settlement_received_msg">%1$s registró una liquidación de %2$s para ti</string>
 </resources>

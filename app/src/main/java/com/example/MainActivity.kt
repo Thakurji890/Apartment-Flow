@@ -167,7 +167,7 @@ fun MainAppContainer(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             NavigationBar(
-                containerColor = Color(0xFFF0F4F9),
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 tonalElevation = 0.dp,
                 modifier = Modifier.testTag("bottom_nav_bar")
             ) {
@@ -197,9 +197,9 @@ fun MainAppContainer(
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF001D36),
-                        selectedTextColor = Color(0xFF001D36),
-                        indicatorColor = Color(0xFFD1E4FF),
+                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
                         unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     ),
@@ -232,9 +232,9 @@ fun MainAppContainer(
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF001D36),
-                        selectedTextColor = Color(0xFF001D36),
-                        indicatorColor = Color(0xFFD1E4FF),
+                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
                         unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     ),
@@ -267,9 +267,9 @@ fun MainAppContainer(
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF001D36),
-                        selectedTextColor = Color(0xFF001D36),
-                        indicatorColor = Color(0xFFD1E4FF),
+                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
                         unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     ),
@@ -302,9 +302,9 @@ fun MainAppContainer(
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF001D36),
-                        selectedTextColor = Color(0xFF001D36),
-                        indicatorColor = Color(0xFFD1E4FF),
+                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
                         unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     ),
@@ -330,7 +330,15 @@ fun MainAppContainer(
                         prefilledAmountStr = ""
                         showSettleDialog = true
                     },
-                    onNavigateToProfile = { navController.navigate("profile") }
+                    onNavigateToProfile = { navController.navigate("profile") },
+                    onNavigateToNotifications = { navController.navigate("notifications") }
+                )
+            }
+
+            composable("notifications") {
+                NotificationsScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 

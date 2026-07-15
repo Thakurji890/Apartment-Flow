@@ -52,6 +52,7 @@ fun HomeScreen(
     onAddBillClick: () -> Unit,
     onSettleUpClick: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -118,15 +119,33 @@ fun HomeScreen(
                     )
                 }
 
+                val unreadNotificationsCount by viewModel.unreadNotificationsCount.collectAsState()
+
                 IconButton(
-                    onClick = { /* Handle Notifications */ },
+                    onClick = onNavigateToNotifications,
                     modifier = Modifier.testTag("notification_button")
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifications",
-                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                    )
+                    BadgedBox(
+                        badge = {
+                            if (unreadNotificationsCount > 0) {
+                                Badge(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                ) {
+                                    Text(
+                                        text = if (unreadNotificationsCount > 99) "99+" else unreadNotificationsCount.toString(),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = stringResource(R.string.notifications_title),
+                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             }
         }

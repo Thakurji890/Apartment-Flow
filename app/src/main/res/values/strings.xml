@@ -217,4 +217,14 @@
     <string name="settings_toast_name_empty">Name cannot be empty</string>
     <string name="settings_toast_name_updated">Apartment name updated successfully!</string>
     <string name="settings_toast_name_failed">Failed to update: %1$s</string>
+
+    <!-- Notifications Screen -->
+    <string name="notifications_title">Notifications</string>
+    <string name="notifications_empty">No notifications yet!</string>
+    <string name="notifications_empty_desc">You will see updates when bills are added or settlements are recorded.</string>
+    <string name="notifications_badge_content_description">%1$d unread notifications</string>
+    <string name="notification_bill_added_title">New Bill Added</string>
+    <string name="notification_bill_added_msg">%1$s added a bill for %2$s (%3$s)</string>
+    <string name="notification_settlement_received_title">Settlement Received</string>
+    <string name="notification_settlement_received_msg">%1$s recorded a settlement of %2$s to you</string>
 </resources>

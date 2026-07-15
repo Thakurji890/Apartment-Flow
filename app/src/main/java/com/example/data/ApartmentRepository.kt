@@ -2,6 +2,7 @@ package com.example.data
 
 import android.content.Context
 import android.util.Log
+import com.example.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
@@ -28,11 +29,13 @@ class ApartmentRepository private constructor() {
     private val repositoryScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var preferenceManager: PreferenceManager? = null
+    private var appContext: Context? = null
 
     // Raw data flows populated by Firestore real-time listeners
     private val _rawRoommates = MutableStateFlow<List<Roommate>>(emptyList())
     private val _rawBills = MutableStateFlow<List<Bill>>(emptyList())
     private val _rawSettlements = MutableStateFlow<List<Settlement>>(emptyList())
+    private val _rawNotifications = MutableStateFlow<List<Notification>>(emptyList())
 
     // Active apartment metadata
     private val _activeApartmentId = MutableStateFlow<String?>(null)
@@ -60,6 +63,7 @@ class ApartmentRepository private constructor() {
     private var billListener: ListenerRegistration? = null
     private var settlementListener: ListenerRegistration? = null
     private var apartmentListener: ListenerRegistration? = null
+    private var notificationListener: ListenerRegistration? = null
 
     // Public reactively combined roommate balances with settlements and bills applied
     val roommates: StateFlow<List<Roommate>> = combine(
@@ -71,6 +75,14 @@ class ApartmentRepository private constructor() {
     }.stateIn(repositoryScope, SharingStarted.Eagerly, emptyList())
 
     val bills: StateFlow<List<Bill>> = _rawBills.asStateFlow()
+
+    val notifications: StateFlow<List<Notification>> = combine(
+        _rawNotifications,
+        _currentUserId
+    ) { rawNotifs, currentUid ->
+        rawNotifs.filter { it.recipientId == currentUid }
+            .sortedByDescending { it.timestamp }
+    }.stateIn(repositoryScope, SharingStarted.Eagerly, emptyList())
 
     init {
         // Configure Firestore offline persistence
@@ -96,6 +108,7 @@ class ApartmentRepository private constructor() {
     }
 
     fun initialize(context: Context) {
+        appContext = context.applicationContext
         val prefs = PreferenceManager.getInstance(context)
         preferenceManager = prefs
 
@@ -225,6 +238,27 @@ class ApartmentRepository private constructor() {
                     _rawSettlements.value = list
                 }
             }
+
+        // Listen to notifications subcollection
+        notificationListener = db.collection("apartments").document(apartmentId)
+            .collection("notifications")
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    _error.value = "Notifications sync error: ${e.localizedMessage}"
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val list = snapshot.mapNotNull { doc ->
+                        try {
+                            doc.toObject(Notification::class.java)
+                        } catch (ex: Exception) {
+                            Log.e("ApartmentRepository", "Error deserializing Notification", ex)
+                            null
+                        }
+                    }
+                    _rawNotifications.value = list
+                }
+            }
     }
 
     private fun stopListening() {
@@ -232,11 +266,13 @@ class ApartmentRepository private constructor() {
         billListener?.remove()
         settlementListener?.remove()
         apartmentListener?.remove()
+        notificationListener?.remove()
 
         roommateListener = null
         billListener = null
         settlementListener = null
         apartmentListener = null
+        notificationListener = null
     }
 
     private fun clearApartmentState() {
@@ -244,6 +280,7 @@ class ApartmentRepository private constructor() {
         _rawRoommates.value = emptyList()
         _rawBills.value = emptyList()
         _rawSettlements.value = emptyList()
+        _rawNotifications.value = emptyList()
         _activeApartmentName.value = null
         _activeApartmentInviteCode.value = null
         _isLoading.value = false
@@ -558,6 +595,22 @@ class ApartmentRepository private constructor() {
         db.collection("apartments").document(aptId)
             .collection("bills").document(generatedBillId)
             .set(newBill)
+            .addOnSuccessListener {
+                val payerName = _rawRoommates.value.find { it.id == payerId }?.name ?: "Someone"
+                val amountStr = "$${String.format(Locale.US, "%.2f", amount)}"
+                _rawRoommates.value.forEach { roommate ->
+                    if (roommate.id != payerId) {
+                        val localizedTitle = appContext?.getString(R.string.notification_bill_added_title) ?: "New Bill Added"
+                        val localizedMsg = appContext?.getString(R.string.notification_bill_added_msg, payerName, title, amountStr)
+                            ?: "$payerName added a bill for $title ($amountStr)"
+                        addNotification(
+                            recipientId = roommate.id,
+                            title = localizedTitle,
+                            message = localizedMsg
+                        )
+                    }
+                }
+            }
             .addOnFailureListener { e ->
                 _error.value = "Failed to add bill: ${e.localizedMessage}"
             }
@@ -621,9 +674,62 @@ class ApartmentRepository private constructor() {
         db.collection("apartments").document(aptId)
             .collection("settlements").document(generatedSettlementId)
             .set(newSettlement)
+            .addOnSuccessListener {
+                val payerName = _rawRoommates.value.find { it.id == fromId }?.name ?: "Someone"
+                val amountStr = "$${String.format(Locale.US, "%.2f", amount)}"
+                val localizedTitle = appContext?.getString(R.string.notification_settlement_received_title) ?: "Settlement Received"
+                val localizedMsg = appContext?.getString(R.string.notification_settlement_received_msg, payerName, amountStr)
+                    ?: "$payerName recorded a settlement of $amountStr to you"
+                addNotification(
+                    recipientId = toId,
+                    title = localizedTitle,
+                    message = localizedMsg
+                )
+            }
             .addOnFailureListener { e ->
                 _error.value = "Failed to save settlement: ${e.localizedMessage}"
             }
+    }
+
+    fun addNotification(recipientId: String, title: String, message: String) {
+        val aptId = _activeApartmentId.value ?: return
+        val docRef = db.collection("apartments").document(aptId)
+            .collection("notifications").document()
+        val id = docRef.id
+        val newNotification = Notification(
+            id = id,
+            recipientId = recipientId,
+            title = title,
+            message = message,
+            timestamp = System.currentTimeMillis(),
+            read = false
+        )
+
+        // TODO: Future push-notification phase (Cloud Function + FCM token storage)
+        // This function is structured to act as a single trigger point where FCM/push payload can be dispatched
+        // to the recipient's registered device tokens without needing to modify screen logic.
+
+        docRef.set(newNotification)
+            .addOnFailureListener { e ->
+                Log.e("ApartmentRepository", "Failed to write notification: ${e.localizedMessage}")
+            }
+    }
+
+    fun markNotificationsAsRead() {
+        val aptId = _activeApartmentId.value ?: return
+        val currentUid = _currentUserId.value
+        val unreadNotifs = _rawNotifications.value.filter { it.recipientId == currentUid && !it.read }
+        if (unreadNotifs.isEmpty()) return
+
+        val batch = db.batch()
+        unreadNotifs.forEach { notif ->
+            val docRef = db.collection("apartments").document(aptId)
+                .collection("notifications").document(notif.id)
+            batch.update(docRef, "read", true)
+        }
+        batch.commit().addOnFailureListener { e ->
+            Log.e("ApartmentRepository", "Failed to mark notifications read: ${e.localizedMessage}")
+        }
     }
 
     fun updateProfile(newDisplayName: String, onComplete: (Boolean, String?) -> Unit) {

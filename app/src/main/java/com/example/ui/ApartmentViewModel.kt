@@ -7,11 +7,13 @@ import com.example.data.Bill
 import com.example.data.BillCategory
 import com.example.data.Debt
 import com.example.data.Roommate
+import com.example.data.Notification
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -20,6 +22,10 @@ class ApartmentViewModel : ViewModel() {
 
     val roommates: StateFlow<List<Roommate>> = repository.roommates
     val bills: StateFlow<List<Bill>> = repository.bills
+    val notifications: StateFlow<List<Notification>> = repository.notifications
+    val unreadNotificationsCount: StateFlow<Int> = notifications.map { list ->
+        list.count { !it.read }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
     val currentUserId: StateFlow<String> = repository.currentUserId
 
     // Apartment details
@@ -136,6 +142,10 @@ class ApartmentViewModel : ViewModel() {
             else -> "$"
         }
         return String.format(java.util.Locale.US, "%s%.2f", symbol, amount)
+    }
+
+    fun markNotificationsAsRead() {
+        repository.markNotificationsAsRead()
     }
 
     fun resetData() {

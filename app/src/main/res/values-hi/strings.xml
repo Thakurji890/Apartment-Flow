@@ -217,4 +217,14 @@
     <string name="settings_toast_name_empty">नाम खाली नहीं हो सकता</string>
     <string name="settings_toast_name_updated">अपार्टमेंट का नाम सफलतापूर्वक बदला गया!</string>
     <string name="settings_toast_name_failed">अपडेट करने में विफल: %1$s</string>
+
+    <!-- Notifications Screen -->
+    <string name="notifications_title">सूचनाएं</string>
+    <string name="notifications_empty">अभी तक कोई सूचना नहीं है!</string>
+    <string name="notifications_empty_desc">बिल जोड़े जाने या भुगतान रिकॉर्ड होने पर आप यहां अपडेट देखेंगे।</string>
+    <string name="notifications_badge_content_description">%1$d बिना पढ़ी हुई सूचनाएं</string>
+    <string name="notification_bill_added_title">नया बिल जोड़ा गया</string>
+    <string name="notification_bill_added_msg">%1$s ने %2$s (%3$s) के लिए बिल जोड़ा</string>
+    <string name="notification_settlement_received_title">भुगतान प्राप्त हुआ</string>
+    <string name="notification_settlement_received_msg">%1$s ने आपको %2$s का भुगतान रिकॉर्ड किया</string>
 </resources>

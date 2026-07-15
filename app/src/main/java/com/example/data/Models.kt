@@ -44,3 +44,12 @@ data class Debt(
     val toId: String = "",   // Who is owed
     val amount: Double = 0.0
 )
+
+data class Notification(
+    val id: String = "",
+    val recipientId: String = "",
+    val title: String = "",
+    val message: String = "",
+    val timestamp: Long = 0L,
+    val read: Boolean = false
+)
