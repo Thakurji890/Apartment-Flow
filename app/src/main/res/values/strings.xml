@@ -227,4 +227,37 @@
     <string name="notification_bill_added_msg">%1$s added a bill for %2$s (%3$s)</string>
     <string name="notification_settlement_received_title">Settlement Received</string>
     <string name="notification_settlement_received_msg">%1$s recorded a settlement of %2$s to you</string>
+
+    <!-- Accessibility Content Descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_exit">Exit</string>
+    <string name="cd_user_icon">User Profile Icon</string>
+    <string name="cd_google_icon">Google Icon</string>
+    <string name="cd_settled_icon">Settled Checkmark</string>
+    <string name="cd_owes_icon">Roommate Balance Status</string>
+    <string name="cd_empty_box">No Items Found</string>
+    <string name="cd_delete_expense">Delete Expense Entry</string>
+    <string name="cd_account_options">Account Menu Options</string>
+    <string name="cd_apartment_icon">Apartment Building Logo</string>
+    <string name="cd_create_icon">Create Option Icon</string>
+    <string name="cd_join_icon">Join Option Icon</string>
+    <string name="cd_arrow">Arrow Indicator</string>
+    <string name="cd_edit_profile">Edit Personal Profile</string>
+    <string name="cd_currency_icon">Currency Settings Icon</string>
+    <string name="cd_language_icon">Language Settings Icon</string>
+    <string name="cd_theme_icon">Theme Mode Settings Icon</string>
+    <string name="cd_edit_apt_name">Edit Apartment Name Settings Icon</string>
+    <string name="cd_leave_icon">Leave Apartment Settings Icon</string>
+    <string name="cd_logout_icon">Logout Settings Icon</string>
+    <string name="cd_action_arrow">Action Menu Navigation Arrow</string>
+    <string name="cd_add_icon">Record Shared Bill Button</string>
+    <string name="cd_copy_code">Copy Invitation Code</string>
+    <string name="cd_share_link">Share Invitation Link</string>
+    <string name="cd_pay_icon">Payment Details Indicator</string>
+    <string name="cd_dropdown_arrow">Dropdown Menu Arrow</string>
+    <string name="cd_title_icon">Expense Title Input Icon</string>
+    <string name="cd_amount_icon">Expense Amount Input Icon</string>
+    <string name="cd_calendar_icon">Calendar Schedule Icon</string>
+    <string name="cd_payer_icon">Paying Member Selector Icon</string>
+    <string name="cd_desc_icon">Optional Description Input Icon</string>
 </resources>

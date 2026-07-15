@@ -147,7 +147,7 @@ fun ExpenseEntryForm(
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Label,
-                        contentDescription = "Title Icon",
+                        contentDescription = stringResource(R.string.cd_title_icon),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
@@ -175,7 +175,7 @@ fun ExpenseEntryForm(
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.AttachMoney,
-                        contentDescription = "Amount Icon",
+                        contentDescription = stringResource(R.string.cd_amount_icon),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
@@ -207,14 +207,14 @@ fun ExpenseEntryForm(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.CalendarToday,
-                            contentDescription = "Calendar Icon",
+                            contentDescription = stringResource(R.string.cd_calendar_icon),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.DateRange,
-                            contentDescription = "Select Date",
+                            contentDescription = stringResource(R.string.cd_calendar_icon),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
@@ -314,7 +314,7 @@ fun ExpenseEntryForm(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "Payer Icon",
+                            contentDescription = stringResource(R.string.cd_payer_icon),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
@@ -324,7 +324,7 @@ fun ExpenseEntryForm(
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Dropdown",
+                            contentDescription = stringResource(R.string.cd_dropdown_arrow),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
@@ -366,7 +366,7 @@ fun ExpenseEntryForm(
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Description,
-                        contentDescription = "Description Icon",
+                        contentDescription = stringResource(R.string.cd_desc_icon),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },

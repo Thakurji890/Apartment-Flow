@@ -249,7 +249,7 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "Add Icon",
+                                contentDescription = stringResource(R.string.cd_add_icon),
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
@@ -316,7 +316,7 @@ fun HomeScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Copy Code",
+                                    contentDescription = stringResource(R.string.cd_copy_code),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -339,7 +339,7 @@ fun HomeScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Share,
-                                    contentDescription = "Share Link",
+                                    contentDescription = stringResource(R.string.cd_share_link),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }

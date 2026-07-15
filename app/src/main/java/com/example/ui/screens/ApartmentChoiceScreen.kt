@@ -89,7 +89,7 @@ fun ApartmentChoiceScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = "Account Options"
+                                    contentDescription = stringResource(R.string.cd_account_options)
                                 )
                             }
                             DropdownMenu(
@@ -184,9 +184,9 @@ fun ApartmentChoiceScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Go Back",
+                                contentDescription = stringResource(R.string.cd_back),
                                 tint = MaterialTheme.colorScheme.primary
-                            )
+                             )
                         }
                     }
                 } else {
@@ -202,7 +202,7 @@ fun ApartmentChoiceScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Home,
-                        contentDescription = "Apartment Icon",
+                        contentDescription = stringResource(R.string.cd_apartment_icon),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(32.dp)
                     )
@@ -372,7 +372,7 @@ fun ApartmentChoiceScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.AddBusiness,
-                                            contentDescription = "Create Icon",
+                                            contentDescription = stringResource(R.string.cd_create_icon),
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(28.dp)
                                         )
@@ -390,7 +390,7 @@ fun ApartmentChoiceScreen(
                                         }
                                         Icon(
                                             imageVector = Icons.Default.KeyboardArrowRight,
-                                            contentDescription = "Arrow",
+                                            contentDescription = stringResource(R.string.cd_arrow),
                                             tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
@@ -414,7 +414,7 @@ fun ApartmentChoiceScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.GroupAdd,
-                                            contentDescription = "Join Icon",
+                                            contentDescription = stringResource(R.string.cd_join_icon),
                                             tint = MaterialTheme.colorScheme.secondary,
                                             modifier = Modifier.size(28.dp)
                                         )
@@ -432,7 +432,7 @@ fun ApartmentChoiceScreen(
                                         }
                                         Icon(
                                             imageVector = Icons.Default.KeyboardArrowRight,
-                                            contentDescription = "Arrow",
+                                            contentDescription = stringResource(R.string.cd_arrow),
                                             tint = MaterialTheme.colorScheme.secondary
                                         )
                                     }

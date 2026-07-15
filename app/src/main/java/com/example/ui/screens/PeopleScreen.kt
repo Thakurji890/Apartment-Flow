@@ -73,7 +73,7 @@ fun PeopleScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back"
+                                contentDescription = stringResource(R.string.cd_back)
                             )
                         }
                     }
@@ -229,7 +229,7 @@ fun PeopleScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Payments,
-                                    contentDescription = "Settled Icon",
+                                    contentDescription = stringResource(R.string.cd_settled_icon),
                                     tint = Color(0xFF386A20),
                                     modifier = Modifier.size(36.dp)
                                 )
@@ -283,7 +283,7 @@ fun PeopleScreen(
                                             )
                                             Icon(
                                                 imageVector = Icons.Default.ArrowForward,
-                                                contentDescription = "owes",
+                                                contentDescription = stringResource(R.string.cd_owes_icon),
                                                 tint = MaterialTheme.colorScheme.error,
                                                 modifier = Modifier.size(16.dp)
                                             )

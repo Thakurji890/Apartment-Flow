@@ -70,7 +70,7 @@ fun LoginScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Exit"
+                            contentDescription = stringResource(R.string.cd_exit)
                         )
                     }
                 },
@@ -155,7 +155,7 @@ fun LoginScreen(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "User Icon",
+                            contentDescription = stringResource(R.string.cd_user_icon),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
@@ -196,7 +196,12 @@ fun LoginScreen(
                             scope.launch {
                                 try {
                                     // Try to look up client_id dynamically or use default
-                                    val webClientId = "266945182431-70r532i6v7o9804jcbna732b1o4h8mvl.apps.googleusercontent.com" // Standard fallback format, or customized
+                                    val webClientId = try {
+                                        val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+                                        if (resId != 0) context.getString(resId) else "266945182431-70r532i6v7o9804jcbna732b1o4h8mvl.apps.googleusercontent.com"
+                                    } catch (e: Exception) {
+                                        "266945182431-70r532i6v7o9804jcbna732b1o4h8mvl.apps.googleusercontent.com"
+                                    }
                                     val googleIdOption = GetGoogleIdOption.Builder()
                                         .setFilterByAuthorizedAccounts(false)
                                         .setServerClientId(webClientId)
@@ -257,7 +262,7 @@ fun LoginScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Login,
-                            contentDescription = "Google Icon",
+                            contentDescription = stringResource(R.string.cd_google_icon),
                             modifier = Modifier.padding(end = 8.dp)
                         )
                         Text(

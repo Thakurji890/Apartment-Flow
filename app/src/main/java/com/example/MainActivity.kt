@@ -184,7 +184,7 @@ fun MainAppContainer(
                     icon = {
                         Icon(
                             imageVector = Icons.Default.Home,
-                            contentDescription = "Home",
+                            contentDescription = stringResource(R.string.tab_home),
                             modifier = Modifier.size(24.dp)
                         )
                     },
@@ -219,7 +219,7 @@ fun MainAppContainer(
                     icon = {
                         Icon(
                             imageVector = Icons.Default.ReceiptLong,
-                            contentDescription = "Bills",
+                            contentDescription = stringResource(R.string.tab_bills),
                             modifier = Modifier.size(24.dp)
                         )
                     },
@@ -254,7 +254,7 @@ fun MainAppContainer(
                     icon = {
                         Icon(
                             imageVector = Icons.Default.Group,
-                            contentDescription = "People",
+                            contentDescription = stringResource(R.string.tab_people),
                             modifier = Modifier.size(24.dp)
                         )
                     },
@@ -289,7 +289,7 @@ fun MainAppContainer(
                     icon = {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
+                            contentDescription = stringResource(R.string.tab_settings),
                             modifier = Modifier.size(24.dp)
                         )
                     },

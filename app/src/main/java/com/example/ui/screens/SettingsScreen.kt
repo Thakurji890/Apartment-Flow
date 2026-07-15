@@ -97,7 +97,7 @@ fun SettingsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 }
@@ -167,7 +167,7 @@ fun SettingsScreen(
 
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
-                        contentDescription = "Edit Profile",
+                        contentDescription = stringResource(R.string.cd_edit_profile),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
                     )
                 }
@@ -216,7 +216,7 @@ fun SettingsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.AttachMoney,
-                                    contentDescription = "Currency",
+                                    contentDescription = stringResource(R.string.cd_currency_icon),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -245,7 +245,7 @@ fun SettingsScreen(
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Select"
+                                contentDescription = stringResource(R.string.cd_dropdown_arrow)
                             )
                         }
 
@@ -298,7 +298,7 @@ fun SettingsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Language,
-                                    contentDescription = "Language",
+                                    contentDescription = stringResource(R.string.cd_language_icon),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -327,7 +327,7 @@ fun SettingsScreen(
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Select Language"
+                                contentDescription = stringResource(R.string.cd_dropdown_arrow)
                             )
                         }
 
@@ -383,7 +383,7 @@ fun SettingsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.BrightnessMedium,
-                                    contentDescription = "Theme",
+                                    contentDescription = stringResource(R.string.cd_theme_icon),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -412,7 +412,7 @@ fun SettingsScreen(
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Select Theme"
+                                contentDescription = stringResource(R.string.cd_dropdown_arrow)
                             )
                         }
 
@@ -471,7 +471,7 @@ fun SettingsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit Apartment Name",
+                                    contentDescription = stringResource(R.string.cd_edit_apt_name),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -490,7 +490,7 @@ fun SettingsScreen(
 
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
-                            contentDescription = "Action",
+                            contentDescription = stringResource(R.string.cd_action_arrow),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
                     }
@@ -529,7 +529,7 @@ fun SettingsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ExitToApp,
-                                    contentDescription = "Leave",
+                                    contentDescription = stringResource(R.string.cd_leave_icon),
                                     tint = Color(0xFF856404)
                                 )
                             }
@@ -551,7 +551,7 @@ fun SettingsScreen(
 
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
-                            contentDescription = "Action",
+                            contentDescription = stringResource(R.string.cd_action_arrow),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
                     }
@@ -590,7 +590,7 @@ fun SettingsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Logout,
-                                    contentDescription = "Logout",
+                                    contentDescription = stringResource(R.string.cd_logout_icon),
                                     tint = Color(0xFFBA1A1A)
                                 )
                             }
@@ -612,7 +612,7 @@ fun SettingsScreen(
 
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
-                            contentDescription = "Action",
+                            contentDescription = stringResource(R.string.cd_action_arrow),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
                     }

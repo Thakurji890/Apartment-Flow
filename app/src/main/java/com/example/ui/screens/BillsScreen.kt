@@ -87,7 +87,7 @@ fun BillsScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back"
+                                contentDescription = stringResource(R.string.cd_back)
                             )
                         }
                     }
@@ -165,7 +165,7 @@ fun BillsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.ReceiptLong,
-                            contentDescription = "Empty",
+                            contentDescription = stringResource(R.string.cd_empty_box),
                             modifier = Modifier.size(64.dp),
                             tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
                         )
@@ -301,7 +301,7 @@ fun BillsScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.DeleteOutline,
-                                            contentDescription = "Delete Expense",
+                                            contentDescription = stringResource(R.string.cd_delete_expense),
                                             tint = MaterialTheme.colorScheme.error,
                                             modifier = Modifier.size(18.dp)
                                         )

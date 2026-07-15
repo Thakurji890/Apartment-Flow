@@ -150,7 +150,7 @@ fun SettleUpDialog(
                                         )
                                         Icon(
                                             imageVector = Icons.Default.Payment,
-                                            contentDescription = "Pay",
+                                            contentDescription = stringResource(R.string.cd_pay_icon),
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(16.dp)
                                         )
@@ -183,7 +183,7 @@ fun SettleUpDialog(
                             .testTag("settle_debtor_input"),
                         trailingIcon = {
                             IconButton(onClick = { expandedDebtor = !expandedDebtor }) {
-                                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
+                                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.cd_dropdown_arrow))
                             }
                         }
                     )
@@ -222,7 +222,7 @@ fun SettleUpDialog(
                             .testTag("settle_creditor_input"),
                         trailingIcon = {
                             IconButton(onClick = { expandedCreditor = !expandedCreditor }) {
-                                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
+                                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.cd_dropdown_arrow))
                             }
                         }
                     )

@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.ApartmentViewModel
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.ui.res.stringResource
+import com.example.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +56,7 @@ fun ProfileScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 },
@@ -121,7 +123,7 @@ fun ProfileScreen(
                         onValueChange = { displayNameInput = it },
                         label = { Text("Display Name") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Person, contentDescription = "Name")
+                            Icon(imageVector = Icons.Default.Person, contentDescription = stringResource(R.string.profile_display_name))
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -189,7 +191,7 @@ fun ProfileScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Email,
-                            contentDescription = "Email",
+                            contentDescription = stringResource(R.string.profile_email),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
@@ -216,7 +218,7 @@ fun ProfileScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Security,
-                            contentDescription = "Security",
+                            contentDescription = stringResource(R.string.cd_user_icon),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
