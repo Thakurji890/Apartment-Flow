@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Apartment Flow</string>
+    
+    <!-- Navigation Tabs -->
+    <string name="tab_home">Home</string>
+    <string name="tab_bills">Bills</string>
+    <string name="tab_people">People</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- General Actions -->
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_ok">OK</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_add">Add</string>
+    <string name="action_settle_up">Settle Up</string>
+
+    <!-- Login Screen -->
+    <string name="login_subtitle">Split expenses, coordinate bills, and track balances effortlessly with your roommates.</string>
+    <string name="login_google_signin">Sign in with Google</string>
+    <string name="login_guest">Continue as Guest</string>
+
+    <!-- Apartment Choice Screen -->
+    <string name="apt_choice_title">Create or Join Apartment</string>
+    <string name="apt_create_section">Create New Apartment</string>
+    <string name="apt_name_label">Apartment Name</string>
+    <string name="apt_name_hint">e.g. Baker Street 221B</string>
+    <string name="apt_create_button">Create Apartment</string>
+    <string name="apt_join_section">Join Existing Apartment</string>
+    <string name="apt_code_label">Invite Code</string>
+    <string name="apt_code_hint">6-character code</string>
+    <string name="apt_join_button">Join Apartment Group</string>
+
+    <!-- Home Screen -->
+    <string name="home_total_spent">Total Spent</string>
+    <string name="home_net_balance">Net Balance</string>
+    <string name="home_settled">You are fully settled up!</string>
+    <string name="home_owes_you">owes you</string>
+    <string name="home_you_owe">you owe</string>
+    <string name="home_invite_card">Invite Your Roommates</string>
+    <string name="home_invite_desc">Share this code with your roommates to have them join your household group.</string>
+    <string name="home_invite_copy">Copy Code</string>
+    <string name="home_invite_share">Share Link</string>
+    <string name="home_recent_bills">Recent Expenses</string>
+
+    <!-- Bills Screen -->
+    <string name="bills_header">Shared Bills</string>
+    <string name="bills_no_expenses">No expenses found for this category.</string>
+    <string name="bills_all">All</string>
+    <string name="bills_groceries">Groceries</string>
+    <string name="bills_utilities">Utilities</string>
+    <string name="bills_rent">Rent</string>
+    <string name="bills_others">Others</string>
+
+    <!-- People Screen -->
+    <string name="people_header">Roommates &amp; Balances</string>
+    <string name="people_add_title">Add Roommate Name</string>
+    <string name="people_add_name_hint">Roommate Name</string>
+    <string name="people_add_button">Add Roommate</string>
+    <string name="people_settle_transfer">record cash transfer</string>
+    <string name="people_settle_direct">Settle Direct</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_header">Settings</string>
+    <string name="settings_preferences">Preferences</string>
+    <string name="settings_base_currency">Base Currency</string>
+    <string name="settings_currency_desc">Used for roommate splits &amp; settlements</string>
+    <string name="settings_language">Language / भाषा</string>
+    <string name="settings_language_desc">Choose your preferred language</string>
+    <string name="settings_theme">Theme Mode</string>
+    <string name="settings_theme_desc">Light, Dark, or System matching</string>
+    <string name="settings_maintenance">Controls &amp; Maintenance</string>
+    <string name="settings_edit_apt">Edit Apartment Name</string>
+    <string name="settings_edit_apt_desc">Change the name of this household group</string>
+    <string name="settings_leave">Leave Apartment</string>
+    <string name="settings_leave_desc">Disconnect from this active group</string>
+    <string name="settings_logout">Log Out</string>
+    <string name="settings_logout_desc">Sign out of your account</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_header">Profile Settings</string>
+    <string name="profile_edit_personal">Edit Personal Info</string>
+    <string name="profile_display_name">Display Name</string>
+    <string name="profile_save_changes">Save Changes</string>
+    <string name="profile_details">Account Details</string>
+    <string name="profile_email">Registered Email</string>
+    <string name="profile_auth_type">Authentication Type</string>
+
+    <!-- Settle Up Dialog -->
+    <string name="settle_dialog_title">Settle Up Balances</string>
+    <string name="settle_dialog_payer">Who Paid?</string>
+    <string name="settle_dialog_receiver">Who Received?</string>
+    <string name="settle_dialog_amount">Amount</string>
+    <string name="settle_dialog_desc">This records a cash settlement transfer directly between roommates.</string>
+
+    <!-- Additional Login Screen Strings -->
+    <string name="login_welcome">ApartmentFlow</string>
+    <string name="login_desc">Real-time apartment expense splitting. Settle shared bills with roommates effortlessly.</string>
+    <string name="login_name_label">Your Display Name</string>
+    <string name="login_name_hint">e.g. John Doe</string>
+    <string name="login_google_error">Google login not available: Please try Demo Mode below.</string>
+    <string name="login_demo_mode">Enter as Guest (Demo Mode)</string>
+
+    <!-- Additional Apartment Choice Screen Strings -->
+    <string name="apt_choice_welcome">Welcome to ApartmentFlow</string>
+    <string name="apt_choice_create_desc">Set up a new shared household and invite your roommates to split bills in real-time.</string>
+    <string name="apt_choice_join_desc">Enter the 6-character invite code sent by your roommate to join their household.</string>
+    <string name="apt_choice_default_desc">To start managing shared expenses, either set up a new apartment or join an existing household.</string>
+    <string name="apt_choice_join_title">Join Apartment</string>
+    <string name="apt_choice_create_title">Create Apartment</string>
+    <string name="apt_choice_enter_name">Please enter an apartment name</string>
+    <string name="apt_choice_create_success">Apartment created successfully!</string>
+    <string name="apt_choice_create_failed">Failed to create apartment</string>
+    <string name="apt_choice_code_length_error">Invite code must be exactly 6 characters</string>
+    <string name="apt_choice_join_success">Joined apartment successfully!</string>
+    <string name="apt_choice_join_failed">Failed to join apartment</string>
+    <string name="apt_choice_create_new_card">Create a New Apartment</string>
+    <string name="apt_choice_create_new_sub">Start a fresh apartment group</string>
+    <string name="apt_choice_join_card">Join with Invite Code</string>
+    <string name="apt_choice_join_sub">Enter a roommate\'s code</string>
+    <string name="apt_choice_create_button">Create Household</string>
+    <string name="apt_choice_join_button">Join Household</string>
+    <string name="apt_choice_invite_code_label">Invite Code (6 characters)</string>
+    <string name="apt_choice_invite_code_hint">e.g. KXMPZQ</string>
+    <string name="apt_choice_name_hint">e.g. Sunnyvale Flat 302</string>
+
+    <!-- Additional Home Screen Strings -->
+    <string name="home_total_pool">Total Pool Spending</string>
+    <string name="home_due">%1$s due</string>
+    <string name="home_owed">%1$s owed</string>
+    <string name="home_all_settled">All settled</string>
+    <string name="home_add_bill">Add Bill</string>
+    <string name="home_invite_roommates_title">Invite Roommates</string>
+    <string name="home_invite_code_label">Code: %1$s</string>
+    <string name="home_copy_toast">Code copied to clipboard!</string>
+    <string name="home_share_chooser">Share Invite Link</string>
+    <string name="home_share_text">Join my ApartmentFlow group using this link: %1$s or enter code manually: %2$s</string>
+    <string name="home_groceries_label">GROCERIES</string>
+    <string name="home_utilities_label">UTILITIES</string>
+    <string name="home_roommates_header">Roommates</string>
+    <string name="home_manage_button">Manage</string>
+    <string name="home_roommate_owed">Owed %1$s</string>
+    <string name="home_roommate_owes">Owes %1$s</string>
+    <string name="home_roommate_paid_label">paid</string>
+    <string name="home_trend_title">Expense Trend</string>
+
+    <!-- Additional Bills Screen Strings -->
+    <string name="bills_screen_title">Bills &amp; Expenses</string>
+    <string name="bills_active_count_template">%1$d active shared expenses</string>
+    <string name="bills_tap_plus_hint">Tap the \'+\' button to record a new bill.</string>
+    <string name="bills_cash_settlement">Cash Settlement</string>
+    <string name="bills_paid_by_template">Paid by %1$s</string>
+    <string name="bills_add_shared_title">Add Shared Bill</string>
+
+    <!-- Additional Expense Entry Form Strings -->
+    <string name="expense_form_name_label">Expense Name / Title</string>
+    <string name="expense_form_name_hint">e.g. Weekly Groceries</string>
+    <string name="expense_form_name_empty_error">Title cannot be empty</string>
+    <string name="expense_form_amount_label">Amount (%1$s)</string>
+    <string name="expense_form_amount_hint">0.00</string>
+    <string name="expense_form_amount_invalid_error">Please enter a valid amount greater than 0</string>
+    <string name="expense_form_date_label">Date (yyyy-MM-dd)</string>
+    <string name="expense_form_date_invalid_error">Please enter a valid date in yyyy-MM-dd format</string>
+    <string name="expense_form_category_label">Category</string>
+    <string name="expense_form_payer_label">Who Paid?</string>
+    <string name="expense_form_payer_select">Select Payer</string>
+    <string name="expense_form_desc_label">Description (Optional)</string>
+    <string name="expense_form_desc_hint">e.g. Milk, bread, and breakfast items</string>
+    <string name="expense_form_split_label">Split Between</string>
+    <string name="expense_form_save_button">Save Expense</string>
+
+    <!-- Additional Settle Up Dialog Strings -->
+    <string name="settle_up_dialog_title">Record Cash Settlement</string>
+    <string name="settle_up_dialog_confirm">Confirm Settlement</string>
+    <string name="settle_up_dialog_suggested">Suggested Settlements</string>
+    <string name="settle_up_dialog_suggested_template">%1$s pays %2$s</string>
+    <string name="settle_up_dialog_settle_full_balance">Settle full balance</string>
+    <string name="settle_up_dialog_manual_header">Manual Settlement Details</string>
+    <string name="settle_up_dialog_debtor_label">Who is Paying?</string>
+    <string name="settle_up_dialog_creditor_label">Who is Receiving?</string>
+    <string name="settle_up_dialog_amount_transferred_label">Amount Transferred (%1$s)</string>
+    <string name="settle_up_dialog_same_person_error">Debtor and Creditor cannot be the same person</string>
+    <string name="settle_up_dialog_invalid_amount_error">Please enter a valid transfer amount</string>
+
+    <!-- Additional People Screen Strings -->
+    <string name="people_screen_title">Roommates</string>
+    <string name="people_count_template">%1$d roommates in this apartment</string>
+    <string name="people_roster_header">Roster &amp; Balances</string>
+    <string name="people_total_paid_template">Total paid spent: %1$s</string>
+    <string name="people_settled">Settled</string>
+    <string name="people_matrix_header">Settlement Matrix</string>
+    <string name="people_no_debts_title">Everyone is completely settled!</string>
+    <string name="people_no_debts_desc">No pending roommates or bilateral balances due.</string>
+    <string name="people_bilateral_debt_desc">Bilateral roommate debt balance</string>
+    <string name="people_add_roommate_desc">Enter the name of your new roommate. They will be added to the sharing roster and can immediately be split into shared bills.</string>
+    <string name="people_name_label">Roommate Full Name</string>
+    <string name="people_name_hint">e.g. Alex Rivera</string>
+    <string name="people_name_empty_error">Name cannot be empty</string>
+
+    <!-- Additional Settings Screen Strings -->
+    <string name="settings_profile_demo_guest">Demo/Guest Account</string>
+    <string name="settings_profile_verified">Verified Roommate</string>
+    <string name="settings_info_title">ApartmentFlow Real-time Engine</string>
+    <string name="settings_info_desc">This application runs real-time multi-user syncing via Firebase Auth, Firestore, and is fully responsive and offline-ready with Jetpack Compose.</string>
+    <string name="settings_info_version_template">Build Version: %1$s</string>
+    <string name="settings_info_env_template">Environment: %1$s</string>
+    <string name="settings_leave_dialog_title">Leave Apartment Group?</string>
+    <string name="settings_leave_dialog_text">This will disconnect you from the current apartment. You can rejoin at any time if you have the 6-character invite code.</string>
+    <string name="settings_leave_dialog_confirm">Leave</string>
+    <string name="settings_logout_dialog_title">Log Out?</string>
+    <string name="settings_logout_dialog_text">Are you sure you want to log out of your ApartmentFlow account?</string>
+    <string name="settings_edit_apt_dialog_title">Edit Apartment Name</string>
+    <string name="settings_edit_apt_dialog_label">Apartment Name</string>
+    <string name="settings_toast_left">Left apartment</string>
+    <string name="settings_toast_logged_out">Logged out</string>
+    <string name="settings_toast_name_empty">Name cannot be empty</string>
+    <string name="settings_toast_name_updated">Apartment name updated successfully!</string>
+    <string name="settings_toast_name_failed">Failed to update: %1$s</string>
+</resources>

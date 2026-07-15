@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Apartment Flow</string>
+    
+    <!-- Navigation Tabs -->
+    <string name="tab_home">होम</string>
+    <string name="tab_bills">बिल</string>
+    <string name="tab_people">लोग</string>
+    <string name="tab_settings">सेटिंग्स</string>
+
+    <!-- General Actions -->
+    <string name="action_save">सहेजें</string>
+    <string name="action_cancel">रद्द करें</string>
+    <string name="action_ok">ठीक है</string>
+    <string name="action_delete">हटाएं</string>
+    <string name="action_add">जोड़ें</string>
+    <string name="action_settle_up">हिसाब चुकता करें</string>
+
+    <!-- Login Screen -->
+    <string name="login_subtitle">अपने रूममेट्स के साथ खर्च बांटें, बिल मैनेज करें और आसानी से बैलेंस ट्रैक करें।</string>
+    <string name="login_google_signin">Google के साथ साइन इन करें</string>
+    <string name="login_guest">अतिथि के रूप में जारी रखें</string>
+
+    <!-- Apartment Choice Screen -->
+    <string name="apt_choice_title">अपार्टमेंट बनाएं या शामिल हों</string>
+    <string name="apt_create_section">नया अपार्टमेंट बनाएं</string>
+    <string name="apt_name_label">अपार्टमेंट का नाम</string>
+    <string name="apt_name_hint">उदा. बेकर स्ट्रीट 221B</string>
+    <string name="apt_create_button">अपार्टमेंट बनाएं</string>
+    <string name="apt_join_section">मौजूदा अपार्टमेंट में शामिल हों</string>
+    <string name="apt_code_label">आमंत्रण कोड</string>
+    <string name="apt_code_hint">6-अक्षर का कोड</string>
+    <string name="apt_join_button">अपार्टमेंट समूह में शामिल हों</string>
+
+    <!-- Home Screen -->
+    <string name="home_total_spent">कुल खर्च</string>
+    <string name="home_net_balance">कुल शेष राशि</string>
+    <string name="home_settled">आपका हिसाब पूरी तरह चुकता है!</string>
+    <string name="home_owes_you">आपको देने हैं</string>
+    <string name="home_you_owe">आपको चुकाने हैं</string>
+    <string name="home_invite_card">अपने रूममेट्स को आमंत्रित करें</string>
+    <string name="home_invite_desc">अपने रूममेट्स को इस अपार्टमेंट ग्रुप में शामिल होने के लिए यह कोड साझा करें।</string>
+    <string name="home_invite_copy">कोड कॉपी करें</string>
+    <string name="home_invite_share">लिंक साझा करें</string>
+    <string name="home_recent_bills">हाल के खर्च</string>
+
+    <!-- Bills Screen -->
+    <string name="bills_header">साझा किए गए बिल</string>
+    <string name="bills_no_expenses">इस श्रेणी के लिए कोई खर्च नहीं मिला।</string>
+    <string name="bills_all">सभी</string>
+    <string name="bills_groceries">राशन / किराना</string>
+    <string name="bills_utilities">बिजली / पानी बिल</string>
+    <string name="bills_rent">किराया</string>
+    <string name="bills_others">अन्य</string>
+
+    <!-- People Screen -->
+    <string name="people_header">रूममेट्स और बैलेंस</string>
+    <string name="people_add_title">रूममेट का नाम जोड़ें</string>
+    <string name="people_add_name_hint">रूममेट का नाम</string>
+    <string name="people_add_button">रूममेट जोड़ें</string>
+    <string name="people_settle_transfer">कैश ट्रांसफर रिकॉर्ड करें</string>
+    <string name="people_settle_direct">सीधा भुगतान</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_header">सेटिंग्स</string>
+    <string name="settings_preferences">प्राथमिकताएं</string>
+    <string name="settings_base_currency">मुख्य मुद्रा</string>
+    <string name="settings_currency_desc">रूममेट विभाजन और भुगतान के लिए प्रयुक्त</string>
+    <string name="settings_language">भाषा / Language</string>
+    <string name="settings_language_desc">अपनी पसंदीदा भाषा चुनें</string>
+    <string name="settings_theme">थीम मोड</string>
+    <string name="settings_theme_desc">लाइट, डार्क या सिस्टम डिफॉल्ट</string>
+    <string name="settings_maintenance">नियंत्रण और रखरखाव</string>
+    <string name="settings_edit_apt">अपार्टमेंट का नाम बदलें</string>
+    <string name="settings_edit_apt_desc">इस घरेलू समूह का नाम बदलें</string>
+    <string name="settings_leave">अपार्टमेंट छोड़ें</string>
+    <string name="settings_leave_desc">इस सक्रिय समूह से संबंध समाप्त करें</string>
+    <string name="settings_logout">लॉग आउट करें</string>
+    <string name="settings_logout_desc">अपने खाते से साइन आउट करें</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_header">प्रोफ़ाइल सेटिंग्स</string>
+    <string name="profile_edit_personal">व्यक्तिगत जानकारी बदलें</string>
+    <string name="profile_display_name">दिखने वाला नाम</string>
+    <string name="profile_save_changes">बदलाव सहेजें</string>
+    <string name="profile_details">खाते का विवरण</string>
+    <string name="profile_email">पंजीकृत ईमेल</string>
+    <string name="profile_auth_type">प्रमाणीकरण प्रकार</string>
+
+    <!-- Settle Up Dialog -->
+    <string name="settle_dialog_title">हिसाब चुकता करें</string>
+    <string name="settle_dialog_payer">किसने भुगतान किया?</string>
+    <string name="settle_dialog_receiver">किसे मिला?</string>
+    <string name="settle_dialog_amount">राशि</string>
+    <string name="settle_dialog_desc">यह रूममेट्स के बीच सीधे नकद भुगतान के ट्रांसफर को रिकॉर्ड करता है।</string>
+
+    <!-- Additional Login Screen Strings -->
+    <string name="login_welcome">ApartmentFlow</string>
+    <string name="login_desc">वास्तविक समय में अपार्टमेंट खर्च का बंटवारा। रूममेट्स के साथ साझा बिलों का निपटान आसानी से करें।</string>
+    <string name="login_name_label">आपका दिखने वाला नाम</string>
+    <string name="login_name_hint">उदा. अमित कुमार</string>
+    <string name="login_google_error">Google लॉगिन उपलब्ध नहीं है: कृपया नीचे दिए गए गेस्ट मोड का प्रयास करें।</string>
+    <string name="login_demo_mode">गेस्ट के रूप में प्रवेश करें (डेमो मोड)</string>
+
+    <!-- Additional Apartment Choice Screen Strings -->
+    <string name="apt_choice_welcome">Welcome to ApartmentFlow</string>
+    <string name="apt_choice_create_desc">एक नया साझा घरेलू समूह बनाएं और वास्तविक समय में बिल बांटने के लिए अपने रूममेट्स को आमंत्रित करें।</string>
+    <string name="apt_choice_join_desc">अपने रूममेट के समूह में शामिल होने के लिए उनके द्वारा भेजा गया 6-अक्षर का आमंत्रण कोड दर्ज करें।</string>
+    <string name="apt_choice_default_desc">साझा खर्चों को प्रबंधित करना शुरू करने के लिए, या तो एक नया अपार्टमेंट बनाएं या किसी मौजूदा समूह में शामिल हों।</string>
+    <string name="apt_choice_join_title">अपार्टमेंट में शामिल हों</string>
+    <string name="apt_choice_create_title">अपार्टमेंट बनाएं</string>
+    <string name="apt_choice_enter_name">कृपया अपार्टमेंट का नाम दर्ज करें</string>
+    <string name="apt_choice_create_success">अपार्टमेंट सफलतापूर्वक बनाया गया!</string>
+    <string name="apt_choice_create_failed">अपार्टमेंट बनाने में विफल</string>
+    <string name="apt_choice_code_length_error">आमंत्रण कोड ठीक 6 अक्षरों का होना चाहिए</string>
+    <string name="apt_choice_join_success">अपार्टमेंट में सफलतापूर्वक शामिल हुए!</string>
+    <string name="apt_choice_join_failed">अपार्टमेंट में शामिल होने में विफल</string>
+    <string name="apt_choice_create_new_card">नया अपार्टमेंट बनाएं</string>
+    <string name="apt_choice_create_new_sub">एक नया अपार्टमेंट समूह शुरू करें</string>
+    <string name="apt_choice_join_card">आमंत्रण कोड के साथ शामिल हों</string>
+    <string name="apt_choice_join_sub">रूममेट का आमंत्रण कोड दर्ज करें</string>
+    <string name="apt_choice_create_button">घरेलू समूह बनाएं</string>
+    <string name="apt_choice_join_button">समूह में शामिल हों</string>
+    <string name="apt_choice_invite_code_label">आमंत्रण कोड (6 अक्षर)</string>
+    <string name="apt_choice_invite_code_hint">उदा. KXMPZQ</string>
+    <string name="apt_choice_name_hint">उदा. सन्नीवेल फ्लैट 302</string>
+
+    <!-- Additional Home Screen Strings -->
+    <string name="home_total_pool">कुल पूल खर्च</string>
+    <string name="home_due">%1$s चुकाने हैं</string>
+    <string name="home_owed">%1$s मिलने हैं</string>
+    <string name="home_all_settled">पूरी तरह चुकता</string>
+    <string name="home_add_bill">बिल जोड़ें</string>
+    <string name="home_invite_roommates_title">रूममेट्स को आमंत्रित करें</string>
+    <string name="home_invite_code_label">कोड: %1$s</string>
+    <string name="home_copy_toast">कोड क्लिपबोर्ड पर कॉपी हो गया!</string>
+    <string name="home_share_chooser">आमंत्रण लिंक साझा करें</string>
+    <string name="home_share_text">इस लिंक का उपयोग करके मेरे ApartmentFlow समूह में शामिल हों: %1$s या मैन्युअल रूप से कोड दर्ज करें: %2$s</string>
+    <string name="home_groceries_label">राशन / किराना</string>
+    <string name="home_utilities_label">बिजली / पानी बिल</string>
+    <string name="home_roommates_header">रूममेट्स</string>
+    <string name="home_manage_button">प्रबंधन</string>
+    <string name="home_roommate_owed">%1$s मिलने हैं</string>
+    <string name="home_roommate_owes">%1$s चुकाने हैं</string>
+    <string name="home_roommate_paid_label">भुगतान किया</string>
+    <string name="home_trend_title">खर्च का रुझान</string>
+
+    <!-- Additional Bills Screen Strings -->
+    <string name="bills_screen_title">बिल और खर्च</string>
+    <string name="bills_active_count_template">%1$d सक्रिय साझा खर्च</string>
+    <string name="bills_tap_plus_hint">नया बिल रिकॉर्ड करने के लिए \'+\' बटन पर टैप करें।</string>
+    <string name="bills_cash_settlement">नकद भुगतान निपटान</string>
+    <string name="bills_paid_by_template">%1$s द्वारा भुगतान किया गया</string>
+    <string name="bills_add_shared_title">साझा बिल जोड़ें</string>
+
+    <!-- Additional Expense Entry Form Strings -->
+    <string name="expense_form_name_label">खर्च का नाम / शीर्षक</string>
+    <string name="expense_form_name_hint">उदा. साप्ताहिक राशन</string>
+    <string name="expense_form_name_empty_error">शीर्षक खाली नहीं हो सकता</string>
+    <string name="expense_form_amount_label">राशि (%1$s)</string>
+    <string name="expense_form_amount_hint">0.00</string>
+    <string name="expense_form_amount_invalid_error">कृपया 0 से अधिक वैध राशि दर्ज करें</string>
+    <string name="expense_form_date_label">दिनांक (yyyy-MM-dd)</string>
+    <string name="expense_form_date_invalid_error">कृपया yyyy-MM-dd प्रारूप में एक वैध तिथि दर्ज करें</string>
+    <string name="expense_form_category_label">श्रेणी</string>
+    <string name="expense_form_payer_label">किसने भुगतान किया?</string>
+    <string name="expense_form_payer_select">भुगतानकर्ता चुनें</string>
+    <string name="expense_form_desc_label">विवरण (वैकल्पिक)</string>
+    <string name="expense_form_desc_hint">उदा. दूध, ब्रेड और नाश्ते का सामान</string>
+    <string name="expense_form_split_label">किसके बीच बांटना है</string>
+    <string name="expense_form_save_button">खर्च सहेजें</string>
+
+    <!-- Additional Settle Up Dialog Strings -->
+    <string name="settle_up_dialog_title">नकद भुगतान रिकॉर्ड करें</string>
+    <string name="settle_up_dialog_confirm">निपटान की पुष्टि करें</string>
+    <string name="settle_up_dialog_suggested">सुझाए गए निपटान</string>
+    <string name="settle_up_dialog_suggested_template">%1$s, %2$s को भुगतान करता है</string>
+    <string name="settle_up_dialog_settle_full_balance">पूरे बैलेंस का निपटान करें</string>
+    <string name="settle_up_dialog_manual_header">मैन्युअल निपटान का विवरण</string>
+    <string name="settle_up_dialog_debtor_label">कौन भुगतान कर रहा है?</string>
+    <string name="settle_up_dialog_creditor_label">किसे भुगतान मिल रहा है?</string>
+    <string name="settle_up_dialog_amount_transferred_label">स्थानांतरित राशि (%1$s)</string>
+    <string name="settle_up_dialog_same_person_error">देने वाला और पाने वाला व्यक्ति एक ही नहीं हो सकता</string>
+    <string name="settle_up_dialog_invalid_amount_error">कृपया एक वैध हस्तांतरण राशि दर्ज करें</string>
+
+    <!-- Additional People Screen Strings -->
+    <string name="people_screen_title">रूममेट्स</string>
+    <string name="people_count_template">इस अपार्टमेंट में %1$d रूममेट्स</string>
+    <string name="people_roster_header">रोस्टर और बैलेंस</string>
+    <string name="people_total_paid_template">कुल भुगतान किया गया खर्च: %1$s</string>
+    <string name="people_settled">चुकता</string>
+    <string name="people_matrix_header">निपटान मैट्रिक्स</string>
+    <string name="people_no_debts_title">हर कोई पूरी तरह से चुकता है!</string>
+    <string name="people_no_debts_desc">कोई लंबित रूममेट्स या आपसी शेष राशि देय नहीं है।</string>
+    <string name="people_bilateral_debt_desc">आपसी रूममेट ऋण शेष राशि</string>
+    <string name="people_add_roommate_desc">अपने नए रूममेट का नाम दर्ज करें। उन्हें साझा रोस्टर में जोड़ दिया जाएगा और वे तुरंत साझा बिलों में शामिल हो सकेंगे।</string>
+    <string name="people_name_label">रूममेट का पूरा नाम</string>
+    <string name="people_name_hint">उदा. अमित कुमार</string>
+    <string name="people_name_empty_error">नाम खाली नहीं हो सकता</string>
+
+    <!-- Additional Settings Screen Strings -->
+    <string name="settings_profile_demo_guest">डेमो/गेस्ट खाता</string>
+    <string name="settings_profile_verified">सत्यापित रूममेट</string>
+    <string name="settings_info_title">ApartmentFlow रियल-टाइम इंजन</string>
+    <string name="settings_info_desc">यह एप्लिकेशन Firebase Auth, Firestore के माध्यम से वास्तविक समय में बहु-उपयोगकर्ता सिंकिंग चलाता है, और Jetpack Compose के साथ पूरी तरह से उत्तरदायी और ऑफ़लाइन-तैयार है।</string>
+    <string name="settings_info_version_template">बिल्ड संस्करण: %1$s</string>
+    <string name="settings_info_env_template">पर्यावरण: %1$s</string>
+    <string name="settings_leave_dialog_title">अपार्टमेंट समूह छोड़ें?</string>
+    <string name="settings_leave_dialog_text">यह आपको वर्तमान अपार्टमेंट से अलग कर देगा। यदि आपके पास 6-अक्षर का आमंत्रण कोड है तो आप किसी भी समय फिर से शामिल हो सकते हैं।</string>
+    <string name="settings_leave_dialog_confirm">छोड़ें</string>
+    <string name="settings_logout_dialog_title">लॉग आउट करें?</string>
+    <string name="settings_logout_dialog_text">क्या आप वाकई अपने ApartmentFlow खाते से लॉग आउट करना चाहते हैं?</string>
+    <string name="settings_edit_apt_dialog_title">अपार्टमेंट का नाम बदलें</string>
+    <string name="settings_edit_apt_dialog_label">अपार्टमेंट का नाम</string>
+    <string name="settings_toast_left">अपार्टमेंट छोड़ दिया</string>
+    <string name="settings_toast_logged_out">लॉग आउट हो गया</string>
+    <string name="settings_toast_name_empty">नाम खाली नहीं हो सकता</string>
+    <string name="settings_toast_name_updated">अपार्टमेंट का नाम सफलतापूर्वक बदला गया!</string>
+    <string name="settings_toast_name_failed">अपडेट करने में विफल: %1$s</string>
+</resources>

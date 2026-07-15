@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Apartment Flow</string>
+    
+    <!-- Navigation Tabs -->
+    <string name="tab_home">Inicio</string>
+    <string name="tab_bills">Facturas</string>
+    <string name="tab_people">Personas</string>
+    <string name="tab_settings">Ajustes</string>
+
+    <!-- General Actions -->
+    <string name="action_save">Guardar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_ok">Aceptar</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_add">Añadir</string>
+    <string name="action_settle_up">Liquidar cuentas</string>
+
+    <!-- Login Screen -->
+    <string name="login_subtitle">Divide gastos, coordina facturas y realiza un seguimiento de los saldos con tus compañeros de cuarto.</string>
+    <string name="login_google_signin">Iniciar sesión con Google</string>
+    <string name="login_guest">Continuar como Invitado</string>
+
+    <!-- Apartment Choice Screen -->
+    <string name="apt_choice_title">Crear o Unirse a un Apartamento</string>
+    <string name="apt_create_section">Crear Nuevo Apartamento</string>
+    <string name="apt_name_label">Nombre del Apartamento</string>
+    <string name="apt_name_hint">ej. Calle Baker 221B</string>
+    <string name="apt_create_button">Crear Apartamento</string>
+    <string name="apt_join_section">Unirse a un Apartamento Existente</string>
+    <string name="apt_code_label">Código de Invitación</string>
+    <string name="apt_code_hint">Código de 6 caracteres</string>
+    <string name="apt_join_button">Unirse al Grupo del Apartamento</string>
+
+    <!-- Home Screen -->
+    <string name="home_total_spent">Total Gastado</string>
+    <string name="home_net_balance">Saldo Neto</string>
+    <string name="home_settled">¡Estás completamente al día!</string>
+    <string name="home_owes_you">te debe</string>
+    <string name="home_you_owe">debes</string>
+    <string name="home_invite_card">Invita a tus Compañeros</string>
+    <string name="home_invite_desc">Comparte este código con tus compañeros de cuarto para que se unan a tu grupo.</string>
+    <string name="home_invite_copy">Copiar Código</string>
+    <string name="home_invite_share">Compartir Enlace</string>
+    <string name="home_recent_bills">Gastos Recientes</string>
+
+    <!-- Bills Screen -->
+    <string name="bills_header">Facturas Compartidas</string>
+    <string name="bills_no_expenses">No se encontraron gastos para esta categoría.</string>
+    <string name="bills_all">Todo</string>
+    <string name="bills_groceries">Alimentos</string>
+    <string name="bills_utilities">Servicios</string>
+    <string name="bills_rent">Alquiler</string>
+    <string name="bills_others">Otros</string>
+
+    <!-- People Screen -->
+    <string name="people_header">Compañeros y Saldos</string>
+    <string name="people_add_title">Añadir Nombre de Compañero</string>
+    <string name="people_add_name_hint">Nombre de Compañero</string>
+    <string name="people_add_button">Añadir Compañero</string>
+    <string name="people_settle_transfer">registrar transferencia</string>
+    <string name="people_settle_direct">Liquidar Directo</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_header">Ajustes</string>
+    <string name="settings_preferences">Preferencias</string>
+    <string name="settings_base_currency">Moneda Base</string>
+    <string name="settings_currency_desc">Usada para divisiones de gastos y liquidaciones</string>
+    <string name="settings_language">Idioma / Language</string>
+    <string name="settings_language_desc">Elige tu idioma preferido</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_desc">Claro, Oscuro o Automático del sistema</string>
+    <string name="settings_maintenance">Controles y Mantenimiento</string>
+    <string name="settings_edit_apt">Editar Nombre del Apartamento</string>
+    <string name="settings_edit_apt_desc">Cambiar el nombre de este grupo familiar</string>
+    <string name="settings_leave">Salir del Apartamento</string>
+    <string name="settings_leave_desc">Desconectarse de este grupo activo</string>
+    <string name="settings_logout">Cerrar Sesión</string>
+    <string name="settings_logout_desc">Salir de tu cuenta</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_header">Ajustes de Perfil</string>
+    <string name="profile_edit_personal">Editar Información Personal</string>
+    <string name="profile_display_name">Nombre para Mostrar</string>
+    <string name="profile_save_changes">Guardar Cambios</string>
+    <string name="profile_details">Detalles de la Cuenta</string>
+    <string name="profile_email">Correo Registrado</string>
+    <string name="profile_auth_type">Tipo de Autenticación</string>
+
+    <!-- Settle Up Dialog -->
+    <string name="settle_dialog_title">Liquidar Saldos</string>
+    <string name="settle_dialog_payer">¿Quién pagó?</string>
+    <string name="settle_dialog_receiver">¿Quién recibió?</string>
+    <string name="settle_dialog_amount">Monto</string>
+    <string name="settle_dialog_desc">Esto registra una transferencia de saldo en efectivo directamente entre compañeros.</string>
+
+    <!-- Additional Login Screen Strings -->
+    <string name="login_welcome">ApartmentFlow</string>
+    <string name="login_desc">División de gastos del apartamento en tiempo real. Liquide las facturas compartidas con sus compañeros de cuarto sin esfuerzo.</string>
+    <string name="login_name_label">Nombre para Mostrar</string>
+    <string name="login_name_hint">ej. Juan Pérez</string>
+    <string name="login_google_error">El inicio de sesión de Google no está disponible: intente el modo de invitado a continuación.</string>
+    <string name="login_demo_mode">Entrar como invitado (Modo Demo)</string>
+
+    <!-- Additional Apartment Choice Screen Strings -->
+    <string name="apt_choice_welcome">Bienvenido a ApartmentFlow</string>
+    <string name="apt_choice_create_desc">Configure un nuevo hogar compartido e invite a sus compañeros de cuarto a dividir las facturas en tiempo real.</string>
+    <string name="apt_choice_join_desc">Ingrese el código de invitación de 6 caracteres enviado por su compañero de cuarto para unirse a su hogar.</string>
+    <string name="apt_choice_default_desc">Para comenzar a administrar los gastos compartidos, configure un nuevo apartamento o únase a un hogar existente.</string>
+    <string name="apt_choice_join_title">Unirse al apartamento</string>
+    <string name="apt_choice_create_title">Crear apartamento</string>
+    <string name="apt_choice_enter_name">Por favor ingrese un nombre de apartamento</string>
+    <string name="apt_choice_create_success">¡Apartamento creado con éxito!</string>
+    <string name="apt_choice_create_failed">Error al crear el apartamento</string>
+    <string name="apt_choice_code_length_error">El código de invitación debe tener exactamente 6 caracteres</string>
+    <string name="apt_choice_join_success">¡Se unió al apartamento con éxito!</string>
+    <string name="apt_choice_join_failed">Error al unirse al apartamento</string>
+    <string name="apt_choice_create_new_card">Crear un nuevo apartamento</string>
+    <string name="apt_choice_create_new_sub">Iniciar un nuevo grupo de apartamento</string>
+    <string name="apt_choice_join_card">Unirse con código de invitación</string>
+    <string name="apt_choice_join_sub">Ingresar código de un compañero</string>
+    <string name="apt_choice_create_button">Crear hogar</string>
+    <string name="apt_choice_join_button">Unirse al hogar</string>
+    <string name="apt_choice_invite_code_label">Código de invitación (6 caracteres)</string>
+    <string name="apt_choice_invite_code_hint">ej. KXMPZQ</string>
+    <string name="apt_choice_name_hint">ej. Sunnyvale Piso 302</string>
+
+    <!-- Additional Home Screen Strings -->
+    <string name="home_total_pool">Gasto Total del Grupo</string>
+    <string name="home_due">%1$s a pagar</string>
+    <string name="home_owed">%1$s a recibir</string>
+    <string name="home_all_settled">Todo liquidado</string>
+    <string name="home_add_bill">Añadir Factura</string>
+    <string name="home_invite_roommates_title">Invitar Compañeros</string>
+    <string name="home_invite_code_label">Código: %1$s</string>
+    <string name="home_copy_toast">¡Código copiado al portapapeles!</string>
+    <string name="home_share_chooser">Compartir Enlace de Invitación</string>
+    <string name="home_share_text">Únete a mi grupo de ApartmentFlow usando este enlace: %1$s o ingresa el código manualmente: %2$s</string>
+    <string name="home_groceries_label">ALIMENTOS</string>
+    <string name="home_utilities_label">SERVICIOS</string>
+    <string name="home_roommates_header">Compañeros de Cuarto</string>
+    <string name="home_manage_button">Gestionar</string>
+    <string name="home_roommate_owed">%1$s a recibir</string>
+    <string name="home_roommate_owes">Debe %1$s</string>
+    <string name="home_roommate_paid_label">pagó</string>
+    <string name="home_trend_title">Tendencia de Gastos</string>
+
+    <!-- Additional Bills Screen Strings -->
+    <string name="bills_screen_title">Facturas y Gastos</string>
+    <string name="bills_active_count_template">%1$d gastos compartidos activos</string>
+    <string name="bills_tap_plus_hint">Toque el botón \'+\' para registrar un nuevo gasto.</string>
+    <string name="bills_cash_settlement">Transferencia de Liquidación</string>
+    <string name="bills_paid_by_template">Pagado por %1$s</string>
+    <string name="bills_add_shared_title">Añadir Factura Compartida</string>
+
+    <!-- Additional Expense Entry Form Strings -->
+    <string name="expense_form_name_label">Nombre del Gasto / Título</string>
+    <string name="expense_form_name_hint">ej. Compras Semanales</string>
+    <string name="expense_form_name_empty_error">El título no puede estar vacío</string>
+    <string name="expense_form_amount_label">Monto (%1$s)</string>
+    <string name="expense_form_amount_hint">0.00</string>
+    <string name="expense_form_amount_invalid_error">Por favor ingrese un monto válido mayor que 0</string>
+    <string name="expense_form_date_label">Fecha (aaaa-mm-dd)</string>
+    <string name="expense_form_date_invalid_error">Por favor ingrese una fecha válida en formato aaaa-mm-dd</string>
+    <string name="expense_form_category_label">Categoría</string>
+    <string name="expense_form_payer_label">¿Quién pagó?</string>
+    <string name="expense_form_payer_select">Seleccionar Pagador</string>
+    <string name="expense_form_desc_label">Descripción (Opcional)</string>
+    <string name="expense_form_desc_hint">ej. Leche, pan y desayuno</string>
+    <string name="expense_form_split_label">Dividir Entre</string>
+    <string name="expense_form_save_button">Guardar Gasto</string>
+
+    <!-- Additional Settle Up Dialog Strings -->
+    <string name="settle_up_dialog_title">Registrar Liquidación de Efectivo</string>
+    <string name="settle_up_dialog_confirm">Confirmar Liquidación</string>
+    <string name="settle_up_dialog_suggested">Liquidaciones Sugeridas</string>
+    <string name="settle_up_dialog_suggested_template">%1$s paga a %2$s</string>
+    <string name="settle_up_dialog_settle_full_balance">Liquidar saldo total</string>
+    <string name="settle_up_dialog_manual_header">Detalles de Liquidación Manual</string>
+    <string name="settle_up_dialog_debtor_label">¿Quién paga?</string>
+    <string name="settle_up_dialog_creditor_label">¿Quién recibe?</string>
+    <string name="settle_up_dialog_amount_transferred_label">Monto Transferido (%1$s)</string>
+    <string name="settle_up_dialog_same_person_error">El pagador y el receptor no pueden ser la misma persona</string>
+    <string name="settle_up_dialog_invalid_amount_error">Por favor ingrese un monto de transferencia válido</string>
+
+    <!-- Additional People Screen Strings -->
+    <string name="people_screen_title">Compañeros</string>
+    <string name="people_count_template">%1$d compañeros de cuarto en este apartamento</string>
+    <string name="people_roster_header">Lista y Saldos</string>
+    <string name="people_total_paid_template">Gasto total pagado: %1$s</string>
+    <string name="people_settled">Liquidado</string>
+    <string name="people_matrix_header">Matriz de Liquidación</string>
+    <string name="people_no_debts_title">¡Todos están completamente al día!</string>
+    <string name="people_no_debts_desc">No hay compañeros de cuarto pendientes ni saldos bilaterales adeudados.</string>
+    <string name="people_bilateral_debt_desc">Saldo de deuda bilateral de compañeros</string>
+    <string name="people_add_roommate_desc">Ingrese el nombre de su nuevo compañero de cuarto. Se agregará a la lista compartida y podrá dividirse inmediatamente en facturas compartidas.</string>
+    <string name="people_name_label">Nombre Completo del Compañero</string>
+    <string name="people_name_hint">ej. Alex Rivera</string>
+    <string name="people_name_empty_error">El nombre no puede estar vacío</string>
+</resources>

@@ -1,0 +1,6 @@
+{
+  "name": "Apartment Flow",
+  "description": "An elegant roommate expense tracker, bills dashboard, and settlement app.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
