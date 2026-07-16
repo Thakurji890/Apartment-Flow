@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="bills_active_count">
+        <item quantity="one">%1$d सक्रिय साझा खर्च</item>
+        <item quantity="other">%1$d सक्रिय साझा खर्च</item>
+    </plurals>
+</resources>

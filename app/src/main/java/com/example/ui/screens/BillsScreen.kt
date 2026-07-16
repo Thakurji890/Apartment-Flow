@@ -29,6 +29,8 @@ import com.example.data.Roommate
 import com.example.ui.ApartmentViewModel
 import com.example.ui.components.ExpenseEntryForm
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.R
 import java.util.Locale
 
@@ -97,7 +99,7 @@ fun BillsScreen(
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                         )
                         Text(
-                            text = stringResource(R.string.bills_active_count_template, actualBillsOnly.size),
+                            text = pluralStringResource(R.plurals.bills_active_count, actualBillsOnly.size, actualBillsOnly.size),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                         )
@@ -212,7 +214,7 @@ fun BillsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.Top
                             ) {
                                 // Category Icon Indicator
                                 Box(
@@ -247,26 +249,53 @@ fun BillsScreen(
                                         text = if (isCashTransfer) stringResource(R.string.bills_cash_settlement) else bill.title,
                                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
                                     )
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.bills_paid_by_template, payerName),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .size(3.dp)
-                                                .clip(CircleShape)
-                                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
-                                        )
-                                        Text(
-                                            text = bill.date,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                        )
+                                    val isLongPayer = payerName.length > 14
+                                    if (isLongPayer) {
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.bills_paid_by_template, payerName),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = bill.date,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    } else {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.bills_paid_by_template, payerName),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f, fill = false)
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(3.dp)
+                                                    .clip(CircleShape)
+                                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+                                            )
+                                            Text(
+                                                text = bill.date,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
                                     }
                                     if (bill.description.isNotEmpty() && !isCashTransfer) {
                                         Text(
@@ -274,6 +303,7 @@ fun BillsScreen(
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                             maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
                                             modifier = Modifier.padding(top = 2.dp)
                                         )
                                     }
