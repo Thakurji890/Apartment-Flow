@@ -120,7 +120,7 @@ fun NotificationsScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(notifications) { notification ->
@@ -163,7 +163,7 @@ fun NotificationItem(
         modifier = modifier
             .fillMaxWidth()
             .testTag("notification_item_${notification.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         border = androidx.compose.foundation.BorderStroke(1.dp, outlineColor)
     ) {

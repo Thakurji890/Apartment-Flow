@@ -58,7 +58,7 @@ fun PeopleScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 20.dp)
         ) {
             // Header
             Row(
@@ -153,7 +153,7 @@ fun PeopleScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("people_item_${roommate.id}"),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface
                         ),
@@ -266,7 +266,7 @@ fun PeopleScreen(
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                             ),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(20.dp),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                         ) {
                             Column(
@@ -304,7 +304,7 @@ fun PeopleScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("debt_item_${debt.fromId}_to_${debt.toId}"),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(20.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),

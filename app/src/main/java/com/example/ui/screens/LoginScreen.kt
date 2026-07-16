@@ -22,6 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
+import com.example.R
+import com.example.ui.theme.extendedColors
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -38,7 +44,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.userProfileChangeRequest
 import androidx.compose.ui.res.stringResource
-import com.example.R
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,7 +109,7 @@ fun LoginScreen(
                 .testTag("login_card"),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
         ) {
             Column(
                 modifier = Modifier
@@ -117,22 +122,29 @@ fun LoginScreen(
                 Box(
                     modifier = Modifier
                         .size(64.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)),
+                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(20.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ReceiptLong,
+                        painter = painterResource(R.drawable.ic_logo),
                         contentDescription = stringResource(R.string.login_welcome),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(36.dp)
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(48.dp)
                     )
                 }
 
                 // Titles
+                val accentColor = MaterialTheme.extendedColors.accent
                 Text(
-                    text = stringResource(R.string.login_welcome),
+                    text = buildAnnotatedString {
+                        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
+                            append("Apartment")
+                        }
+                        withStyle(style = SpanStyle(color = accentColor)) {
+                            append("Flow")
+                        }
+                    },
                     style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
 
@@ -146,7 +158,7 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Custom Name Input for Personalized Demo Mode
+                // Display Name Input
                 OutlinedTextField(
                     value = nameInput,
                     onValueChange = { nameInput = it },
@@ -191,6 +203,11 @@ fun LoginScreen(
                     // Google Sign-In Button
                     Button(
                         onClick = {
+                            val enteredName = nameInput.trim()
+                            if (enteredName.isEmpty()) {
+                                errorMessage = context.getString(R.string.login_name_empty_error)
+                                return@Button
+                            }
                             isLoading = true
                             errorMessage = null
                             scope.launch {
@@ -220,17 +237,14 @@ fun LoginScreen(
                                         auth.signInWithCredential(firebaseCredential)
                                             .addOnSuccessListener {
                                                 // Update profile if they entered a custom name
-                                                val enteredName = nameInput.trim()
-                                                if (enteredName.isNotEmpty()) {
-                                                    auth.currentUser?.updateProfile(
-                                                        userProfileChangeRequest {
-                                                            displayName = enteredName
-                                                        }
-                                                    )?.addOnCompleteListener {
-                                                        isLoading = false
-                                                        onLoginSuccess()
+                                                auth.currentUser?.updateProfile(
+                                                    userProfileChangeRequest {
+                                                        displayName = nameInput.trim()
                                                     }
-                                                } else {
+                                                )?.addOnCompleteListener {
+                                                    isLoading = false
+                                                    onLoginSuccess()
+                                                } ?: run {
                                                     isLoading = false
                                                     onLoginSuccess()
                                                 }
@@ -274,7 +288,11 @@ fun LoginScreen(
                     // Demo / Guest Mode Bypass Button
                     OutlinedButton(
                         onClick = {
-                            val nameToUse = nameInput.trim().ifEmpty { "Guest Roommate" }
+                            val nameToUse = nameInput.trim()
+                            if (nameToUse.isEmpty()) {
+                                errorMessage = context.getString(R.string.login_name_empty_error)
+                                return@OutlinedButton
+                            }
                             isLoading = true
                             errorMessage = null
                             auth.signInAnonymously()

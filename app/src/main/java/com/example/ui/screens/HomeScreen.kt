@@ -30,6 +30,8 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -81,7 +83,7 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
     ) {
@@ -108,10 +110,11 @@ fun HomeScreen(
                             .testTag("home_avatar_button"),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "AF",
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                        Icon(
+                            painter = androidx.compose.ui.res.painterResource(R.drawable.ic_logo),
+                            contentDescription = "Profile",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                     Text(
@@ -157,39 +160,60 @@ fun HomeScreen(
             }
         }
 
-        // Balance Dashboard Card (MD3 Elevated Card, radius 28dp)
+        // Balance Dashboard Card (MD3 Elevated Card, radius 20dp)
         item {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("balance_card"),
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 ),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.home_total_pool),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                val waveColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                Box(
+                    modifier = Modifier.drawBehind {
+                        val path = Path().apply {
+                            moveTo(0f, size.height * 0.6f)
+                            quadraticBezierTo(
+                                size.width * 0.25f, size.height * 0.4f,
+                                size.width * 0.5f, size.height * 0.6f
                             )
-                            Text(
-                                text = viewModel.formatCurrency(totalSpent, currentCurrency),
-                                style = MaterialTheme.typography.displayMedium,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 4.dp)
+                            quadraticBezierTo(
+                                size.width * 0.75f, size.height * 0.8f,
+                                size.width, size.height * 0.6f
                             )
+                            lineTo(size.width, size.height)
+                            lineTo(0f, size.height)
+                            close()
                         }
+                        drawPath(path = path, color = waveColor)
+                    }
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.home_total_pool),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                                Text(
+                                    text = viewModel.formatCurrency(totalSpent, currentCurrency),
+                                    style = MaterialTheme.typography.displayMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
 
                         // Due/Owed status badge
                         val extendedColors = MaterialTheme.extendedColors
@@ -246,7 +270,7 @@ fun HomeScreen(
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             ),
-                            shape = RoundedCornerShape(24.dp)
+                            shape = RoundedCornerShape(20.dp)
                         ) {
                             Text(
                                 text = stringResource(R.string.settle_up_dialog_title),
@@ -267,7 +291,7 @@ fun HomeScreen(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                             ),
-                            shape = RoundedCornerShape(24.dp)
+                            shape = RoundedCornerShape(20.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
@@ -284,6 +308,7 @@ fun HomeScreen(
                             )
                         }
                     }
+                }
                 }
             }
         }
@@ -379,11 +404,11 @@ fun HomeScreen(
             ) {
                 // Groceries card
                 val isDarkTheme = isSystemInDarkTheme()
-                val groceryCardBg = if (isDarkTheme) MaterialTheme.colorScheme.secondaryContainer else Color(0xFFE6DEFF)
-                val groceryCardText = if (isDarkTheme) MaterialTheme.colorScheme.onSecondaryContainer else Color(0xFF1D1633)
+                val groceryCardBg = if (isDarkTheme) MaterialTheme.colorScheme.secondaryContainer else com.example.ui.theme.GroceriesBg
+                val groceryCardText = if (isDarkTheme) MaterialTheme.colorScheme.onSecondaryContainer else com.example.ui.theme.GroceriesText
                 
-                val utilityCardBg = if (isDarkTheme) MaterialTheme.colorScheme.tertiaryContainer else Color(0xFFD2E5D5)
-                val utilityCardText = if (isDarkTheme) MaterialTheme.colorScheme.onTertiaryContainer else Color(0xFF00210E)
+                val utilityCardBg = if (isDarkTheme) MaterialTheme.colorScheme.tertiaryContainer else com.example.ui.theme.UtilitiesBg
+                val utilityCardText = if (isDarkTheme) MaterialTheme.colorScheme.onTertiaryContainer else com.example.ui.theme.UtilitiesText
 
                 Card(
                     modifier = Modifier
@@ -391,7 +416,7 @@ fun HomeScreen(
                         .height(112.dp)
                         .testTag("grocery_card")
                         .clickable { onNavigateToBills() },
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = groceryCardBg
                     )
@@ -426,7 +451,7 @@ fun HomeScreen(
                         .height(112.dp)
                         .testTag("utility_card")
                         .clickable { onNavigateToBills() },
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = utilityCardBg
                     )
@@ -490,7 +515,7 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .padding(vertical = 2.dp)
                     .testTag("roommate_item_${roommate.id}"),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
@@ -576,7 +601,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("trend_card"),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),

@@ -22,7 +22,8 @@ data class ExtendedColors(
     val onNegativeContainer: Color,
     val warning: Color,
     val warningContainer: Color,
-    val onWarningContainer: Color
+    val onWarningContainer: Color,
+    val accent: Color
 )
 
 val LightExtendedColors = ExtendedColors(
@@ -34,7 +35,8 @@ val LightExtendedColors = ExtendedColors(
     onNegativeContainer = Color(0xFF410002),
     warning = Color(0xFF856404),
     warningContainer = Color(0xFFFFF3CD),
-    onWarningContainer = Color(0xFF2B2100)
+    onWarningContainer = Color(0xFF2B2100),
+    accent = AmberSandLight
 )
 
 val DarkExtendedColors = ExtendedColors(
@@ -46,7 +48,8 @@ val DarkExtendedColors = ExtendedColors(
     onNegativeContainer = Color(0xFFFFDAD6),
     warning = Color(0xFFFFD54F),
     warningContainer = Color(0xFF403B2B),
-    onWarningContainer = Color(0xFFFFF3CD)
+    onWarningContainer = Color(0xFFFFF3CD),
+    accent = AmberSandDark
 )
 
 val LocalExtendedColors = staticCompositionLocalOf { LightExtendedColors }
@@ -56,36 +59,36 @@ val MaterialTheme.extendedColors: ExtendedColors
     get() = LocalExtendedColors.current
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFA1C9FF),
-    onPrimary = Color(0xFF00325A),
-    primaryContainer = Color(0xFF00497E),
-    onPrimaryContainer = Color(0xFFD1E4FF),
-    secondary = Color(0xFFBBC7DB),
-    onSecondary = Color(0xFF253140),
-    secondaryContainer = Color(0xFF2D323A),
-    onSecondaryContainer = Color(0xFFE2E2E9),
-    background = Color(0xFF101216),
-    onBackground = Color(0xFFE2E2E9),
-    surface = Color(0xFF1B1D22),
-    onSurface = Color(0xFFE2E2E9),
-    outline = Color(0xFF43474E),
-    error = Color(0xFFFFB4AB)
+    primary = HarborIndigoDark,
+    onPrimary = HarborIndigoDarkOn,
+    primaryContainer = HarborIndigoDarkContainer,
+    onPrimaryContainer = HarborIndigoDarkOnContainer,
+    secondary = HarborIndigoDark,
+    onSecondary = HarborIndigoDarkOn,
+    secondaryContainer = HarborIndigoDarkContainer,
+    onSecondaryContainer = HarborIndigoDarkOnContainer,
+    background = InkBackground,
+    onBackground = TextDark,
+    surface = InkSurface,
+    onSurface = TextDark,
+    outline = OutlineDark,
+    error = ErrorRed
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = CleanPrimary,
-    onPrimary = CleanOnPrimary,
-    primaryContainer = CleanPrimaryContainer,
-    onPrimaryContainer = CleanOnPrimaryContainer,
-    secondary = CleanSecondary,
-    onSecondary = CleanOnSecondary,
-    secondaryContainer = CleanSecondaryContainer,
-    onSecondaryContainer = CleanOnSecondaryContainer,
-    background = CleanBackground,
-    onBackground = CleanOnBackground,
-    surface = CleanSurface,
-    onSurface = CleanOnSurface,
-    outline = CleanOutline,
+    primary = HarborIndigoLight,
+    onPrimary = HarborIndigoLightOn,
+    primaryContainer = HarborIndigoLightContainer,
+    onPrimaryContainer = HarborIndigoLightOnContainer,
+    secondary = HarborIndigoLight,
+    onSecondary = HarborIndigoLightOn,
+    secondaryContainer = HarborIndigoLightContainer,
+    onSecondaryContainer = HarborIndigoLightOnContainer,
+    background = LinenBackground,
+    onBackground = TextLight,
+    surface = LinenSurface,
+    onSurface = TextLight,
+    outline = OutlineLight,
     error = ErrorRed
 )
 
@@ -93,7 +96,7 @@ private val LightColorScheme = lightColorScheme(
 fun MyApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false, // Set to false to preserve exact custom theme colors
-    content: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -105,7 +108,6 @@ fun MyApplicationTheme(
     }
 
     val extendedColors = if (darkTheme) DarkExtendedColors else LightExtendedColors
-
     CompositionLocalProvider(LocalExtendedColors provides extendedColors) {
         MaterialTheme(
             colorScheme = colorScheme,

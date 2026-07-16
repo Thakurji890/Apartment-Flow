@@ -69,7 +69,7 @@ fun BillsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 20.dp)
         ) {
             // Header
             Row(
@@ -207,7 +207,7 @@ fun BillsScreen(
                                 .fillMaxWidth()
                                 .clickable { expanded = !expanded }
                                 .testTag("bill_item_${bill.id}"),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(20.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),
