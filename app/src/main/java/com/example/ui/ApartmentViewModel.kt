@@ -140,14 +140,7 @@ class ApartmentViewModel : ViewModel() {
     }
 
     fun formatCurrency(amount: Double, currencyPref: String): String {
-        val symbol = when {
-            currencyPref.contains("€") -> "€"
-            currencyPref.contains("£") -> "£"
-            currencyPref.contains("₹") -> "₹"
-            currencyPref.contains("CAD") -> "CA$"
-            else -> "$"
-        }
-        return String.format(java.util.Locale.US, "%s%.2f", symbol, amount)
+        return com.example.util.CurrencyFormatter.format(amount, currencyPref)
     }
 
     fun markNotificationsAsRead() {

@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -588,18 +589,22 @@ class ApartmentRepository private constructor() {
             .collection("bills").document(generatedBillId)
             .set(newBill)
             .addOnSuccessListener {
-                val payerName = _rawRoommates.value.find { it.id == payerId }?.name ?: "Someone"
-                val amountStr = "$${String.format(Locale.US, "%.2f", amount)}"
-                _rawRoommates.value.forEach { roommate ->
-                    if (roommate.id != payerId) {
-                        val localizedTitle = appContext?.getString(R.string.notification_bill_added_title) ?: "New Bill Added"
-                        val localizedMsg = appContext?.getString(R.string.notification_bill_added_msg, payerName, title, amountStr)
-                            ?: "$payerName added a bill for $title ($amountStr)"
-                        addNotification(
-                            recipientId = roommate.id,
-                            title = localizedTitle,
-                            message = localizedMsg
-                        )
+                repositoryScope.launch {
+                    val payerName = _rawRoommates.value.find { it.id == payerId }?.name ?: "Someone"
+                    val currentCurrency = preferenceManager?.currency?.firstOrNull() ?: "USD"
+                    val amountStr = com.example.util.CurrencyFormatter.format(amount, currentCurrency)
+                    
+                    _rawRoommates.value.forEach { roommate ->
+                        if (roommate.id != payerId) {
+                            val localizedTitle = appContext?.getString(R.string.notification_bill_added_title) ?: "New Bill Added"
+                            val localizedMsg = appContext?.getString(R.string.notification_bill_added_msg, payerName, title, amountStr)
+                                ?: "$payerName added a bill for $title ($amountStr)"
+                            addNotification(
+                                recipientId = roommate.id,
+                                title = localizedTitle,
+                                message = localizedMsg
+                            )
+                        }
                     }
                 }
             }
@@ -676,16 +681,19 @@ class ApartmentRepository private constructor() {
             .collection("settlements").document(generatedSettlementId)
             .set(newSettlement)
             .addOnSuccessListener {
-                val payerName = _rawRoommates.value.find { it.id == fromId }?.name ?: "Someone"
-                val amountStr = "$${String.format(Locale.US, "%.2f", amount)}"
-                val localizedTitle = appContext?.getString(R.string.notification_settlement_received_title) ?: "Settlement Received"
-                val localizedMsg = appContext?.getString(R.string.notification_settlement_received_msg, payerName, amountStr)
-                    ?: "$payerName recorded a settlement of $amountStr to you"
-                addNotification(
-                    recipientId = toId,
-                    title = localizedTitle,
-                    message = localizedMsg
-                )
+                repositoryScope.launch {
+                    val payerName = _rawRoommates.value.find { it.id == fromId }?.name ?: "Someone"
+                    val currentCurrency = preferenceManager?.currency?.firstOrNull() ?: "USD"
+                    val amountStr = com.example.util.CurrencyFormatter.format(amount, currentCurrency)
+                    val localizedTitle = appContext?.getString(R.string.notification_settlement_received_title) ?: "Settlement Received"
+                    val localizedMsg = appContext?.getString(R.string.notification_settlement_received_msg, payerName, amountStr)
+                        ?: "$payerName recorded a settlement of $amountStr to you"
+                    addNotification(
+                        recipientId = toId,
+                        title = localizedTitle,
+                        message = localizedMsg
+                    )
+                }
             }
             .addOnFailureListener { e ->
                 _error.value = "Failed to save settlement: ${e.localizedMessage}"
