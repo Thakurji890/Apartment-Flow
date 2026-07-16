@@ -43,6 +43,10 @@ fun ProfileScreen(
     var isSaving by remember { mutableStateOf(false) }
 
     val email = currentUser?.email ?: "No Email (Guest Session)"
+    val roommates by viewModel.roommates.collectAsState()
+    val currentUserRoommate = roommates.find { it.id == currentUser?.uid }
+    var upiIdInput by remember(currentUserRoommate) { mutableStateOf(currentUserRoommate?.upiId ?: "") }
+    var upiIdError by remember { mutableStateOf(false) }
     val accountType = if (currentUser?.isAnonymous == true) "Guest Mode" else "Google Account"
 
     Scaffold(
@@ -131,6 +135,30 @@ fun ProfileScreen(
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
                     )
+                    OutlinedTextField(
+                        value = upiIdInput,
+                        onValueChange = {
+                            upiIdInput = it
+                            upiIdError = false
+                        },
+                        label = { Text("Your UPI ID") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Security, contentDescription = "UPI ID")
+                        },
+                        isError = upiIdError,
+                        supportingText = {
+                            if (upiIdError) {
+                                Text("UPI ID must contain @ and no spaces")
+                            } else {
+                                Text("Optional. Used for receiving payments.")
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("profile_upi_input"),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
+                    )
 
                     Button(
                         onClick = {
@@ -139,7 +167,11 @@ fun ProfileScreen(
                                 return@Button
                             }
                             isSaving = true
-                            viewModel.updateProfile(displayNameInput.trim()) { success, error ->
+                            if (upiIdInput.isNotBlank() && (!upiIdInput.contains("@") || upiIdInput.contains(" "))) {
+                                upiIdError = true
+                                return@Button
+                            }
+                            viewModel.updateProfile(displayNameInput.trim(), upiIdInput.trim()) { success, error ->
                                 isSaving = false
                                 if (success) {
                                     Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()

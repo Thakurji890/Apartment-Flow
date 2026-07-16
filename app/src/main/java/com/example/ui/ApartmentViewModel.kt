@@ -114,8 +114,8 @@ class ApartmentViewModel : ViewModel() {
         }
     }
 
-    fun updateProfile(newDisplayName: String, onComplete: (Boolean, String?) -> Unit) {
-        repository.updateProfile(newDisplayName, onComplete)
+    fun updateProfile(newDisplayName: String, newUpiId: String, onComplete: (Boolean, String?) -> Unit) {
+        repository.updateProfile(newDisplayName, newUpiId, onComplete)
     }
 
     fun updateApartmentName(newName: String, onComplete: (Boolean, String?) -> Unit) {

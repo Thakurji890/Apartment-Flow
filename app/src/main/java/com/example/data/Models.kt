@@ -10,7 +10,8 @@ data class Roommate(
     val avatarBgColor: Long = 0L, // hex value representation for serialization/reconstruction
     val avatarTextColor: Long = 0L,
     val totalPaid: Double = 0.0,
-    val balance: Double = 0.0 // positive means they are owed money, negative means they owe money
+    val balance: Double = 0.0, // positive means they are owed money, negative means they owe money
+    val upiId: String = ""
 )
 
 enum class BillCategory(val displayName: String, val bgColor: Long, val textColor: Long) {

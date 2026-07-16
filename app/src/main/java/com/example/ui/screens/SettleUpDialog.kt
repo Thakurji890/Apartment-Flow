@@ -45,6 +45,8 @@ fun SettleUpDialog(
     var amountError by remember { mutableStateOf(false) }
     var expandedDebtor by remember { mutableStateOf(false) }
     var expandedCreditor by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var showUpiConfirmation by remember { mutableStateOf(false) }
 
     val directDebt = remember(selectedDebtorId, selectedCreditorId, bills, settlements) {
         var debt = 0.0
@@ -93,6 +95,30 @@ fun SettleUpDialog(
     }
 
     val currencySymbol = currencyPref.substringAfter("(").substringBefore(")")
+
+    if (showUpiConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showUpiConfirmation = false },
+            title = { Text("Payment Confirmation") },
+            text = { Text("Did the payment go through?\n\nApartmentFlow does not verify the payment; clicking Yes will record it as a manual settlement.") },
+            confirmButton = {
+                Button(onClick = {
+                    showUpiConfirmation = false
+                    val amount = amountStr.toDoubleOrNull()
+                    if (amount != null && amount > 0) {
+                        onSettle(selectedDebtorId, selectedCreditorId, amount)
+                    }
+                }) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUpiConfirmation = false }) {
+                    Text("No")
+                }
+            }
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -218,6 +244,7 @@ fun SettleUpDialog(
                 // Debtor Dropdown (who pays)
                 Box(modifier = Modifier.fillMaxWidth()) {
                     val activeDebtorName = roommates.find { it.id == selectedDebtorId }?.name ?: stringResource(R.string.expense_form_payer_select)
+
                     OutlinedTextField(
                         value = activeDebtorName,
                         onValueChange = {},
@@ -257,6 +284,7 @@ fun SettleUpDialog(
                 // Creditor Dropdown (who receives)
                 Box(modifier = Modifier.fillMaxWidth()) {
                     val activeCreditorName = roommates.find { it.id == selectedCreditorId }?.name ?: stringResource(R.string.expense_form_payer_select)
+
                     OutlinedTextField(
                         value = activeCreditorName,
                         onValueChange = {},
@@ -292,6 +320,32 @@ fun SettleUpDialog(
                 }
 
                 // Amount
+                val creditor = roommates.find { it.id == selectedCreditorId }
+                if (creditor != null && creditor.upiId.isNotBlank()) {
+                    Button(
+                        onClick = {
+                            val amount = amountStr.toDoubleOrNull() ?: 0.0
+                            if (amount <= 0.0) {
+                                amountError = true
+                                return@Button
+                            }
+                            val note = android.net.Uri.encode("ApartmentFlow settlement")
+                            val name = android.net.Uri.encode(creditor.name)
+                            val uri = android.net.Uri.parse("upi://pay?pa=${creditor.upiId}&pn=$name&am=$amount&cu=INR&tn=$note")
+                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
+                            try {
+                                context.startActivity(intent)
+                                showUpiConfirmation = true
+                            } catch (e: android.content.ActivityNotFoundException) {
+                                android.widget.Toast.makeText(context, "No UPI app found — try Google Pay, PhonePe, or Paytm", android.widget.Toast.LENGTH_LONG).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                    ) {
+                        Text("Pay via UPI", color = MaterialTheme.colorScheme.onTertiary)
+                    }
+                }
                 OutlinedTextField(
                     value = amountStr,
                     onValueChange = {

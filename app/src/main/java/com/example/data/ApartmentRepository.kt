@@ -763,7 +763,7 @@ class ApartmentRepository private constructor() {
         }
     }
 
-    fun updateProfile(newDisplayName: String, onComplete: (Boolean, String?) -> Unit) {
+    fun updateProfile(newDisplayName: String, newUpiId: String, onComplete: (Boolean, String?) -> Unit) {
         val user = auth.currentUser ?: return onComplete(false, "No user signed in")
         val uid = user.uid
         val aptId = _activeApartmentId.value
@@ -777,7 +777,7 @@ class ApartmentRepository private constructor() {
                     if (aptId != null) {
                         db.collection("apartments").document(aptId)
                             .collection("roommates").document(uid)
-                            .update("name", newDisplayName)
+                            .update("name", newDisplayName, "upiId", newUpiId)
                             .addOnSuccessListener {
                                 onComplete(true, null)
                             }

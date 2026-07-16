@@ -1,0 +1,4 @@
+sed -i 's/fun updateProfile(newDisplayName: String, onComplete: (Boolean, String?) -> Unit)/fun updateProfile(newDisplayName: String, newUpiId: String, onComplete: (Boolean, String?) -> Unit)/g' app/src/main/java/com/example/ui/ApartmentViewModel.kt
+sed -i 's/repository.updateProfile(newDisplayName, onComplete)/repository.updateProfile(newDisplayName, newUpiId, onComplete)/g' app/src/main/java/com/example/ui/ApartmentViewModel.kt
+sed -i 's/fun updateProfile(newDisplayName: String, onComplete: (Boolean, String?) -> Unit)/fun updateProfile(newDisplayName: String, newUpiId: String, onComplete: (Boolean, String?) -> Unit)/g' app/src/main/java/com/example/data/ApartmentRepository.kt
+sed -i 's/\.update("name", newDisplayName)/.update("name", newDisplayName, "upiId", newUpiId)/g' app/src/main/java/com/example/data/ApartmentRepository.kt
