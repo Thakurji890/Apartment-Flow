@@ -79,6 +79,10 @@ class ApartmentViewModel : ViewModel() {
         repository.deleteBill(billId)
     }
 
+    fun addGuest(name: String) {
+        repository.addGuest(name)
+    }
+
     fun addRoommate(name: String) {
         repository.addRoommate(name)
     }

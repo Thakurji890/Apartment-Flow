@@ -42,6 +42,7 @@ val languageOptions = listOf(
 fun SettingsScreen(
     viewModel: ApartmentViewModel,
     onNavigateToProfile: () -> Unit,
+    onNavigateToInvite: () -> Unit,
     onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -504,6 +505,47 @@ fun SettingsScreen(
                         )
                     }
                 }
+
+                // Invite Roommate Card
+                Card(
+                    modifier = Modifier.fillMaxWidth().testTag("settings_invite_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateToInvite() }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = stringResource(R.string.cd_invite_roommate),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = stringResource(R.string.people_invite_button),
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = stringResource(R.string.cd_action_arrow),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Leave Apartment Card
                 Card(

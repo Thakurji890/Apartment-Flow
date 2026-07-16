@@ -6,6 +6,7 @@ data class Roommate(
     val id: String = "",
     val name: String = "",
     val initials: String = "",
+    val isGuest: Boolean = false,
     val avatarBgColor: Long = 0L, // hex value representation for serialization/reconstruction
     val avatarTextColor: Long = 0L,
     val totalPaid: Double = 0.0,

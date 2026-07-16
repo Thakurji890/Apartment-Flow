@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.PersonAddAlt1
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,25 +24,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.Roommate
 import com.example.data.Debt
 import com.example.ui.ApartmentViewModel
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.text.style.TextOverflow
 import com.example.ui.theme.extendedColors
-import com.example.R
-import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PeopleScreen(
     viewModel: ApartmentViewModel,
     onTriggerSettleUpDirectly: (String, String, Double) -> Unit,
     onBackClick: (() -> Unit)? = null,
+    onNavigateToInvite: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val roommates by viewModel.roommates.collectAsState()
@@ -48,7 +49,9 @@ fun PeopleScreen(
     val debts by viewModel.debts.collectAsState()
     val currentCurrency by viewModel.currency.collectAsState()
 
-    var showAddRoommateDialog by remember { mutableStateOf(false) }
+    var showAddGuestDialog by remember { mutableStateOf(false) }
+    var guestName by remember { mutableStateOf("") }
+    var guestNameError by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -65,10 +68,11 @@ fun PeopleScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -95,23 +99,35 @@ fun PeopleScreen(
                         )
                     }
                 }
-
-                Button(
-                    onClick = { showAddRoommateDialog = true },
-                    modifier = Modifier.testTag("add_roommate_header_button"),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.people_add_button),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = stringResource(R.string.action_add),
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                    )
+                
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    IconButton(
+                        onClick = { showAddGuestDialog = true },
+                        modifier = Modifier.testTag("add_guest_header_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonAddAlt1,
+                            contentDescription = stringResource(R.string.cd_add_guest),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Button(
+                        onClick = onNavigateToInvite,
+                        modifier = Modifier.testTag("invite_roommate_header_button"),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = stringResource(R.string.cd_invite_roommate),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = stringResource(R.string.people_invite_button),
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
                 }
             }
 
@@ -152,8 +168,8 @@ fun PeopleScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("people_item_${roommate.id}"),
-                        shape = RoundedCornerShape(20.dp),
+                            .testTag("roommate_card_${roommate.id}"),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface
                         ),
@@ -186,7 +202,7 @@ fun PeopleScreen(
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Text(
-                                    text = roommate.name,
+                                    text = roommate.name + if (roommate.isGuest) " (Guest - no account)" else "",
                                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -194,68 +210,53 @@ fun PeopleScreen(
                                 Text(
                                     text = stringResource(R.string.people_total_paid_template, viewModel.formatCurrency(roommate.totalPaid, currentCurrency)),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            }
 
-                            Column(
-                                horizontalAlignment = Alignment.End
-                            ) {
-                                // Net Balance Badge
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = balanceBg
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Balance chip
+                                Box(
+                                    modifier = Modifier
+                                        .background(balanceBg, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    val badgeText = when {
-                                        roommate.balance > 0.01 -> stringResource(R.string.home_roommate_owed, viewModel.formatCurrency(roommate.balance, currentCurrency))
-                                        roommate.balance < -0.01 -> stringResource(R.string.home_roommate_owes, viewModel.formatCurrency(-roommate.balance, currentCurrency))
-                                        else -> stringResource(R.string.people_settled)
-                                    }
                                     Text(
-                                        text = badgeText,
-                                        color = balanceColor,
+                                        text = if (roommate.balance == 0.0) {
+                                            stringResource(R.string.people_settled)
+                                        } else {
+                                            viewModel.formatCurrency(roommate.balance, currentCurrency)
+                                        },
                                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        color = balanceColor
                                     )
                                 }
-                                
-                                if (roommate.id != viewModel.currentUserId.value) {
-                                    androidx.compose.material3.IconButton(
-                                        onClick = {
-                                            if (Math.abs(roommate.balance) > 0.01) {
-                                                android.widget.Toast.makeText(context, context.getString(R.string.people_remove_balance_error, roommate.name), android.widget.Toast.LENGTH_LONG).show()
-                                            } else {
-                                                viewModel.removeRoommate(roommate.id)
-                                            }
-                                        },
-                                        modifier = Modifier.size(32.dp).padding(top = 4.dp).testTag("remove_roommate_${roommate.id}")
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.DeleteOutline,
-                                            contentDescription = stringResource(R.string.people_remove_roommate),
-                                            tint = MaterialTheme.colorScheme.error,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
+                            }
+
+                            if (roommate.id != viewModel.currentUserId.value) {
+                                IconButton(
+                                    onClick = { viewModel.removeRoommate(roommate.id) },
+                                    modifier = Modifier.testTag("remove_roommate_${roommate.id}")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DeleteOutline,
+                                        contentDescription = stringResource(R.string.people_remove_roommate),
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
                                 }
                             }
                         }
                     }
                 }
 
-                // Debts / Settlements Matrix Section
+                // Debts Section (Bilateral)
                 item {
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = stringResource(R.string.people_matrix_header),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        ),
-                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
 
@@ -263,11 +264,11 @@ fun PeopleScreen(
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             ),
-                            shape = RoundedCornerShape(20.dp),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                         ) {
                             Column(
                                 modifier = Modifier
@@ -277,20 +278,20 @@ fun PeopleScreen(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Payments,
-                                    contentDescription = stringResource(R.string.cd_settled_icon),
-                                    tint = MaterialTheme.extendedColors.positive,
-                                    modifier = Modifier.size(36.dp)
+                                    imageVector = Icons.Default.Group,
+                                    contentDescription = stringResource(R.string.cd_empty_box),
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(48.dp)
                                 )
                                 Text(
                                     text = stringResource(R.string.people_no_debts_title),
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = stringResource(R.string.people_no_debts_desc),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -304,7 +305,7 @@ fun PeopleScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("debt_item_${debt.fromId}_to_${debt.toId}"),
-                            shape = RoundedCornerShape(20.dp),
+                            shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),
@@ -398,38 +399,36 @@ fun PeopleScreen(
             }
         }
 
-        // Add Roommate Dialog
-        if (showAddRoommateDialog) {
-            var name by remember { mutableStateOf("") }
-            var nameError by remember { mutableStateOf(false) }
-
+        // Add Guest Dialog
+        if (showAddGuestDialog) {
             AlertDialog(
-                onDismissRequest = { showAddRoommateDialog = false },
+                onDismissRequest = { showAddGuestDialog = false },
                 title = {
                     Text(
-                        text = stringResource(R.string.people_add_title),
+                        text = stringResource(R.string.people_add_guest_title),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 },
                 confirmButton = {
                     Button(
                         onClick = {
-                            if (name.isNotBlank()) {
-                                viewModel.addRoommate(name)
-                                showAddRoommateDialog = false
+                            if (guestName.isNotBlank()) {
+                                viewModel.addGuest(guestName)
+                                showAddGuestDialog = false
+                                guestName = ""
                             } else {
-                                nameError = true
+                                guestNameError = true
                             }
                         },
-                        modifier = Modifier.testTag("roommate_save_button")
+                        modifier = Modifier.testTag("guest_save_button")
                     ) {
-                        Text(stringResource(R.string.people_add_button))
+                        Text(stringResource(R.string.people_add_guest_button))
                     }
                 },
                 dismissButton = {
                     TextButton(
-                        onClick = { showAddRoommateDialog = false },
-                        modifier = Modifier.testTag("roommate_cancel_button")
+                        onClick = { showAddGuestDialog = false },
+                        modifier = Modifier.testTag("guest_cancel_button")
                     ) {
                         Text(stringResource(R.string.action_cancel))
                     }
@@ -442,24 +441,24 @@ fun PeopleScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.people_add_roommate_desc),
+                            text = stringResource(R.string.people_add_guest_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                         OutlinedTextField(
-                            value = name,
+                            value = guestName,
                             onValueChange = {
-                                name = it
-                                nameError = false
+                                guestName = it
+                                guestNameError = false
                             },
                             label = { Text(stringResource(R.string.people_name_label)) },
                             placeholder = { Text(stringResource(R.string.people_name_hint)) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .testTag("roommate_name_input"),
-                            isError = nameError,
+                                .testTag("guest_name_input"),
+                            isError = guestNameError,
                             supportingText = {
-                                if (nameError) {
+                                if (guestNameError) {
                                     Text(stringResource(R.string.people_name_empty_error))
                                 }
                             },

@@ -624,6 +624,28 @@ class ApartmentRepository private constructor() {
     }
 
     // Add Roommate manually
+    fun addGuest(name: String) {
+        val aptId = _activeApartmentId.value ?: return
+        val generatedRoommateId = "guest_" + name.lowercase().replace(" ", "_") + "_" + System.currentTimeMillis().toString().takeLast(4)
+        val initials = name.split(" ").mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").take(2)
+        val colors = listOf(0xFFD1E4FF, 0xFFFFDBCF, 0xFFD2E5D5, 0xFFE6DEFF, 0xFFF5E0FF, 0xFFFFF1C5)
+        val textColors = listOf(0xFF001D36, 0xFF350B00, 0xFF00210E, 0xFF1D1633, 0xFF2A004B, 0xFF2F1D00)
+        val randomIndex = name.hashCode().coerceAtLeast(0) % colors.size
+        val newRoommate = Roommate(
+            id = generatedRoommateId,
+            name = name,
+            initials = if (initials.isNotEmpty()) initials else "GU",
+            isGuest = true,
+            avatarBgColor = colors[randomIndex],
+            avatarTextColor = textColors[randomIndex],
+            totalPaid = 0.0,
+            balance = 0.0
+        )
+        db.collection("apartments").document(aptId)
+            .collection("roommates").document(generatedRoommateId)
+            .set(newRoommate)
+    }
+
     fun addRoommate(name: String) {
         val aptId = _activeApartmentId.value ?: return
         val generatedRoommateId = name.lowercase().replace(" ", "_") + "_" + System.currentTimeMillis().toString().takeLast(4)

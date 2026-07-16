@@ -197,6 +197,10 @@
     <string name="people_no_debts_title">Everyone is completely settled!</string>
     <string name="people_no_debts_desc">No pending roommates or bilateral balances due.</string>
     <string name="people_bilateral_debt_desc">Bilateral roommate debt balance</string>
+    <string name="people_invite_button">Invite</string>
+    <string name="people_add_guest_title">Add Guest</string>
+    <string name="people_add_guest_button">Add Guest</string>
+    <string name="people_add_guest_desc">Add a guest without an account. They can be included in bill splits, but cannot pay bills.</string>
     <string name="people_add_roommate_desc">Enter the name of your new roommate. They will be added to the sharing roster and can immediately be split into shared bills.</string>
     <string name="people_name_label">Roommate Full Name</string>
     <string name="people_name_hint">e.g. Alex Rivera</string>
@@ -258,6 +262,8 @@
     <string name="cd_logout_icon">Logout Settings Icon</string>
     <string name="cd_action_arrow">Action Menu Navigation Arrow</string>
     <string name="cd_add_icon">Record Shared Bill Button</string>
+    <string name="cd_invite_roommate">Invite Roommate</string>
+    <string name="cd_add_guest">Add Guest</string>
     <string name="cd_copy_code">Copy Invitation Code</string>
     <string name="cd_share_link">Share Invitation Link</string>
     <string name="cd_pay_icon">Payment Details Indicator</string>

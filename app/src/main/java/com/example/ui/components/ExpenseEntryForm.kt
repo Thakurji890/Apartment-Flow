@@ -56,7 +56,7 @@ fun ExpenseEntryForm(
     var title by remember { mutableStateOf(initialTitle) }
     var amountStr by remember { mutableStateOf(initialAmount) }
     var category by remember { mutableStateOf(initialCategory) }
-    var payerId by remember { mutableStateOf(initialPayerId.ifEmpty { roommates.firstOrNull()?.id ?: "" }) }
+    var payerId by remember { mutableStateOf(initialPayerId.ifEmpty { roommates.firstOrNull { !it.isGuest }?.id ?: "" }) }
     var description by remember { mutableStateOf(initialDescription) }
 
     val selectedParticipants = remember { mutableStateListOf<String>() }
@@ -345,7 +345,7 @@ fun ExpenseEntryForm(
                     onDismissRequest = { expandedPayer = false },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    roommates.forEach { rm ->
+                    roommates.filter { !it.isGuest }.forEach { rm ->
                         DropdownMenuItem(
                             text = { Text(rm.name) },
                             onClick = {
@@ -405,7 +405,7 @@ fun ExpenseEntryForm(
                     .testTag("expense_form_split_participants"),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                roommates.forEach { rm ->
+                roommates.filter { !it.isGuest }.forEach { rm ->
                     val isChecked = selectedParticipants.contains(rm.id)
                     Row(
                         modifier = Modifier

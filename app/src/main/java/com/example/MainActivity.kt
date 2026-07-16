@@ -258,6 +258,13 @@ fun MainAppContainer(
                 )
             }
 
+            composable("invite") {
+                com.example.ui.screens.InviteScreen(
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
             composable("people") {
                 PeopleScreen(
                     viewModel = viewModel,
@@ -267,6 +274,7 @@ fun MainAppContainer(
                         prefilledAmountStr = amount.toString()
                         showSettleDialog = true
                     },
+                    onNavigateToInvite = { navController.navigate("invite") },
                     onBackClick = if (navController.previousBackStackEntry != null) {
                         { navController.popBackStack() }
                     } else null
@@ -277,6 +285,7 @@ fun MainAppContainer(
                 SettingsScreen(
                     viewModel = viewModel,
                     onNavigateToProfile = { navController.navigate("profile") },
+                    onNavigateToInvite = { navController.navigate("invite") },
                     onBackClick = if (navController.previousBackStackEntry != null) {
                         { navController.popBackStack() }
                     } else null

@@ -1,0 +1,2 @@
+sed -i 's/import androidx.compose.foundation.layout.*/import androidx.compose.foundation.layout.*\nimport androidx.compose.foundation.rememberScrollState\nimport androidx.compose.foundation.verticalScroll/g' app/src/main/java/com/example/ui/screens/BillsScreen.kt
+sed -i 's/\.fillMaxWidth()/\.fillMaxWidth()\n                        \.verticalScroll(rememberScrollState())/g' app/src/main/java/com/example/ui/screens/BillsScreen.kt

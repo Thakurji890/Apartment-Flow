@@ -4,6 +4,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -75,6 +79,7 @@ fun BillsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                        
                     .padding(vertical = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -120,6 +125,7 @@ fun BillsScreen(
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
+                        
                     .padding(bottom = 12.dp)
                     .testTag("filter_row"),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -159,7 +165,8 @@ fun BillsScreen(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        ,
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -190,6 +197,7 @@ fun BillsScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
+                        
                         .testTag("bills_list"),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     contentPadding = PaddingValues(bottom = 80.dp)
@@ -205,6 +213,7 @@ fun BillsScreen(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
+                        
                                 .clickable { expanded = !expanded }
                                 .testTag("bill_item_${bill.id}"),
                             shape = RoundedCornerShape(20.dp),
@@ -216,6 +225,7 @@ fun BillsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                        
                                     .padding(14.dp),
                                 verticalAlignment = Alignment.Top
                             ) {
@@ -346,6 +356,7 @@ fun BillsScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                        
                                         .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
                                 ) {
                                     androidx.compose.material3.HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
@@ -370,7 +381,8 @@ fun BillsScreen(
                                             val extraCents = if (index < leftoverCents) 1 else 0
                                             val share = (baseCents + extraCents) / 100.0
                                             Row(
-                                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                                modifier = Modifier.fillMaxWidth()
+                        .padding(vertical = 2.dp),
                                                 horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
                                                 Text(
@@ -447,6 +459,8 @@ fun AddBillDialog(
                     modifier = Modifier
                         .padding(24.dp)
                         .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        
                 ) {
                     Text(
                         text = stringResource(R.string.bills_add_shared_title),

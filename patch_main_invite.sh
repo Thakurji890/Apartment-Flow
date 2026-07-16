@@ -1,0 +1,1 @@
+sed -i '/composable("people") {/i \            composable("invite") {\n                com.example.ui.screens.InviteScreen(\n                    viewModel = viewModel,\n                    onBackClick = { navController.popBackStack() }\n                )\n            }\n' app/src/main/java/com/example/MainActivity.kt
