@@ -4,4 +4,12 @@
         <item quantity="one">%1$d सक्रिय साझा खर्च</item>
         <item quantity="other">%1$d सक्रिय साझा खर्च</item>
     </plurals>
+    <plurals name="people_count">
+        <item quantity="one">इस अपार्टमेंट में %1$d रूममेट</item>
+        <item quantity="other">इस अपार्टमेंट में %1$d रूममेट</item>
+    </plurals>
+    <plurals name="notifications_unread_count">
+        <item quantity="one">%1$d न पढ़ा गया सूचना</item>
+        <item quantity="other">%1$d न पढ़े गए सूचनाएं</item>
+    </plurals>
 </resources>

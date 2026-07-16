@@ -4,4 +4,12 @@
         <item quantity="one">%1$d gasto compartido activo</item>
         <item quantity="other">%1$d gastos compartidos activos</item>
     </plurals>
+    <plurals name="people_count">
+        <item quantity="one">%1$d compañero de cuarto en este apartamento</item>
+        <item quantity="other">%1$d compañeros de cuarto en este apartamento</item>
+    </plurals>
+    <plurals name="notifications_unread_count">
+        <item quantity="one">%1$d notificación no leída</item>
+        <item quantity="other">%1$d notificaciones no leídas</item>
+    </plurals>
 </resources>

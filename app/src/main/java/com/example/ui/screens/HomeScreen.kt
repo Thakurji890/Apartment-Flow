@@ -38,6 +38,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.ui.theme.extendedColors
 import com.example.R
 import com.example.data.BillCategory
 import com.example.data.Roommate
@@ -94,7 +96,8 @@ fun HomeScreen(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f)
                 ) {
                     Box(
                         modifier = Modifier
@@ -116,7 +119,10 @@ fun HomeScreen(
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = (-0.5).sp
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                 }
 
@@ -186,16 +192,20 @@ fun HomeScreen(
                         }
 
                         // Due/Owed status badge
-                        val isDark = isSystemInDarkTheme()
+                        val extendedColors = MaterialTheme.extendedColors
                         val badgeColor = if (userBalance < 0) {
-                            if (isDark) Color(0xFFFFB4AB) else Color(0xFFBA1A1A)
+                            extendedColors.negative
+                        } else if (userBalance > 0) {
+                            extendedColors.positive
                         } else {
-                            if (isDark) Color(0xFFC8E6C9) else Color(0xFF386A20)
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         }
                         val badgeBg = if (userBalance < 0) {
-                            if (isDark) Color(0xFF410002) else Color(0xFFFFDAD6)
+                            extendedColors.negativeContainer
+                        } else if (userBalance > 0) {
+                            extendedColors.positiveContainer
                         } else {
-                            if (isDark) Color(0xFF0F3815) else Color(0xFFE8F5E9)
+                            MaterialTheme.colorScheme.surfaceVariant
                         }
                         val badgeText = if (userBalance < 0) {
                             stringResource(R.string.home_due, viewModel.formatCurrency(-userBalance, currentCurrency))
@@ -214,7 +224,9 @@ fun HomeScreen(
                                 text = badgeText,
                                 color = badgeColor,
                                 style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -366,6 +378,13 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Groceries card
+                val isDarkTheme = isSystemInDarkTheme()
+                val groceryCardBg = if (isDarkTheme) MaterialTheme.colorScheme.secondaryContainer else Color(0xFFE6DEFF)
+                val groceryCardText = if (isDarkTheme) MaterialTheme.colorScheme.onSecondaryContainer else Color(0xFF1D1633)
+                
+                val utilityCardBg = if (isDarkTheme) MaterialTheme.colorScheme.tertiaryContainer else Color(0xFFD2E5D5)
+                val utilityCardText = if (isDarkTheme) MaterialTheme.colorScheme.onTertiaryContainer else Color(0xFF00210E)
+
                 Card(
                     modifier = Modifier
                         .weight(1f)
@@ -374,7 +393,7 @@ fun HomeScreen(
                         .clickable { onNavigateToBills() },
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFE6DEFF)
+                        containerColor = groceryCardBg
                     )
                 ) {
                     Column(
@@ -389,13 +408,13 @@ fun HomeScreen(
                                 letterSpacing = 1.sp,
                                 fontWeight = FontWeight.Bold
                             ),
-                            color = Color(0xFF1D1633).copy(alpha = 0.7f)
+                            color = groceryCardText.copy(alpha = 0.7f)
                         )
                         Text(
                             text = viewModel.formatCurrency(groceryTotal, currentCurrency),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1D1633)
+                            color = groceryCardText
                         )
                     }
                 }
@@ -409,7 +428,7 @@ fun HomeScreen(
                         .clickable { onNavigateToBills() },
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFD2E5D5)
+                        containerColor = utilityCardBg
                     )
                 ) {
                     Column(
@@ -424,13 +443,13 @@ fun HomeScreen(
                                 letterSpacing = 1.sp,
                                 fontWeight = FontWeight.Bold
                             ),
-                            color = Color(0xFF00210E).copy(alpha = 0.7f)
+                            color = utilityCardText.copy(alpha = 0.7f)
                         )
                         Text(
                             text = viewModel.formatCurrency(utilityTotal, currentCurrency),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF00210E)
+                            color = utilityCardText
                         )
                     }
                 }
@@ -481,7 +500,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     // Avatar
@@ -505,11 +524,14 @@ fun HomeScreen(
                     ) {
                         Text(
                             text = roommate.name,
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         
                         val isUserOwed = roommate.balance > 0
-                        val statusColor = if (isUserOwed) Color(0xFF386A20) else if (roommate.balance < 0) Color(0xFFBA1A1A) else Color.Gray
+                        val extendedColors = MaterialTheme.extendedColors
+                        val statusColor = if (isUserOwed) extendedColors.positive else if (roommate.balance < 0) extendedColors.negative else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         
                         val statusTextStr = when {
                             roommate.balance > 0.01 -> stringResource(R.string.home_roommate_owed, viewModel.formatCurrency(roommate.balance, currentCurrency))
@@ -519,7 +541,9 @@ fun HomeScreen(
                         Text(
                             text = statusTextStr,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = statusColor
+                            color = statusColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -530,12 +554,16 @@ fun HomeScreen(
                         Text(
                             text = viewModel.formatCurrency(roommate.totalPaid, currentCurrency),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = stringResource(R.string.home_roommate_paid_label),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }

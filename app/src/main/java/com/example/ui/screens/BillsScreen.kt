@@ -31,6 +31,7 @@ import com.example.ui.components.ExpenseEntryForm
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.ui.theme.extendedColors
 import com.example.R
 import java.util.Locale
 
@@ -320,7 +321,7 @@ fun BillsScreen(
                                         text = viewModel.formatCurrency(bill.amount, currentCurrency),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isCashTransfer) Color(0xFF386A20) else MaterialTheme.colorScheme.onSurface
+                                        color = if (isCashTransfer) MaterialTheme.extendedColors.positive else MaterialTheme.colorScheme.onSurface
                                     )
 
                                     IconButton(

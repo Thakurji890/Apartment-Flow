@@ -43,6 +43,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // Initialize Firebase
+        com.google.firebase.FirebaseApp.initializeApp(this)
+        
         // Initialize real repository with contextual preference storage
         com.example.data.ApartmentRepository.getInstance().initialize(applicationContext)
 
@@ -163,6 +166,14 @@ fun MainAppContainer(
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route ?: "home"
 
+    data class NavItem(val route: String, val labelResId: Int, val icon: androidx.compose.ui.graphics.vector.ImageVector, val testTag: String)
+    val navItems = listOf(
+        NavItem("home", R.string.tab_home, Icons.Default.Home, "nav_home_tab"),
+        NavItem("bills", R.string.tab_bills, Icons.Default.ReceiptLong, "nav_bills_tab"),
+        NavItem("people", R.string.tab_people, Icons.Default.Group, "nav_people_tab"),
+        NavItem("settings", R.string.tab_settings, Icons.Default.Settings, "nav_settings_tab")
+    )
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
@@ -171,145 +182,41 @@ fun MainAppContainer(
                 tonalElevation = 0.dp,
                 modifier = Modifier.testTag("bottom_nav_bar")
             ) {
-                // Home Screen Tab
-                NavigationBarItem(
-                    selected = currentRoute == "home",
-                    onClick = {
-                        navController.navigate("home") {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = stringResource(R.string.tab_home),
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = stringResource(R.string.tab_home),
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = if (currentRoute == "home") FontWeight.Bold else FontWeight.Medium
+                navItems.forEach { item ->
+                    NavigationBarItem(
+                        selected = currentRoute == item.route,
+                        onClick = {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = stringResource(item.labelResId),
+                                modifier = Modifier.size(24.dp)
                             )
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    ),
-                    modifier = Modifier.testTag("nav_home_tab")
-                )
-
-                // Bills Screen Tab
-                NavigationBarItem(
-                    selected = currentRoute == "bills",
-                    onClick = {
-                        navController.navigate("bills") {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.ReceiptLong,
-                            contentDescription = stringResource(R.string.tab_bills),
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = stringResource(R.string.tab_bills),
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = if (currentRoute == "bills") FontWeight.Bold else FontWeight.Medium
+                        },
+                        label = {
+                            Text(
+                                text = stringResource(item.labelResId),
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = if (currentRoute == item.route) FontWeight.Bold else FontWeight.Medium
+                                )
                             )
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    ),
-                    modifier = Modifier.testTag("nav_bills_tab")
-                )
-
-                // People Screen Tab
-                NavigationBarItem(
-                    selected = currentRoute == "people",
-                    onClick = {
-                        navController.navigate("people") {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Group,
-                            contentDescription = stringResource(R.string.tab_people),
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = stringResource(R.string.tab_people),
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = if (currentRoute == "people") FontWeight.Bold else FontWeight.Medium
-                            )
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    ),
-                    modifier = Modifier.testTag("nav_people_tab")
-                )
-
-                // Settings Screen Tab
-                NavigationBarItem(
-                    selected = currentRoute == "settings",
-                    onClick = {
-                        navController.navigate("settings") {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = stringResource(R.string.tab_settings),
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = stringResource(R.string.tab_settings),
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = if (currentRoute == "settings") FontWeight.Bold else FontWeight.Medium
-                            )
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    ),
-                    modifier = Modifier.testTag("nav_settings_tab")
-                )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        ),
+                        modifier = Modifier.testTag(item.testTag)
+                    )
+                }
             }
         }
     ) { innerPadding ->

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.ui.ApartmentViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.example.ui.theme.extendedColors
 
 data class LanguageOption(val tag: String, val displayName: String)
 
@@ -48,11 +49,11 @@ fun SettingsScreen(
     val auth = FirebaseAuth.getInstance()
     val currentUser = auth.currentUser
 
-    val isDark = isSystemInDarkTheme()
-    val warningColor = if (isDark) Color(0xFFFFD54F) else Color(0xFF856404)
-    val warningBg = if (isDark) Color(0xFF403B2B) else Color(0xFFFFF3CD)
-    val dangerColor = if (isDark) MaterialTheme.colorScheme.error else Color(0xFFBA1A1A)
-    val dangerBg = if (isDark) Color(0xFF410002) else Color(0xFFFFDAD6)
+    val extendedColors = MaterialTheme.extendedColors
+    val warningColor = extendedColors.warning
+    val warningBg = extendedColors.warningContainer
+    val dangerColor = extendedColors.negative
+    val dangerBg = extendedColors.negativeContainer
 
     var showLeaveConfirmation by remember { mutableStateOf(false) }
     var showLogoutConfirmation by remember { mutableStateOf(false) }
@@ -473,7 +474,7 @@ fun SettingsScreen(
                                 modifier = Modifier
                                     .size(40.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFE8F0FE)),
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(

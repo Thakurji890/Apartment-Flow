@@ -28,6 +28,9 @@ import com.example.data.Roommate
 import com.example.data.Debt
 import com.example.ui.ApartmentViewModel
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.ui.theme.extendedColors
 import com.example.R
 import java.util.Locale
 
@@ -84,7 +87,7 @@ fun PeopleScreen(
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                         )
                         Text(
-                            text = stringResource(R.string.people_count_template, roommates.size),
+                            text = pluralStringResource(R.plurals.people_count, roommates.size, roommates.size),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                         )
@@ -128,20 +131,20 @@ fun PeopleScreen(
                 }
 
                 items(roommates, key = { it.id }) { roommate ->
-                    val isDark = isSystemInDarkTheme()
+                    val extendedColors = MaterialTheme.extendedColors
                     val balanceColor = if (roommate.balance > 0.0) {
-                        if (isDark) Color(0xFFC8E6C9) else Color(0xFF386A20)
+                        extendedColors.positive
                     } else if (roommate.balance < 0.0) {
-                        if (isDark) Color(0xFFFFB4AB) else Color(0xFFBA1A1A)
+                        extendedColors.negative
                     } else {
-                        Color.Gray
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     }
                     val balanceBg = if (roommate.balance > 0.0) {
-                        if (isDark) Color(0xFF0F3815) else Color(0xFFE8F5E9)
+                        extendedColors.positiveContainer
                     } else if (roommate.balance < 0.0) {
-                        if (isDark) Color(0xFF410002) else Color(0xFFFFDAD6)
+                        extendedColors.negativeContainer
                     } else {
-                        if (isDark) Color(0xFF23252A) else Color(0xFFF3F4F9)
+                        MaterialTheme.colorScheme.surfaceVariant
                     }
 
                     Card(
@@ -158,7 +161,7 @@ fun PeopleScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalAlignment = Alignment.Top,
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             // Avatar circle
@@ -182,12 +185,16 @@ fun PeopleScreen(
                             ) {
                                 Text(
                                     text = roommate.name,
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     text = stringResource(R.string.people_total_paid_template, viewModel.formatCurrency(roommate.totalPaid, currentCurrency)),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
 
@@ -205,7 +212,9 @@ fun PeopleScreen(
                                     text = badgeText,
                                     color = balanceColor,
                                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -244,7 +253,7 @@ fun PeopleScreen(
                                 Icon(
                                     imageVector = Icons.Default.Payments,
                                     contentDescription = stringResource(R.string.cd_settled_icon),
-                                    tint = Color(0xFF386A20),
+                                    tint = MaterialTheme.extendedColors.positive,
                                     modifier = Modifier.size(36.dp)
                                 )
                                 Text(
@@ -279,21 +288,27 @@ fun PeopleScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically,
+                                verticalAlignment = Alignment.Top,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.Top,
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Column {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Text(
                                                 text = debtorName,
-                                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f, fill = false)
                                             )
                                             Icon(
                                                 imageVector = Icons.Default.ArrowForward,
@@ -303,13 +318,18 @@ fun PeopleScreen(
                                             )
                                             Text(
                                                 text = creditorName,
-                                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f, fill = false)
                                             )
                                         }
                                         Text(
                                             text = stringResource(R.string.people_bilateral_debt_desc),
                                             style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                     }
                                 }

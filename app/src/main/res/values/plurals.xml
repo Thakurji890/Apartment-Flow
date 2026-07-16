@@ -4,4 +4,12 @@
         <item quantity="one">%1$d active shared expense</item>
         <item quantity="other">%1$d active shared expenses</item>
     </plurals>
+    <plurals name="people_count">
+        <item quantity="one">%1$d roommate in this apartment</item>
+        <item quantity="other">%1$d roommates in this apartment</item>
+    </plurals>
+    <plurals name="notifications_unread_count">
+        <item quantity="one">%1$d unread notification</item>
+        <item quantity="other">%1$d unread notifications</item>
+    </plurals>
 </resources>
