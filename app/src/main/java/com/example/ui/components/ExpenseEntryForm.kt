@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -58,13 +60,20 @@ fun ExpenseEntryForm(
     var title by remember { mutableStateOf(initialTitle) }
     var amountStr by remember { mutableStateOf(initialAmount) }
     var category by remember { mutableStateOf(initialCategory) }
-    var payerId by remember { mutableStateOf(initialPayerId.ifEmpty { roommates.firstOrNull { !it.isGuest }?.id ?: "" }) }
+    var payerId by remember { mutableStateOf(initialPayerId.ifEmpty { roommates.firstOrNull()?.id ?: "" }) }
     var description by remember { mutableStateOf(initialDescription) }
 
+
     val selectedParticipants = remember { mutableStateListOf<String>() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
     LaunchedEffect(roommates) {
         if (selectedParticipants.isEmpty()) {
             selectedParticipants.addAll(roommates.map { it.id })
+        }
+        if (payerId.isEmpty() && roommates.isNotEmpty()) {
+            payerId = roommates.first().id
         }
     }
 
@@ -130,8 +139,7 @@ fun ExpenseEntryForm(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState()),
+            .background(MaterialTheme.colorScheme.surface),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Form Fields Column
@@ -348,7 +356,7 @@ fun ExpenseEntryForm(
                     onDismissRequest = { expandedPayer = false },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    roommates.filter { !it.isGuest }.forEach { rm ->
+                    roommates.forEach { rm ->
                         DropdownMenuItem(
                             text = { Text(rm.name) },
                             onClick = {
@@ -408,7 +416,7 @@ fun ExpenseEntryForm(
                     .testTag("expense_form_split_participants"),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                roommates.filter { !it.isGuest }.forEach { rm ->
+                roommates.forEach { rm ->
                     val isChecked = selectedParticipants.contains(rm.id)
                     Row(
                         modifier = Modifier
@@ -431,9 +439,7 @@ fun ExpenseEntryForm(
                                 if (checked) {
                                     selectedParticipants.add(rm.id)
                                 } else {
-                                    if (selectedParticipants.size > 1) {
-                                        selectedParticipants.remove(rm.id)
-                                    }
+                                    selectedParticipants.remove(rm.id)
                                 }
                             },
                             modifier = Modifier.testTag("split_checkbox_${rm.id}")
@@ -457,7 +463,11 @@ fun ExpenseEntryForm(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedButton(
-                onClick = onCancelClick,
+                onClick = {
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                    onCancelClick()
+                },
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp)
@@ -468,7 +478,7 @@ fun ExpenseEntryForm(
 
             Button(
                 onClick = {
-                    val parsedAmount = amountStr.toDoubleOrNull()
+                    val parsedAmount = amountStr.replace(",", ".").toDoubleOrNull()
                     titleError = title.isBlank()
                     amountError = parsedAmount == null || parsedAmount <= 0.0
 
@@ -484,6 +494,8 @@ fun ExpenseEntryForm(
                     participantsError = selectedParticipants.isEmpty()
 
                     if (!titleError && !amountError && !dateError && !participantsError) {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
                         onSaveClick(title, parsedAmount!!, category, dateStr, payerId, description, selectedParticipants.toList())
                     }
                 },

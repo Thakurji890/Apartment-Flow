@@ -444,7 +444,7 @@ fun AddBillDialog(
     onDismiss: () -> Unit,
     onAddBill: (String, Double, BillCategory, String, String, String, List<String>) -> Unit
 ) {
-    AlertDialog(
+    BasicAlertDialog(
         onDismissRequest = onDismiss,
         properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier.padding(16.dp),
