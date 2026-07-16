@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "266945182431-9c44e5g828v26an31js4oh1fm66lg73b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.apartmentflow.lfsqkx",
+            "certificate_hash": "1937dc6e5a890dffc483606192a8573594336a38"
+          }
+        },
+        {
           "client_id": "266945182431-oessbuar90es73ri7cevu46pjo1co77p.apps.googleusercontent.com",
           "client_type": 3
         }

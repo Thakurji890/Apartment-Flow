@@ -100,7 +100,7 @@
     <string name="login_name_label">Your Display Name</string>
     <string name="login_name_hint">e.g. John Doe</string>
     <string name="login_name_empty_error">Display name is required</string>
-    <string name="login_google_error">Google login not available: Please try Demo Mode below.</string>
+    <string name="login_google_error">Google login failed. Please check your configuration.</string>
     <string name="login_demo_mode">Enter as Guest (Demo Mode)</string>
 
     <!-- Additional Apartment Choice Screen Strings -->

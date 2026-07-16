@@ -57,35 +57,14 @@ fun LoginScreen(
     val scope = rememberCoroutineScope()
     val credentialManager = CredentialManager.create(context)
 
-    var nameInput by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val activity = context as? Activity
 
     Scaffold(
-        modifier = modifier.fillMaxSize().testTag("login_screen"),
-        topBar = {
-            TopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(
-                        onClick = { activity?.finish() },
-                        modifier = Modifier.testTag("login_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_exit)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        },
-        containerColor = Color.Transparent
+        modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -93,7 +72,7 @@ fun LoginScreen(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
                             MaterialTheme.colorScheme.background
                         )
                     )
@@ -102,236 +81,154 @@ fun LoginScreen(
             contentAlignment = Alignment.Center
         ) {
             Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-                .widthIn(max = 480.dp)
-                .testTag("login_card"),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-        ) {
-            Column(
                 modifier = Modifier
-                    .padding(32.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                    .fillMaxWidth()
+                    .padding(24.dp)
+                    .widthIn(max = 480.dp)
+                    .testTag("login_card"),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
-                // App Logo Icon
-                Box(
+                Column(
                     modifier = Modifier
-                        .size(64.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(20.dp)),
-                    contentAlignment = Alignment.Center
+                        .padding(32.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_logo),
-                        contentDescription = stringResource(R.string.login_welcome),
-                        tint = Color.Unspecified,
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
-
-                // Titles
-                val accentColor = MaterialTheme.extendedColors.accent
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
-                            append("Apartment")
-                        }
-                        withStyle(style = SpanStyle(color = accentColor)) {
-                            append("Flow")
-                        }
-                    },
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                    textAlign = TextAlign.Center
-                )
-
-                Text(
-                    text = stringResource(R.string.login_desc),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Display Name Input
-                OutlinedTextField(
-                    value = nameInput,
-                    onValueChange = { nameInput = it },
-                    label = { Text(stringResource(R.string.login_name_label)) },
-                    placeholder = { Text(stringResource(R.string.login_name_hint)) },
-                    leadingIcon = {
+                    // App Logo Icon
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(20.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = stringResource(R.string.cd_user_icon),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("login_name_input"),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Done
-                    )
-                )
-
-                // Error message banner
-                AnimatedVisibility(visible = errorMessage != null) {
-                    errorMessage?.let { msg ->
-                        Text(
-                            text = msg,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            painter = painterResource(R.drawable.ic_logo),
+                            contentDescription = stringResource(R.string.login_welcome),
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(48.dp)
                         )
                     }
-                }
 
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                } else {
-                    // Google Sign-In Button
-                    Button(
-                        onClick = {
-                            val enteredName = nameInput.trim()
-                            if (enteredName.isEmpty()) {
-                                errorMessage = context.getString(R.string.login_name_empty_error)
-                                return@Button
+                    // Titles
+                    val accentColor = MaterialTheme.extendedColors.accent
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
+                                append("Apartment")
                             }
-                            isLoading = true
-                            errorMessage = null
-                            scope.launch {
-                                try {
-                                    // Try to look up client_id dynamically or use default
-                                    val webClientId = try {
-                                        val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-                                        if (resId != 0) context.getString(resId) else "266945182431-70r532i6v7o9804jcbna732b1o4h8mvl.apps.googleusercontent.com"
-                                    } catch (e: Exception) {
-                                        "266945182431-70r532i6v7o9804jcbna732b1o4h8mvl.apps.googleusercontent.com"
-                                    }
-                                    val googleIdOption = GetGoogleIdOption.Builder()
-                                        .setFilterByAuthorizedAccounts(false)
-                                        .setServerClientId(webClientId)
-                                        .setAutoSelectEnabled(false)
-                                        .build()
+                            withStyle(style = SpanStyle(color = accentColor)) {
+                                append("Flow")
+                            }
+                        },
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = stringResource(R.string.login_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
 
-                                    val request = GetCredentialRequest.Builder()
-                                        .addCredentialOption(googleIdOption)
-                                        .build()
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                                    val result = credentialManager.getCredential(context, request)
-                                    val credential = result.credential
+                    // Error message banner
+                    AnimatedVisibility(visible = errorMessage != null) {
+                        errorMessage?.let { msg ->
+                            Text(
+                                text = msg,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+                    }
 
-                                    if (credential is GoogleIdTokenCredential) {
-                                        val firebaseCredential = GoogleAuthProvider.getCredential(credential.idToken, null)
-                                        auth.signInWithCredential(firebaseCredential)
-                                            .addOnSuccessListener {
-                                                // Update profile if they entered a custom name
-                                                auth.currentUser?.updateProfile(
-                                                    userProfileChangeRequest {
-                                                        displayName = nameInput.trim()
-                                                    }
-                                                )?.addOnCompleteListener {
-                                                    isLoading = false
-                                                    onLoginSuccess()
-                                                } ?: run {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    } else {
+                        // Google Sign-In Button
+                        Button(
+                            onClick = {
+                                isLoading = true
+                                errorMessage = null
+                                scope.launch {
+                                    try {
+                                        // Try to look up client_id dynamically or use default
+                                        val webClientId = try {
+                                            val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+                                            if (resId != 0) context.getString(resId) else "266945182431-70r532i6v7o9804jcbna732b1o4h8mvl.apps.googleusercontent.com"
+                                        } catch (e: Exception) {
+                                            "266945182431-70r532i6v7o9804jcbna732b1o4h8mvl.apps.googleusercontent.com"
+                                        }
+
+                                        val googleIdOption = GetGoogleIdOption.Builder()
+                                            .setFilterByAuthorizedAccounts(false)
+                                            .setServerClientId(webClientId)
+                                            .setAutoSelectEnabled(false)
+                                            .build()
+
+                                        val request = GetCredentialRequest.Builder()
+                                            .addCredentialOption(googleIdOption)
+                                            .build()
+
+                                        val result = credentialManager.getCredential(context, request)
+                                        val credential = result.credential
+                                        
+                                        if (credential is androidx.credentials.CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                            val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                            val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
+                                            auth.signInWithCredential(firebaseCredential)
+                                                .addOnSuccessListener {
                                                     isLoading = false
                                                     onLoginSuccess()
                                                 }
-                                            }
-                                            .addOnFailureListener { e ->
-                                                isLoading = false
-                                                errorMessage = "Firebase sign in failed: ${e.localizedMessage}"
-                                            }
-                                    } else {
-                                        isLoading = false
-                                        errorMessage = "Unexpected credential type received"
-                                    }
-                                } catch (e: Exception) {
-                                    isLoading = false
-                                    errorMessage = context.getString(R.string.login_google_error)
-                                    Log.e("LoginScreen", "Google Sign-In Error", e)
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                            .testTag("login_google_button"),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Login,
-                            contentDescription = stringResource(R.string.cd_google_icon),
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.login_google_signin),
-                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                        )
-                    }
-
-                    // Demo / Guest Mode Bypass Button
-                    OutlinedButton(
-                        onClick = {
-                            val nameToUse = nameInput.trim()
-                            if (nameToUse.isEmpty()) {
-                                errorMessage = context.getString(R.string.login_name_empty_error)
-                                return@OutlinedButton
-                            }
-                            isLoading = true
-                            errorMessage = null
-                            auth.signInAnonymously()
-                                .addOnSuccessListener { authResult ->
-                                    val profileUpdates = userProfileChangeRequest {
-                                        displayName = nameToUse
-                                    }
-                                    authResult.user?.updateProfile(profileUpdates)
-                                        ?.addOnCompleteListener {
+                                                .addOnFailureListener { e ->
+                                                    isLoading = false
+                                                    errorMessage = "Firebase sign in failed: ${e.localizedMessage}"
+                                                }
+                                        } else {
                                             isLoading = false
-                                            onLoginSuccess()
-                                        } ?: run {
-                                            isLoading = false
-                                            onLoginSuccess()
+                                            errorMessage = "Unexpected credential type received"
                                         }
+                                    } catch (e: Exception) {
+                                        isLoading = false
+                                        errorMessage = context.getString(R.string.login_google_error)
+                                        Log.e("LoginScreen", "Google Sign-In Error", e)
+                                    }
                                 }
-                                .addOnFailureListener { e ->
-                                    isLoading = false
-                                    errorMessage = "Demo login failed: ${e.localizedMessage}"
-                                }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                            .testTag("login_demo_button"),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.login_demo_mode),
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                                .testTag("login_google_button"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Login,
+                                contentDescription = stringResource(R.string.cd_google_icon),
+                                modifier = Modifier.padding(end = 8.dp)
                             )
-                        )
+                            Text(
+                                text = stringResource(R.string.login_google_signin),
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
                     }
                 }
             }
         }
     }
-}
 }
