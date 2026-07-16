@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,6 +44,7 @@ fun PeopleScreen(
     modifier: Modifier = Modifier
 ) {
     val roommates by viewModel.roommates.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val debts by viewModel.debts.collectAsState()
     val currentCurrency by viewModel.currency.collectAsState()
 
@@ -198,24 +200,48 @@ fun PeopleScreen(
                                 )
                             }
 
-                            // Net Balance Badge
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = balanceBg
+                            Column(
+                                horizontalAlignment = Alignment.End
                             ) {
-                                val badgeText = when {
-                                    roommate.balance > 0.01 -> stringResource(R.string.home_roommate_owed, viewModel.formatCurrency(roommate.balance, currentCurrency))
-                                    roommate.balance < -0.01 -> stringResource(R.string.home_roommate_owes, viewModel.formatCurrency(-roommate.balance, currentCurrency))
-                                    else -> stringResource(R.string.people_settled)
+                                // Net Balance Badge
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = balanceBg
+                                ) {
+                                    val badgeText = when {
+                                        roommate.balance > 0.01 -> stringResource(R.string.home_roommate_owed, viewModel.formatCurrency(roommate.balance, currentCurrency))
+                                        roommate.balance < -0.01 -> stringResource(R.string.home_roommate_owes, viewModel.formatCurrency(-roommate.balance, currentCurrency))
+                                        else -> stringResource(R.string.people_settled)
+                                    }
+                                    Text(
+                                        text = badgeText,
+                                        color = balanceColor,
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 }
-                                Text(
-                                    text = badgeText,
-                                    color = balanceColor,
-                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                
+                                if (roommate.id != viewModel.currentUserId.value) {
+                                    androidx.compose.material3.IconButton(
+                                        onClick = {
+                                            if (Math.abs(roommate.balance) > 0.01) {
+                                                android.widget.Toast.makeText(context, context.getString(R.string.people_remove_balance_error, roommate.name), android.widget.Toast.LENGTH_LONG).show()
+                                            } else {
+                                                viewModel.removeRoommate(roommate.id)
+                                            }
+                                        },
+                                        modifier = Modifier.size(32.dp).padding(top = 4.dp).testTag("remove_roommate_${roommate.id}")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.DeleteOutline,
+                                            contentDescription = stringResource(R.string.people_remove_roommate),
+                                            tint = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.ApartmentRepository
 import com.example.data.Bill
+import com.example.data.Settlement
 import com.example.data.BillCategory
 import com.example.data.Debt
 import com.example.data.Roommate
@@ -22,6 +23,7 @@ class ApartmentViewModel : ViewModel() {
 
     val roommates: StateFlow<List<Roommate>> = repository.roommates
     val bills: StateFlow<List<Bill>> = repository.bills
+    val settlements: StateFlow<List<Settlement>> = repository.settlements
     val notifications: StateFlow<List<Notification>> = repository.notifications
     val unreadNotificationsCount: StateFlow<Int> = notifications.map { list ->
         list.count { !it.read }
@@ -79,6 +81,10 @@ class ApartmentViewModel : ViewModel() {
 
     fun addRoommate(name: String) {
         repository.addRoommate(name)
+    }
+
+    fun removeRoommate(roommateId: String) {
+        repository.removeRoommate(roommateId)
     }
 
     fun settleUp(fromId: String, toId: String, amount: Double) {

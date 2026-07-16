@@ -48,6 +48,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val currentUser = auth.currentUser
+    val roommates by viewModel.roommates.collectAsState()
 
     val extendedColors = MaterialTheme.extendedColors
     val warningColor = extendedColors.warning
@@ -689,9 +690,16 @@ fun SettingsScreen(
                 confirmButton = {
                     Button(
                         onClick = {
-                            viewModel.leaveApartment()
-                            showLeaveConfirmation = false
-                            Toast.makeText(context, context.getString(R.string.settings_toast_left), Toast.LENGTH_SHORT).show()
+                            val myId = viewModel.currentUserId.value
+                            val myRoommate = roommates.find { it.id == myId }
+                            if (myRoommate != null && Math.abs(myRoommate.balance) > 0.01) {
+                                Toast.makeText(context, context.getString(R.string.settings_leave_balance_error), Toast.LENGTH_LONG).show()
+                                showLeaveConfirmation = false
+                            } else {
+                                viewModel.leaveApartment()
+                                showLeaveConfirmation = false
+                                Toast.makeText(context, context.getString(R.string.settings_toast_left), Toast.LENGTH_SHORT).show()
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.error

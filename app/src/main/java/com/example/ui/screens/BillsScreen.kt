@@ -195,6 +195,7 @@ fun BillsScreen(
                     contentPadding = PaddingValues(bottom = 80.dp)
                 ) {
                     items(bills, key = { it.id }) { bill ->
+                        var expanded by remember { mutableStateOf(false) }
                         val isCashTransfer = bill.title == "Cash Settlement"
                         val categoryBg = if (isCashTransfer) 0xFFF3F4F9 else bill.category.bgColor
                         val categoryText = if (isCashTransfer) 0xFF1A1C1E else bill.category.textColor
@@ -204,6 +205,7 @@ fun BillsScreen(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clickable { expanded = !expanded }
                                 .testTag("bill_item_${bill.id}"),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
@@ -336,6 +338,54 @@ fun BillsScreen(
                                             tint = MaterialTheme.colorScheme.error,
                                             modifier = Modifier.size(18.dp)
                                         )
+                                    }
+                                }
+                            }
+                            
+                            androidx.compose.animation.AnimatedVisibility(visible = expanded) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
+                                ) {
+                                    androidx.compose.material3.HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
+                                    Text(
+                                        text = "Split breakdown:",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(bottom = 4.dp)
+                                    )
+                                    val participants = if (bill.splitAmongIds.isNotEmpty()) {
+                                        bill.splitAmongIds.mapNotNull { id -> roommates.find { it.id == id } }
+                                    } else {
+                                        roommates
+                                    }
+                                    if (participants.isNotEmpty()) {
+                                        val totalCents = Math.round(bill.amount * 100.0).toInt()
+                                        val n = participants.size
+                                        val baseCents = totalCents / n
+                                        val leftoverCents = totalCents % n
+                                        
+                                        participants.forEachIndexed { index, participant ->
+                                            val extraCents = if (index < leftoverCents) 1 else 0
+                                            val share = (baseCents + extraCents) / 100.0
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = participant.name,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    text = viewModel.formatCurrency(share, currentCurrency),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }

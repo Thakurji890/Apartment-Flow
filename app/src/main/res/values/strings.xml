@@ -182,6 +182,9 @@
     <string name="settle_up_dialog_amount_transferred_label">Amount Transferred (%1$s)</string>
     <string name="settle_up_dialog_same_person_error">Debtor and Creditor cannot be the same person</string>
     <string name="settle_up_dialog_invalid_amount_error">Please enter a valid transfer amount</string>
+    <string name="settle_up_dialog_suggested_desc">These are optimized settlement suggestions that minimize the number of payments needed across the whole group, and may not match a specific bill directly.</string>
+    <string name="settle_up_dialog_direct_debt_owes">%1$s owes %2$s %3$s based on shared bills.</string>
+    <string name="settle_up_dialog_no_direct_debt">No direct bills between %1$s and %2$s — this will still be recorded as a settlement.</string>
 
     <!-- Additional People Screen Strings -->
     <string name="people_screen_title">Roommates</string>
@@ -197,6 +200,8 @@
     <string name="people_name_label">Roommate Full Name</string>
     <string name="people_name_hint">e.g. Alex Rivera</string>
     <string name="people_name_empty_error">Name cannot be empty</string>
+    <string name="people_remove_roommate">Remove Roommate</string>
+    <string name="people_remove_balance_error">Cannot remove %1$s. They must be completely settled up first.</string>
 
     <!-- Additional Settings Screen Strings -->
     <string name="settings_profile_demo_guest">Demo/Guest Account</string>
@@ -208,6 +213,7 @@
     <string name="settings_leave_dialog_title">Leave Apartment Group?</string>
     <string name="settings_leave_dialog_text">This will disconnect you from the current apartment. You can rejoin at any time if you have the 6-character invite code.</string>
     <string name="settings_leave_dialog_confirm">Leave</string>
+    <string name="settings_leave_balance_error">You must settle your balance before leaving the apartment.</string>
     <string name="settings_logout_dialog_title">Log Out?</string>
     <string name="settings_logout_dialog_text">Are you sure you want to log out of your ApartmentFlow account?</string>
     <string name="settings_edit_apt_dialog_title">Edit Apartment Name</string>

@@ -23,12 +23,18 @@ import androidx.compose.ui.res.stringResource
 import com.example.R
 import java.util.Locale
 
+import com.example.data.Bill
+import com.example.data.Settlement
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettleUpDialog(
     roommates: List<Roommate>,
+    bills: List<Bill>,
+    settlements: List<Settlement>,
     suggestedDebts: List<Debt>,
     currencyPref: String,
+    formatCurrency: (Double) -> String,
     onDismiss: () -> Unit,
     onSettle: (String, String, Double) -> Unit
 ) {
@@ -40,15 +46,50 @@ fun SettleUpDialog(
     var expandedDebtor by remember { mutableStateOf(false) }
     var expandedCreditor by remember { mutableStateOf(false) }
 
-    fun formatCurrency(amount: Double): String {
-        val symbol = when {
-            currencyPref.contains("€") -> "€"
-            currencyPref.contains("£") -> "£"
-            currencyPref.contains("₹") -> "₹"
-            currencyPref.contains("CAD") -> "CA$"
-            else -> "$"
+    val directDebt = remember(selectedDebtorId, selectedCreditorId, bills, settlements) {
+        var debt = 0.0
+        
+        fun getShare(bill: Bill, targetId: String): Double {
+            val participants = if (bill.splitAmongIds.isNotEmpty()) {
+                bill.splitAmongIds.filter { id -> roommates.any { r -> r.id == id } }
+            } else {
+                roommates.map { it.id }
+            }
+            if (!participants.contains(targetId)) return 0.0
+            
+            val totalCents = Math.round(bill.amount * 100.0).toInt()
+            val n = participants.size
+            val baseCents = totalCents / n
+            val leftoverCents = totalCents % n
+            
+            val index = participants.indexOf(targetId)
+            val extraCents = if (index < leftoverCents) 1 else 0
+            return (baseCents + extraCents) / 100.0
         }
-        return String.format(Locale.US, "%s%.2f", symbol, amount)
+
+        bills.filter { it.payerId == selectedCreditorId }.forEach { bill ->
+            debt += getShare(bill, selectedDebtorId)
+        }
+        bills.filter { it.payerId == selectedDebtorId }.forEach { bill ->
+            debt -= getShare(bill, selectedCreditorId)
+        }
+        
+        settlements.filter { it.fromId == selectedDebtorId && it.toId == selectedCreditorId }.forEach {
+            debt -= it.amount
+        }
+        settlements.filter { it.fromId == selectedCreditorId && it.toId == selectedDebtorId }.forEach {
+            debt += it.amount
+        }
+        
+        debt
+    }
+
+    LaunchedEffect(selectedDebtorId, selectedCreditorId) {
+        if (directDebt > 0.01) {
+            amountStr = String.format(Locale.US, "%.2f", directDebt)
+        } else {
+            amountStr = ""
+        }
     }
 
     val currencySymbol = currencyPref.substringAfter("(").substringBefore(")")
@@ -97,6 +138,11 @@ fun SettleUpDialog(
                         text = stringResource(R.string.settle_up_dialog_suggested),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = stringResource(R.string.settle_up_dialog_suggested_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
                     Column(
@@ -265,6 +311,18 @@ fun SettleUpDialog(
                                 Text(stringResource(R.string.settle_up_dialog_same_person_error))
                             } else {
                                 Text(stringResource(R.string.settle_up_dialog_invalid_amount_error))
+                            }
+                        } else {
+                            val activeDebtorName = roommates.find { it.id == selectedDebtorId }?.name ?: ""
+                            val activeCreditorName = roommates.find { it.id == selectedCreditorId }?.name ?: ""
+                            if (selectedDebtorId.isNotEmpty() && selectedCreditorId.isNotEmpty() && selectedDebtorId != selectedCreditorId) {
+                                if (directDebt > 0.01) {
+                                    Text(stringResource(R.string.settle_up_dialog_direct_debt_owes, activeDebtorName, activeCreditorName, formatCurrency(directDebt)))
+                                } else if (directDebt < -0.01) {
+                                    Text(stringResource(R.string.settle_up_dialog_direct_debt_owes, activeCreditorName, activeDebtorName, formatCurrency(-directDebt)))
+                                } else {
+                                    Text(stringResource(R.string.settle_up_dialog_no_direct_debt, activeDebtorName, activeCreditorName))
+                                }
                             }
                         }
                     },

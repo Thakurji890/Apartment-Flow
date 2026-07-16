@@ -182,6 +182,9 @@
     <string name="settle_up_dialog_amount_transferred_label">Monto Transferido (%1$s)</string>
     <string name="settle_up_dialog_same_person_error">El pagador y el receptor no pueden ser la misma persona</string>
     <string name="settle_up_dialog_invalid_amount_error">Por favor ingrese un monto de transferencia válido</string>
+    <string name="settle_up_dialog_suggested_desc">Estas son sugerencias de pago optimizadas que minimizan la cantidad de pagos necesarios en el grupo y pueden no coincidir con una factura específica.</string>
+    <string name="settle_up_dialog_direct_debt_owes">%1$s le debe a %2$s %3$s según los gastos compartidos.</string>
+    <string name="settle_up_dialog_no_direct_debt">No hay deudas directas entre %1$s y %2$s — esto igual se registrará como un pago.</string>
 
     <!-- Additional People Screen Strings -->
     <string name="people_screen_title">Compañeros</string>

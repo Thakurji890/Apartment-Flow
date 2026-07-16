@@ -294,10 +294,15 @@ fun MainAppContainer(
         // Global Settle Up Dialog Integration
         if (showSettleDialog && roommates.isNotEmpty()) {
             val currentCurrency by viewModel.currency.collectAsState()
+            val bills by viewModel.bills.collectAsState()
+            val settlements by viewModel.settlements.collectAsState()
             SettleUpDialog(
                 roommates = roommates,
+                bills = bills,
+                settlements = settlements,
                 suggestedDebts = suggestedDebts,
                 currencyPref = currentCurrency,
+                formatCurrency = { amount -> viewModel.formatCurrency(amount, currentCurrency) },
                 onDismiss = { showSettleDialog = false },
                 onSettle = { debtorId, creditorId, amount ->
                     viewModel.settleUp(debtorId, creditorId, amount)

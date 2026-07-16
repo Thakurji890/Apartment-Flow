@@ -78,6 +78,7 @@ fun ExpenseEntryForm(
     var titleError by remember { mutableStateOf(false) }
     var amountError by remember { mutableStateOf(false) }
     var dateError by remember { mutableStateOf(false) }
+    var participantsError by remember { mutableStateOf(false) }
 
     // Dropdowns and Dialog visibility
     var expandedPayer by remember { mutableStateOf(false) }
@@ -377,12 +378,26 @@ fun ExpenseEntryForm(
             )
 
             // Split Between / Participants Checkbox List
-            Text(
-                text = stringResource(R.string.expense_form_split_label),
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                modifier = Modifier.padding(top = 4.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.expense_form_split_label),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                if (participantsError) {
+                    Text(
+                        text = "Select at least one",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
 
             Column(
                 modifier = Modifier
@@ -463,8 +478,9 @@ fun ExpenseEntryForm(
                         false
                     }
                     dateError = !dateParsed
+                    participantsError = selectedParticipants.isEmpty()
 
-                    if (!titleError && !amountError && !dateError) {
+                    if (!titleError && !amountError && !dateError && !participantsError) {
                         onSaveClick(title, parsedAmount!!, category, dateStr, payerId, description, selectedParticipants.toList())
                     }
                 },

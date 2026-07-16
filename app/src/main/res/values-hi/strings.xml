@@ -182,6 +182,9 @@
     <string name="settle_up_dialog_amount_transferred_label">स्थानांतरित राशि (%1$s)</string>
     <string name="settle_up_dialog_same_person_error">देने वाला और पाने वाला व्यक्ति एक ही नहीं हो सकता</string>
     <string name="settle_up_dialog_invalid_amount_error">कृपया एक वैध हस्तांतरण राशि दर्ज करें</string>
+    <string name="settle_up_dialog_suggested_desc">ये अनुकूलित भुगतान सुझाव हैं जो पूरे समूह में आवश्यक भुगतानों की संख्या को कम करते हैं, और हो सकता है कि किसी विशिष्ट बिल से सीधे मेल न खाएं।</string>
+    <string name="settle_up_dialog_direct_debt_owes">साझा बिलों के आधार पर %1$s पर %2$s का %3$s बकाया है।</string>
+    <string name="settle_up_dialog_no_direct_debt">%1$s और %2$s के बीच कोई सीधा बिल नहीं है — इसे फिर भी भुगतान के रूप में दर्ज किया जाएगा।</string>
 
     <!-- Additional People Screen Strings -->
     <string name="people_screen_title">रूममेट्स</string>

@@ -75,6 +75,7 @@ class ApartmentRepository private constructor() {
     }.stateIn(repositoryScope, SharingStarted.Eagerly, emptyList())
 
     val bills: StateFlow<List<Bill>> = _rawBills.asStateFlow()
+    val settlements: StateFlow<List<Settlement>> = _rawSettlements.asStateFlow()
 
     val notifications: StateFlow<List<Notification>> = combine(
         _rawNotifications,
@@ -349,16 +350,9 @@ class ApartmentRepository private constructor() {
             val totalShare = shareMap[roommate.id] ?: 0.0
             val balance = totalPaid - totalShare
 
-            val statusText = when {
-                balance > 0.01 -> "Owed $${String.format(Locale.US, "%.2f", balance)}"
-                balance < -0.01 -> "Owes $${String.format(Locale.US, "%.2f", -balance)}"
-                else -> "All settled"
-            }
-
             roommate.copy(
                 totalPaid = totalPaid,
-                balance = balance,
-                statusText = statusText
+                balance = balance
             )
         }
     }
@@ -447,8 +441,7 @@ class ApartmentRepository private constructor() {
                     avatarBgColor = colors[randomIndex],
                     avatarTextColor = textColors[randomIndex],
                     totalPaid = 0.0,
-                    balance = 0.0,
-                    statusText = "All settled"
+                    balance = 0.0
                 )
 
                 db.collection("apartments").document(generatedId)
@@ -534,8 +527,7 @@ class ApartmentRepository private constructor() {
                             avatarBgColor = colors[randomIndex],
                             avatarTextColor = textColors[randomIndex],
                             totalPaid = 0.0,
-                            balance = 0.0,
-                            statusText = "All settled"
+                            balance = 0.0
                         )
 
                         db.collection("apartments").document(apartmentId)
@@ -646,8 +638,7 @@ class ApartmentRepository private constructor() {
             avatarBgColor = colors[randomIndex],
             avatarTextColor = textColors[randomIndex],
             totalPaid = 0.0,
-            balance = 0.0,
-            statusText = "All settled"
+            balance = 0.0
         )
 
         db.collection("apartments").document(aptId)
@@ -655,6 +646,16 @@ class ApartmentRepository private constructor() {
             .set(newRoommate)
             .addOnFailureListener { e ->
                 _error.value = "Failed to add roommate: ${e.localizedMessage}"
+            }
+    }
+
+    fun removeRoommate(roommateId: String) {
+        val aptId = _activeApartmentId.value ?: return
+        db.collection("apartments").document(aptId)
+            .collection("roommates").document(roommateId)
+            .delete()
+            .addOnFailureListener { e ->
+                _error.value = "Failed to remove roommate: ${e.localizedMessage}"
             }
     }
 
