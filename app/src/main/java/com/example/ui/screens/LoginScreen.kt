@@ -165,9 +165,9 @@ fun LoginScreen(
                                         // Try to look up client_id dynamically or use default
                                         val webClientId = try {
                                             val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-                                            if (resId != 0) context.getString(resId) else "266945182431-70r532i6v7o9804jcbna732b1o4h8mvl.apps.googleusercontent.com"
+                                            if (resId != 0) context.getString(resId) else "266945182431-oessbuar90es73ri7cevu46pjo1co77p.apps.googleusercontent.com"
                                         } catch (e: Exception) {
-                                            "266945182431-70r532i6v7o9804jcbna732b1o4h8mvl.apps.googleusercontent.com"
+                                            "266945182431-oessbuar90es73ri7cevu46pjo1co77p.apps.googleusercontent.com"
                                         }
 
                                         val googleIdOption = GetGoogleIdOption.Builder()
@@ -197,7 +197,7 @@ fun LoginScreen(
                                                 }
                                         } else {
                                             isLoading = false
-                                            errorMessage = "Unexpected credential type received"
+                                            errorMessage = "Unexpected credential: ${credential.javaClass.simpleName}" + if (credential is androidx.credentials.CustomCredential) " type: ${credential.type}" else ""
                                         }
                                     } catch (e: Exception) {
                                         isLoading = false
