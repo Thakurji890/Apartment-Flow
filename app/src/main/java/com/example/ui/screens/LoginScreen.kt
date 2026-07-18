@@ -180,7 +180,11 @@ fun LoginScreen(
                                             .addCredentialOption(googleIdOption)
                                             .build()
 
-                                        val result = credentialManager.getCredential(context, request)
+                                        var activityContext = context
+                                        while (activityContext is android.content.ContextWrapper && activityContext !is android.app.Activity) {
+                                            activityContext = activityContext.baseContext
+                                        }
+                                        val result = credentialManager.getCredential(activityContext, request)
                                         val credential = result.credential
                                         
                                         if (credential is androidx.credentials.CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
@@ -201,7 +205,8 @@ fun LoginScreen(
                                         }
                                     } catch (e: Exception) {
                                         isLoading = false
-                                        errorMessage = context.getString(R.string.login_google_error)
+                                        val errorMsg = e.localizedMessage ?: e.message ?: e.toString()
+                                        errorMessage = "${context.getString(R.string.login_google_error)}\n$errorMsg"
                                         Log.e("LoginScreen", "Google Sign-In Error", e)
                                     }
                                 }

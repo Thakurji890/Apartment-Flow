@@ -509,6 +509,22 @@ class ApartmentRepository private constructor() {
                 db.collection("apartments").document(apartmentId)
                     .update("memberIds", updatedMembers)
                     .addOnSuccessListener {
+                        // Notify existing members
+                        val newMemberName = auth.currentUser?.displayName ?: "A new member"
+                        memberIds.forEach { existingMemberId ->
+                            val docRef = db.collection("apartments").document(apartmentId)
+                                .collection("notifications").document()
+                            val newNotification = Notification(
+                                id = docRef.id,
+                                recipientId = existingMemberId,
+                                title = "New Roommate",
+                                message = "$newMemberName joined the apartment!",
+                                timestamp = System.currentTimeMillis(),
+                                read = false
+                            )
+                            docRef.set(newNotification)
+                        }
+
                         // Create their Roommate profile under subcollection
                         val user = auth.currentUser
                         val displayName = user?.displayName ?: "New Roommate"

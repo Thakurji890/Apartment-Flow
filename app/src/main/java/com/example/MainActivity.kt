@@ -112,6 +112,19 @@ fun MainAppContainer(
         }
     }
 
+    val notifications by viewModel.notifications.collectAsState(initial = emptyList())
+    var previousNotifications by remember { mutableStateOf(emptyList<com.example.data.Notification>()) }
+
+    LaunchedEffect(notifications) {
+        if (previousNotifications.isNotEmpty()) {
+            val newNotifs = notifications.filter { it !in previousNotifications && !it.read }
+            newNotifs.forEach { notif ->
+                Toast.makeText(context, "${notif.title}: ${notif.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+        previousNotifications = notifications
+    }
+
     // Observe activeApartmentId from viewmodel
     val activeApartmentId by viewModel.activeApartmentId.collectAsState()
 
