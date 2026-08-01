@@ -1,1 +1,0 @@
-sed -i '/var expandedCreditor by remember/a \    val context = androidx.compose.ui.platform.LocalContext.current\n    var showUpiConfirmation by remember { mutableStateOf(false) }' app/src/main/java/com/example/ui/screens/SettleUpDialog.kt
