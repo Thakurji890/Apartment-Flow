@@ -26,6 +26,7 @@ fun DashboardScreen(
     onNavigateToApartmentSetup: () -> Unit,
     onNavigateToApartmentDetails: (String) -> Unit,
     onNavigateToExpenses: (String) -> Unit,
+    onNavigateToSettlements: (String) -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val apartments by viewModel.apartments.collectAsState()
@@ -81,7 +82,8 @@ fun DashboardScreen(
                         ApartmentCard(
                             apartment = apartment,
                             onClick = { onNavigateToApartmentDetails(apartment.id) },
-                            onExpensesClick = { onNavigateToExpenses(apartment.id) }
+                            onExpensesClick = { onNavigateToExpenses(apartment.id) },
+                            onSettlementsClick = { onNavigateToSettlements(apartment.id) }
                         )
                     }
                 }
@@ -94,7 +96,8 @@ fun DashboardScreen(
 fun ApartmentCard(
     apartment: Apartment,
     onClick: () -> Unit,
-    onExpensesClick: () -> Unit
+    onExpensesClick: () -> Unit,
+    onSettlementsClick: () -> Unit
 ) {
     val spacing = LocalSpacing.current
     Card(
@@ -131,10 +134,15 @@ fun ApartmentCard(
                     style = MaterialTheme.typography.bodySmall
                 )
                 
-                Button(onClick = onExpensesClick) {
-                    Icon(Icons.Default.AttachMoney, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(spacing.extraSmall))
-                    Text("Expenses")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onSettlementsClick) {
+                        Text("Settlements")
+                    }
+                    Button(onClick = onExpensesClick) {
+                        Icon(Icons.Default.AttachMoney, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(spacing.extraSmall))
+                        Text("Expenses")
+                    }
                 }
             }
         }

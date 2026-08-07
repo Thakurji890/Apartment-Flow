@@ -32,4 +32,16 @@ sealed class Screen(val route: String) {
     object EditExpense : Screen("edit_expense/{apartmentId}/{expenseId}") {
         fun createRoute(apartmentId: String, expenseId: String) = "edit_expense/$apartmentId/$expenseId"
     }
+
+    object SettlementList : Screen("settlement_list/{apartmentId}") {
+        fun createRoute(apartmentId: String) = "settlement_list/$apartmentId"
+    }
+    
+    object CreateSettlement : Screen("create_settlement/{apartmentId}") {
+        fun createRoute(apartmentId: String) = "create_settlement/$apartmentId"
+    }
+    
+    object SettlementDetails : Screen("settlement_details/{apartmentId}/{settlementId}") {
+        fun createRoute(apartmentId: String, settlementId: String) = "settlement_details/$apartmentId/$settlementId"
+    }
 }

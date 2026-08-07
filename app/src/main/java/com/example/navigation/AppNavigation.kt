@@ -31,6 +31,10 @@ import com.example.feature.expense.presentation.add.AddExpenseScreen
 import com.example.feature.expense.presentation.details.ExpenseDetailsScreen
 import com.example.feature.expense.presentation.edit.EditExpenseScreen
 
+import com.example.feature.settlement.presentation.list.SettlementListScreen
+import com.example.feature.settlement.presentation.create.CreateSettlementScreen
+import com.example.feature.settlement.presentation.details.SettlementDetailsScreen
+
 @Composable
 fun AppNavigation(navController: NavHostController) {
     NavHost(
@@ -165,6 +169,9 @@ fun AppNavigation(navController: NavHostController) {
                 },
                 onNavigateToExpenses = { apartmentId ->
                     navController.navigate(Screen.ExpenseList.createRoute(apartmentId))
+                },
+                onNavigateToSettlements = { apartmentId ->
+                    navController.navigate(Screen.SettlementList.createRoute(apartmentId))
                 }
             )
         }
@@ -233,6 +240,44 @@ fun AppNavigation(navController: NavHostController) {
             )
         ) {
             EditExpenseScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.SettlementList.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            SettlementListScreen(
+                onNavigateToCreate = { navController.navigate(Screen.CreateSettlement.createRoute(apartmentId)) },
+                onNavigateToDetails = { settlementId ->
+                    navController.navigate(Screen.SettlementDetails.createRoute(apartmentId, settlementId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.CreateSettlement.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType }
+            )
+        ) {
+            CreateSettlementScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.SettlementDetails.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("settlementId") { type = NavType.StringType }
+            )
+        ) {
+            SettlementDetailsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
