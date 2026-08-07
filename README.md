@@ -1,35 +1,32 @@
-# Expense Splitting Module
+# ApartmentFlow - Settlement Module
 
-## Overview
-This module handles all logic for dividing expenses between apartment members and calculating resulting debts. It adheres to Clean Architecture with clear domain, data, and presentation layers.
+## Settlement Workflow
+1. **Creation**: A debtor initiates a settlement request by entering the amount, selecting the creditor, and choosing a payment method.
+2. **Review**: The creditor receives the request and reviews the payment details (and any attached receipts).
+3. **Confirmation/Rejection**: The creditor can Accept or Reject the settlement. 
+4. **Completion**: Once Accepted, the settlement status changes to `CONFIRMED`.
 
-## Features Supported
-- **Equal Split**: Evenly divides the total among selected members.
-- **Exact Split**: Members are assigned exact amounts (validated to match total).
-- **Percentage Split**: Divides based on given percentages (validated to 100%).
-- **Share-based Split**: Divides proportionally based on assigned shares.
-- **Custom Split**: Arbitrary assignments.
+## Firestore Transaction Strategy
+- We use Firestore Transactions in `confirmSettlement` to ensure data consistency.
+- A single transaction reads the current status of the settlement and then updates it to `CONFIRMED`.
+- This ensures concurrent operations (like two admins accepting simultaneously) do not lead to inconsistent states.
 
-## Calculation Algorithm
-The `CalculationEngine` operates on **cents** (Long) instead of floating-point dollars to avoid precision issues (e.g. $10.00 / 3).
-1. It calculates the exact cent amount for each member based on their share/percentage.
-2. Any remaining cents caused by indivisible numbers (e.g. 1000 cents / 3 = 333 cents with 1 remainder) are distributed 1 cent at a time to members until the remainder is 0. 
-3. This guarantees `Sum(Split Amounts) == Total Expense Amount`.
+## Balance Reconciliation
+- During confirmation, the balance engine recalculates the apartment's member balances.
+- The amount paid is deducted from the debtor's overall debt and credited towards the creditor's balance.
+- This calculation prevents negative balances and recalculates member summaries automatically.
 
-## Balance Engine Algorithm
-The `BalanceEngine` takes `Payments` (who paid) and `Splits` (who owes what part) to determine net balances.
-1. Each user's net balance = `Amount Paid - Amount Owed`.
-2. Positive net balance = Creditor (is owed money).
-3. Negative net balance = Debtor (owes money).
-4. The algorithm then matches Debtors to Creditors greedily (highest debtor to highest creditor) to generate the minimum number of direct `Debt` transactions to settle the expense.
+## Confirmation Process
+- Only settlements in the `PENDING` state can be confirmed.
+- Manual Confirmation Flow: Debtor submits payment -> Creditor reviews -> Accept or Reject.
+- Rejected settlements are marked as `REJECTED` and do not alter balances.
 
-## Concurrency & Data Integrity
-When saving splits, `ExpenseSplitRepositoryImpl` uses Firestore Transactions. 
-- It guarantees that reading current member balances and applying the new debts happens atomically.
-- This prevents race conditions if multiple people edit expenses simultaneously.
-- When editing or deleting an expense, the previous debts are rolled back before the new ones are applied.
+## Error Handling
+- Validation blocks invalid amounts (amount <= 0) and identical creditor/debtor assignments.
+- Network exceptions and Firestore errors are caught and surfaced to the UI via `Resource.Error`.
+- State is managed via `StateFlow`, displaying relevant error states and UI prompts securely.
 
-## Testing
-Comprehensive Robolectric/JUnit tests exist for:
-- CalculationEngine (rounding, equal, exact, percentage, shares).
-- BalanceEngine (single payer, multi-payer complex scenarios).
+## Security Considerations
+- Data Access: Only participants (debtors/creditors) and apartment admins can view settlement details via tailored Firestore Security Rules and server-side filtering.
+- Action Restrictions: Only a creditor or an administrator has the authority to confirm or reject settlements.
+- Receipts: Private to the apartment members.
