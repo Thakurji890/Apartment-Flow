@@ -28,6 +28,8 @@ data class DashboardUiState(
     
     // Monthly Summary
     val currentMonth: YearMonth = YearMonth.now(),
+    val searchQuery: String = "",
+    val searchResults: List<Any> = emptyList(), // For global search results if needed
     val currentMonthExpenses: Double = 0.0,
     val averageDailySpending: Double = 0.0,
     val highestExpense: Double = 0.0,

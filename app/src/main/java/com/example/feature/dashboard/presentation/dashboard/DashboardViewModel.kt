@@ -29,6 +29,9 @@ class DashboardViewModel @Inject constructor(
     private val _state = MutableStateFlow(DashboardUiState(apartmentId = apartmentId))
     val state = _state.asStateFlow()
 
+    private val _filterMonth = MutableStateFlow(YearMonth.now())
+    private val _searchQuery = MutableStateFlow("")
+
     init {
         loadDashboardData()
     }
@@ -45,7 +48,6 @@ class DashboardViewModel @Inject constructor(
                 }
                 else -> {}
             }
-
             // Fetch user's apartments for switcher
             apartmentRepository.getUserApartments().collectLatest { aptsRes ->
                 if (aptsRes is Resource.Success) {
@@ -58,90 +60,99 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             val currentUserId = currentUser?.uid ?: return@launch
             
-            val currentMonth = YearMonth.now()
-            val startOfMonth = currentMonth.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            val endOfMonth = currentMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            combine(_filterMonth, _searchQuery) { month, query ->
+                Pair(month, query)
+            }.flatMapLatest { (currentMonth, query) ->
+                val startOfMonth = currentMonth.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                val endOfMonth = currentMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-            val flow1 = combine(
-                useCases.getExpensesForMonth(apartmentId, startOfMonth, endOfMonth),
-                useCases.getSettlementsForMonth(apartmentId, startOfMonth, endOfMonth),
-                useCases.getMemberBalances(apartmentId)
-            ) { expRes, setRes, balRes ->
-                Triple(expRes, setRes, balRes)
-            }
-            
-            val flow2 = combine(
-                useCases.getDebts(apartmentId),
-                useCases.getMembers(apartmentId),
-                useCases.getRecentExpenses(apartmentId, 5)
-            ) { debtRes, memRes, recExpRes ->
-                Triple(debtRes, memRes, recExpRes)
-            }
-            
-            val flow3 = useCases.getRecentActivity(apartmentId, 10)
-
-            combine(flow1, flow2, flow3) { t1, t2, activities ->
-                val (expRes, setRes, balRes) = t1
-                val (debtRes, memRes, recExpRes) = t2
+                val flow1 = combine(
+                    useCases.getExpensesForMonth(apartmentId, startOfMonth, endOfMonth),
+                    useCases.getSettlementsForMonth(apartmentId, startOfMonth, endOfMonth),
+                    useCases.getMemberBalances(apartmentId)
+                ) { expRes, setRes, balRes ->
+                    Triple(expRes, setRes, balRes)
+                }
                 
-                val expenses = (expRes as? Resource.Success)?.data ?: emptyList()
-                val settlements = (setRes as? Resource.Success)?.data ?: emptyList()
-                val balances = (balRes as? Resource.Success)?.data ?: emptyList()
-                val debts = (debtRes as? Resource.Success)?.data ?: emptyList()
-                val members = (memRes as? Resource.Success)?.data ?: emptyList()
-                val recentExpenses = (recExpRes as? Resource.Success)?.data ?: emptyList()
-
-                val myBalance = balances.find { it.userId == currentUserId }
-                val currentMember = members.find { it.userId == currentUserId }
-
-                // Monthly Summary calculations
-                val monthTotal = expenses.sumOf { it.amount }
-                val daysInMonth = LocalDate.now().dayOfMonth.coerceAtLeast(1)
-                val avgDaily = if (monthTotal > 0) monthTotal / daysInMonth else 0.0
-                val highest = expenses.maxOfOrNull { it.amount } ?: 0.0
-                val activeMembersCount = members.count { it.status == "ACTIVE" }
-
-                // Settlement Summary
-                val pendingCount = settlements.count { it.status == SettlementStatus.PENDING }
-                val settledThisMonth = settlements.count { it.status == SettlementStatus.CONFIRMED }
-                val paidThisMonth = settlements.filter { it.status == SettlementStatus.CONFIRMED && it.debtorId == currentUserId }.sumOf { it.amount }
-                val receivedThisMonth = settlements.filter { it.status == SettlementStatus.CONFIRMED && it.creditorId == currentUserId }.sumOf { it.amount }
+                val flow2 = combine(
+                    useCases.getDebts(apartmentId),
+                    useCases.getMembers(apartmentId),
+                    useCases.getRecentExpenses(apartmentId, 5)
+                ) { debtRes, memRes, recExpRes ->
+                    Triple(debtRes, memRes, recExpRes)
+                }
                 
-                // Total Spent (This relies on splitting engine results. For now, total spent across all time can be derived 
-                // from balances? Balances represent what is owed. Total spent is harder without downloading all expenses.
-                // We'll approximate total spent this month for the user based on expenses they paid).
-                val totalSpentByUserThisMonth = expenses.filter { it.paidBy == currentUserId }.sumOf { it.amount }
+                val flow3 = useCases.getRecentActivity(apartmentId, 10)
 
-                _state.value.copy(
-                    isLoading = false,
-                    currentMember = currentMember,
+                combine(flow1, flow2, flow3) { t1, t2, activities ->
+                    val (expRes, setRes, balRes) = t1
+                    val (debtRes, memRes, recExpRes) = t2
                     
-                    // Financial summary based on balance engine
-                    amountYouOwe = myBalance?.totalOwed ?: 0.0,
-                    amountOwedToYou = myBalance?.totalToReceive ?: 0.0,
-                    netBalance = myBalance?.netBalance ?: 0.0,
-                    totalSpent = totalSpentByUserThisMonth, // scoped to month for now
+                    val expenses = (expRes as? Resource.Success)?.data ?: emptyList()
+                    val settlements = (setRes as? Resource.Success)?.data ?: emptyList()
+                    val balances = (balRes as? Resource.Success)?.data ?: emptyList()
+                    val debts = (debtRes as? Resource.Success)?.data ?: emptyList()
+                    val members = (memRes as? Resource.Success)?.data ?: emptyList()
+                    val recentExpenses = (recExpRes as? Resource.Success)?.data ?: emptyList()
+
+                    // Handle Search Filtering Locally
+                    val q = query.lowercase()
+                    val filteredActivities = if (q.isBlank()) activities else activities.filter { 
+                        it.title.lowercase().contains(q) || members.find { m -> m.userId == it.userId }?.displayName?.lowercase()?.contains(q) == true
+                    }
+                    val filteredExpenses = if (q.isBlank()) expenses else expenses.filter {
+                        it.title.lowercase().contains(q) || it.paidBy.lowercase().contains(q)
+                    }
+
+                    val myBalance = balances.find { it.userId == currentUserId }
+                    val currentMember = members.find { it.userId == currentUserId }
+
+                    // Monthly Summary calculations
+                    val monthTotal = expenses.sumOf { it.amount }
+                    val daysInMonth = LocalDate.now().dayOfMonth.coerceAtLeast(1)
+                    val avgDaily = if (monthTotal > 0) monthTotal / daysInMonth else 0.0
+                    val highest = expenses.maxOfOrNull { it.amount } ?: 0.0
+                    val activeMembersCount = members.count { it.status == "ACTIVE" }
+
+                    // Settlement Summary
+                    val pendingCount = settlements.count { it.status == SettlementStatus.PENDING }
+                    val settledThisMonth = settlements.count { it.status == SettlementStatus.CONFIRMED }
+                    val paidThisMonth = settlements.filter { it.status == SettlementStatus.CONFIRMED && it.debtorId == currentUserId }.sumOf { it.amount }
+                    val receivedThisMonth = settlements.filter { it.status == SettlementStatus.CONFIRMED && it.creditorId == currentUserId }.sumOf { it.amount }
                     
-                    // Monthly
-                    currentMonthExpenses = monthTotal,
-                    averageDailySpending = avgDaily,
-                    highestExpense = highest,
-                    numberOfExpenses = expenses.size,
-                    numberOfActiveMembers = activeMembersCount,
-                    
-                    recentExpenses = recentExpenses,
-                    outstandingDebts = debts,
-                    members = members,
-                    memberBalances = balances,
-                    
-                    pendingSettlementsCount = pendingCount,
-                    settledThisMonthCount = settledThisMonth,
-                    amountPaidThisMonth = paidThisMonth,
-                    amountReceivedThisMonth = receivedThisMonth,
-                    
-                    recentActivities = activities,
-                    error = null
-                )
+                    val totalSpentByUserThisMonth = expenses.filter { it.paidBy == currentUserId }.sumOf { it.amount }
+
+                    _state.value.copy(
+                        isLoading = false,
+                        currentMember = currentMember,
+                        currentMonth = currentMonth,
+                        searchQuery = query,
+                        
+                        amountYouOwe = myBalance?.totalOwed ?: 0.0,
+                        amountOwedToYou = myBalance?.totalToReceive ?: 0.0,
+                        netBalance = myBalance?.netBalance ?: 0.0,
+                        totalSpent = totalSpentByUserThisMonth,
+                        
+                        currentMonthExpenses = monthTotal,
+                        averageDailySpending = avgDaily,
+                        highestExpense = highest,
+                        numberOfExpenses = expenses.size,
+                        numberOfActiveMembers = activeMembersCount,
+                        
+                        recentExpenses = if (q.isBlank()) recentExpenses else filteredExpenses.take(5),
+                        outstandingDebts = debts,
+                        members = members,
+                        memberBalances = balances,
+                        
+                        pendingSettlementsCount = pendingCount,
+                        settledThisMonthCount = settledThisMonth,
+                        amountPaidThisMonth = paidThisMonth,
+                        amountReceivedThisMonth = receivedThisMonth,
+                        
+                        recentActivities = filteredActivities,
+                        error = null
+                    )
+                }
             }.catch { e ->
                 _state.update { it.copy(isLoading = false, error = e.message ?: "Unknown error") }
             }.collect { newState ->
@@ -152,6 +163,22 @@ class DashboardViewModel @Inject constructor(
     
     fun refresh() {
         _state.update { it.copy(isLoading = true) }
-        loadDashboardData()
+        // Re-trigger flow by emitting current values
+        _filterMonth.value = _filterMonth.value
+    }
+    
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+        _state.update { it.copy(searchQuery = query) }
+    }
+    
+    fun previousMonth() {
+        _filterMonth.value = _filterMonth.value.minusMonths(1)
+    }
+    
+    fun nextMonth() {
+        if (_filterMonth.value.isBefore(YearMonth.now())) {
+            _filterMonth.value = _filterMonth.value.plusMonths(1)
+        }
     }
 }

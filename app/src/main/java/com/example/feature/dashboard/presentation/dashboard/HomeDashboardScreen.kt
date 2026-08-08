@@ -109,10 +109,9 @@ fun HomeDashboardScreen(
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     item {
-                        var searchQuery by remember { mutableStateOf("") }
                         OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
+                            value = state.searchQuery,
+                            onValueChange = { viewModel.updateSearchQuery(it) },
                             modifier = Modifier.fillMaxWidth(),
                             placeholder = { Text("Search dashboard...") },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
@@ -123,7 +122,8 @@ fun HomeDashboardScreen(
                     item {
                         ApartmentSwitcher(
                             apartmentName = state.apartmentName,
-                            onClick = { /* TODO: Implement switcher dropdown */ }
+                            apartments = state.apartments,
+                            onApartmentSelected = { /* TODO: handle switch */ }
                         )
                     }
 
@@ -141,7 +141,11 @@ fun HomeDashboardScreen(
                 }
 
                 item {
-                    MonthlySummaryCard(state)
+                    MonthlySummaryCard(
+                        state = state,
+                        onPreviousMonth = { viewModel.previousMonth() },
+                        onNextMonth = { viewModel.nextMonth() }
+                    )
                 }
 
                 if (state.outstandingDebts.isNotEmpty()) {
@@ -199,29 +203,53 @@ fun HomeDashboardScreen(
 }
 
 @Composable
-fun ApartmentSwitcher(apartmentName: String, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+fun ApartmentSwitcher(
+    apartmentName: String,
+    apartments: List<com.example.feature.apartment.domain.model.Apartment>,
+    onApartmentSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    Box {
+        Surface(
+            onClick = { expanded = true },
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            shape = MaterialTheme.shapes.medium
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Home, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = apartmentName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Home, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = apartmentName,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+                Icon(Icons.Default.ArrowDropDown, contentDescription = "Switch Apartment")
+            }
+        }
+        
+        androidx.compose.material3.DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            apartments.forEach { apartment ->
+                androidx.compose.material3.DropdownMenuItem(
+                    text = { Text(apartment.name) },
+                    onClick = {
+                        expanded = false
+                        onApartmentSelected(apartment.id)
+                    }
                 )
             }
-            Icon(Icons.Default.ArrowDropDown, contentDescription = "Switch Apartment")
         }
     }
 }
@@ -277,7 +305,7 @@ fun FinancialSummaryCard(state: DashboardUiState) {
 }
 
 @Composable
-fun MonthlySummaryCard(state: DashboardUiState) {
+fun MonthlySummaryCard(state: DashboardUiState, onPreviousMonth: () -> Unit, onNextMonth: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -286,12 +314,18 @@ fun MonthlySummaryCard(state: DashboardUiState) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${state.currentMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }} Summary",
+                    text = "${state.currentMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${state.currentMonth.year} Summary",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                // Filter could be added here
-                Icon(Icons.Default.DateRange, contentDescription = "Filter Month", modifier = Modifier.size(20.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onPreviousMonth) {
+                        Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Previous Month")
+                    }
+                    IconButton(onClick = onNextMonth, enabled = state.currentMonth.isBefore(java.time.YearMonth.now())) {
+                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Next Month")
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
