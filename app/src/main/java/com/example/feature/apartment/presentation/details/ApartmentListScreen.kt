@@ -22,12 +22,12 @@ import com.example.ui.theme.LocalSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(
+fun ApartmentListScreen(
     onNavigateToApartmentSetup: () -> Unit,
     onNavigateToApartmentDetails: (String) -> Unit,
     onNavigateToExpenses: (String) -> Unit,
     onNavigateToSettlements: (String) -> Unit,
-    viewModel: DashboardViewModel = hiltViewModel()
+    viewModel: ApartmentListViewModel = hiltViewModel()
 ) {
     val apartments by viewModel.apartments.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()

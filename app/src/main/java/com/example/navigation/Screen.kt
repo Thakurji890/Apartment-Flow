@@ -12,7 +12,7 @@ sealed class Screen(val route: String) {
     object ApartmentSetup : Screen("apartment_setup")
     object CreateApartment : Screen("create_apartment")
     object JoinApartment : Screen("join_apartment")
-    object Dashboard : Screen("dashboard") // Placeholder
+    object ApartmentList : Screen("apartment_list") // Placeholder
     object ApartmentDetails : Screen("apartment_details/{apartmentId}") {
         fun createRoute(apartmentId: String) = "apartment_details/$apartmentId"
     }
@@ -43,5 +43,9 @@ sealed class Screen(val route: String) {
     
     object SettlementDetails : Screen("settlement_details/{apartmentId}/{settlementId}") {
         fun createRoute(apartmentId: String, settlementId: String) = "settlement_details/$apartmentId/$settlementId"
+    }
+
+    object HomeDashboard : Screen("home_dashboard/{apartmentId}") {
+        fun createRoute(apartmentId: String) = "home_dashboard/$apartmentId"
     }
 }

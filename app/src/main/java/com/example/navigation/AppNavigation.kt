@@ -23,7 +23,7 @@ import com.example.feature.auth.presentation.welcome.WelcomeScreen
 import com.example.feature.apartment.presentation.setup.ApartmentSetupScreen
 import com.example.feature.apartment.presentation.create.CreateApartmentScreen
 import com.example.feature.apartment.presentation.join.JoinApartmentScreen
-import com.example.feature.apartment.presentation.details.DashboardScreen
+import com.example.feature.apartment.presentation.details.ApartmentListScreen
 import com.example.feature.apartment.presentation.details.ApartmentDetailsScreen
 
 import com.example.feature.expense.presentation.list.ExpenseListScreen
@@ -59,7 +59,7 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 },
                 onNavigateToDashboard = {
-                    navController.navigate(Screen.Dashboard.route) {
+                    navController.navigate(Screen.ApartmentList.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 }
@@ -88,7 +88,7 @@ fun AppNavigation(navController: NavHostController) {
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
                 onNavigateToDashboard = {
-                    navController.navigate(Screen.Dashboard.route) {
+                    navController.navigate(Screen.ApartmentList.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
@@ -143,7 +143,7 @@ fun AppNavigation(navController: NavHostController) {
             CreateApartmentScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToDashboard = {
-                    navController.navigate(Screen.Dashboard.route) {
+                    navController.navigate(Screen.ApartmentList.route) {
                         popUpTo(Screen.ApartmentSetup.route) { inclusive = true }
                     }
                 }
@@ -154,18 +154,18 @@ fun AppNavigation(navController: NavHostController) {
             JoinApartmentScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToDashboard = {
-                    navController.navigate(Screen.Dashboard.route) {
+                    navController.navigate(Screen.ApartmentList.route) {
                         popUpTo(Screen.ApartmentSetup.route) { inclusive = true }
                     }
                 }
             )
         }
         
-        composable(Screen.Dashboard.route) {
-            DashboardScreen(
+        composable(Screen.ApartmentList.route) {
+            ApartmentListScreen(
                 onNavigateToApartmentSetup = { navController.navigate(Screen.ApartmentSetup.route) },
                 onNavigateToApartmentDetails = { apartmentId ->
-                    navController.navigate(Screen.ApartmentDetails.createRoute(apartmentId))
+                    navController.navigate(Screen.HomeDashboard.createRoute(apartmentId))
                 },
                 onNavigateToExpenses = { apartmentId ->
                     navController.navigate(Screen.ExpenseList.createRoute(apartmentId))
@@ -173,6 +173,23 @@ fun AppNavigation(navController: NavHostController) {
                 onNavigateToSettlements = { apartmentId ->
                     navController.navigate(Screen.SettlementList.createRoute(apartmentId))
                 }
+            )
+        }
+
+        composable(
+            route = Screen.HomeDashboard.route,
+            arguments = listOf(navArgument("apartmentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.dashboard.presentation.dashboard.HomeDashboardScreen(
+                onNavigateToExpenseDetails = { expenseId -> 
+                    navController.navigate(Screen.ExpenseDetails.createRoute(apartmentId, expenseId)) 
+                },
+                onNavigateToAddExpense = { navController.navigate(Screen.AddExpense.createRoute(apartmentId)) },
+                onNavigateToSettlements = { navController.navigate(Screen.SettlementList.createRoute(apartmentId)) },
+                onNavigateToExpenses = { navController.navigate(Screen.ExpenseList.createRoute(apartmentId)) },
+                onNavigateToApartment = { navController.navigate(Screen.ApartmentDetails.createRoute(apartmentId)) },
+                onNavigateToMemberDetails = { /* TODO: Member details route */ }
             )
         }
         
