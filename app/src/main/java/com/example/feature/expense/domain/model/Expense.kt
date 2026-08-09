@@ -19,6 +19,9 @@ data class Expense(
     val isRecurring: Boolean = false,
     val status: String = "ACTIVE",
     val deleted: Boolean = false,
+    val isRecurringExpense: Boolean = false,
+    val recurringBillId: String? = null,
+    val occurrenceId: String? = null,
     // Transient field to resolve UI logic easier
     val isSynced: Boolean = true
 )

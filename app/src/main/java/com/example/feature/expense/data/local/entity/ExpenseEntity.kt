@@ -25,6 +25,9 @@ data class ExpenseEntity(
     val isRecurring: Boolean,
     val status: String,
     val deleted: Boolean,
+    val isRecurringExpense: Boolean,
+    val recurringBillId: String?,
+    val occurrenceId: String?,
     val isSynced: Boolean
 ) {
     fun toExpense(): Expense {
@@ -47,6 +50,9 @@ data class ExpenseEntity(
             isRecurring = isRecurring,
             status = status,
             deleted = deleted,
+            isRecurringExpense = isRecurringExpense,
+            recurringBillId = recurringBillId,
+            occurrenceId = occurrenceId,
             isSynced = isSynced
         )
     }
@@ -72,6 +78,9 @@ data class ExpenseEntity(
                 isRecurring = expense.isRecurring,
                 status = expense.status,
                 deleted = expense.deleted,
+                isRecurringExpense = expense.isRecurringExpense,
+                recurringBillId = expense.recurringBillId,
+                occurrenceId = expense.occurrenceId,
                 isSynced = expense.isSynced
             )
         }

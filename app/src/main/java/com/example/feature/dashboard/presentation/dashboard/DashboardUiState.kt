@@ -49,5 +49,8 @@ data class DashboardUiState(
     val amountReceivedThisMonth: Double = 0.0,
     
     // Activity
-    val recentActivities: List<ActivityItem> = emptyList()
+    val recentActivities: List<ActivityItem> = emptyList(),
+    
+    // Recurring Bills
+    val recurringBills: List<com.example.feature.recurringbill.domain.model.RecurringBill> = emptyList()
 )

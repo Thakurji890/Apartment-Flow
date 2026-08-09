@@ -178,7 +178,16 @@ fun HomeDashboardScreen(
                     SettlementSummaryCard(state)
                 }
 
+                if (state.recurringBills.isNotEmpty()) {
+                    item {
+                        SectionHeader(title = "Upcoming Bills", onActionClick = { /* Navigate to bills list */ })
+                    }
+                    items(state.recurringBills.take(3)) { bill ->
+                        RecurringBillItem(bill = bill, onClick = { /* Navigate to bill details */ })
+                    }
+                }
                 item {
+
                     SectionHeader(title = "Recent Activity")
                 }
                 items(state.recentActivities) { activity ->
@@ -570,5 +579,46 @@ private fun getGreeting(): String {
         in 0..11 -> "Good Morning"
         in 12..16 -> "Good Afternoon"
         else -> "Good Evening"
+    }
+}
+
+@Composable
+fun RecurringBillItem(bill: com.example.feature.recurringbill.domain.model.RecurringBill, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = "Recurring Bill",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = bill.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                val formatter = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
+                Text(
+                    text = "Next: ${formatter.format(java.util.Date(bill.nextDueDate))}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = "$${String.format("%.2f", bill.expectedAmount)}",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }

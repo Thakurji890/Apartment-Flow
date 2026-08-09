@@ -1,0 +1,1 @@
+sed -i 's/val flow3 = combine(/val flow3 = combine<List<ActivityItem>, Resource<List<com.example.feature.recurringbill.domain.model.RecurringBill>>, Pair<List<ActivityItem>, Resource<List<com.example.feature.recurringbill.domain.model.RecurringBill>>>>(/g' app/src/main/java/com/example/feature/dashboard/presentation/dashboard/DashboardViewModel.kt

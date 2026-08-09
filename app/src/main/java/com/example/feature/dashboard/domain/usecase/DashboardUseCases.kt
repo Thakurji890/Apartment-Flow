@@ -10,6 +10,8 @@ import com.example.feature.expense.domain.model.Expense
 import com.example.feature.expensesplit.domain.repository.ExpenseSplitRepository
 import com.example.feature.settlement.domain.model.Settlement
 import com.example.feature.settlement.domain.model.SettlementStatus
+import com.example.feature.recurringbill.domain.repository.RecurringBillRepository
+import com.example.feature.recurringbill.domain.model.RecurringBill
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -18,7 +20,8 @@ import javax.inject.Inject
 class DashboardUseCases @Inject constructor(
     private val dashboardRepository: DashboardRepository,
     private val apartmentRepository: ApartmentRepository,
-    private val splitRepository: ExpenseSplitRepository
+    private val splitRepository: ExpenseSplitRepository,
+    private val recurringBillRepository: RecurringBillRepository
 ) {
 
     fun getRecentExpenses(apartmentId: String, limit: Int = 5) =
@@ -36,8 +39,9 @@ class DashboardUseCases @Inject constructor(
     fun getDebts(apartmentId: String) =
         splitRepository.getDebtsForApartment(apartmentId)
         
-    fun getMembers(apartmentId: String) = 
+    fun getMembers(apartmentId: String) =
         apartmentRepository.getApartmentMembers(apartmentId)
+
 
     /**
      * Aggregates recent activity by combining recent expenses, settlements, and member joins.
@@ -95,4 +99,7 @@ class DashboardUseCases @Inject constructor(
             activities.sortedByDescending { it.timestamp }.take(limit)
         }
     }
+
+    fun getRecurringBills(apartmentId: String): Flow<Resource<List<RecurringBill>>> =
+        recurringBillRepository.getRecurringBills(apartmentId)
 }
