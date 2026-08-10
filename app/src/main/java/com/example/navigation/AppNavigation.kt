@@ -1,39 +1,30 @@
 package com.example.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-
-import com.example.feature.auth.presentation.emailverification.EmailVerificationScreen
-import com.example.feature.auth.presentation.forgotpassword.ForgotPasswordScreen
-import com.example.feature.auth.presentation.login.LoginScreen
-import com.example.feature.auth.presentation.onboarding.OnboardingScreen
-import com.example.feature.auth.presentation.signup.SignUpScreen
-import com.example.feature.auth.presentation.splash.SplashScreen
-import com.example.feature.auth.presentation.welcome.WelcomeScreen
-
+import com.example.feature.apartment.presentation.details.ApartmentDetailsScreen
+import com.example.feature.apartment.presentation.details.ApartmentListScreen
 import com.example.feature.apartment.presentation.setup.ApartmentSetupScreen
 import com.example.feature.apartment.presentation.create.CreateApartmentScreen
 import com.example.feature.apartment.presentation.join.JoinApartmentScreen
-import com.example.feature.apartment.presentation.details.ApartmentListScreen
-import com.example.feature.apartment.presentation.details.ApartmentDetailsScreen
-
-import com.example.feature.expense.presentation.list.ExpenseListScreen
+import com.example.feature.auth.presentation.emailverification.EmailVerificationScreen
+import com.example.feature.auth.presentation.forgotpassword.ForgotPasswordScreen
+import com.example.feature.auth.presentation.login.LoginScreen
+import com.example.feature.auth.presentation.signup.SignUpScreen
 import com.example.feature.expense.presentation.add.AddExpenseScreen
-import com.example.feature.expense.presentation.details.ExpenseDetailsScreen
 import com.example.feature.expense.presentation.edit.EditExpenseScreen
-
-import com.example.feature.settlement.presentation.list.SettlementListScreen
+import com.example.feature.expense.presentation.details.ExpenseDetailsScreen
+import com.example.feature.expense.presentation.list.ExpenseListScreen
+import com.example.feature.auth.presentation.onboarding.OnboardingScreen
+import com.example.feature.auth.presentation.splash.SplashScreen
+import com.example.feature.auth.presentation.welcome.WelcomeScreen
 import com.example.feature.settlement.presentation.create.CreateSettlementScreen
 import com.example.feature.settlement.presentation.details.SettlementDetailsScreen
+import com.example.feature.settlement.presentation.list.SettlementListScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
@@ -189,7 +180,9 @@ fun AppNavigation(navController: NavHostController) {
                 onNavigateToSettlements = { navController.navigate(Screen.SettlementList.createRoute(apartmentId)) },
                 onNavigateToExpenses = { navController.navigate(Screen.ExpenseList.createRoute(apartmentId)) },
                 onNavigateToApartment = { navController.navigate(Screen.ApartmentDetails.createRoute(apartmentId)) },
-                onNavigateToMemberDetails = { /* TODO: Member details route */ }
+                onNavigateToMemberDetails = { /* TODO: Member details route */ },
+                onNavigateToRecurringBills = { navController.navigate(Screen.RecurringBillList.createRoute(apartmentId)) },
+                onNavigateToRecurringBillDetails = { billId -> navController.navigate(Screen.RecurringBillDetails.createRoute(apartmentId, billId)) }
             )
         }
         
@@ -296,6 +289,57 @@ fun AppNavigation(navController: NavHostController) {
         ) {
             SettlementDetailsScreen(
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        composable(
+            route = Screen.RecurringBillList.route,
+            arguments = listOf(navArgument("apartmentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.recurringbill.presentation.list.RecurringBillListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAddBill = { navController.navigate(Screen.AddRecurringBill.createRoute(apartmentId)) },
+                onNavigateToBillDetails = { billId -> navController.navigate(Screen.RecurringBillDetails.createRoute(apartmentId, billId)) }
+            )
+        }
+
+        composable(
+            route = Screen.AddRecurringBill.route,
+            arguments = listOf(navArgument("apartmentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.recurringbill.presentation.add_edit.AddEditRecurringBillScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.EditRecurringBill.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("billId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            val billId = backStackEntry.arguments?.getString("billId") ?: ""
+            com.example.feature.recurringbill.presentation.add_edit.AddEditRecurringBillScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.RecurringBillDetails.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("billId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            val billId = backStackEntry.arguments?.getString("billId") ?: ""
+            com.example.feature.recurringbill.presentation.details.RecurringBillDetailsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEdit = { navController.navigate(Screen.EditRecurringBill.createRoute(apartmentId, billId)) }
             )
         }
     }

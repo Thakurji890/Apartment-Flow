@@ -1,0 +1,1 @@
+sed -i 's/onNavigateToMemberDetails: (String) -> Unit/onNavigateToMemberDetails: (String) -> Unit,\n    onNavigateToRecurringBills: () -> Unit,\n    onNavigateToRecurringBillDetails: (String) -> Unit/g' app/src/main/java/com/example/feature/dashboard/presentation/dashboard/HomeDashboardScreen.kt

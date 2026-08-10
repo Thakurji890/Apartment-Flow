@@ -38,7 +38,9 @@ fun HomeDashboardScreen(
     onNavigateToSettlements: () -> Unit,
     onNavigateToExpenses: () -> Unit,
     onNavigateToApartment: () -> Unit,
-    onNavigateToMemberDetails: (String) -> Unit
+    onNavigateToMemberDetails: (String) -> Unit,
+    onNavigateToRecurringBills: () -> Unit,
+    onNavigateToRecurringBillDetails: (String) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -180,10 +182,10 @@ fun HomeDashboardScreen(
 
                 if (state.recurringBills.isNotEmpty()) {
                     item {
-                        SectionHeader(title = "Upcoming Bills", onActionClick = { /* Navigate to bills list */ })
+                        SectionHeader(title = "Upcoming Bills", onActionClick = onNavigateToRecurringBills)
                     }
                     items(state.recurringBills.take(3)) { bill ->
-                        RecurringBillItem(bill = bill, onClick = { /* Navigate to bill details */ })
+                        RecurringBillItem(bill = bill, onClick = { onNavigateToRecurringBillDetails(bill.id) })
                     }
                 }
                 item {
