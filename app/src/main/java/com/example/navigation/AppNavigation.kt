@@ -182,7 +182,8 @@ fun AppNavigation(navController: NavHostController) {
                 onNavigateToApartment = { navController.navigate(Screen.ApartmentDetails.createRoute(apartmentId)) },
                 onNavigateToMemberDetails = { /* TODO: Member details route */ },
                 onNavigateToRecurringBills = { navController.navigate(Screen.RecurringBillList.createRoute(apartmentId)) },
-                onNavigateToRecurringBillDetails = { billId -> navController.navigate(Screen.RecurringBillDetails.createRoute(apartmentId, billId)) }
+                onNavigateToRecurringBillDetails = { billId -> navController.navigate(Screen.RecurringBillDetails.createRoute(apartmentId, billId)) },
+                onNavigateToShoppingLists = { navController.navigate(Screen.ShoppingLists.createRoute(apartmentId)) }
             )
         }
         
@@ -342,5 +343,79 @@ fun AppNavigation(navController: NavHostController) {
                 onNavigateToEdit = { navController.navigate(Screen.EditRecurringBill.createRoute(apartmentId, billId)) }
             )
         }
+
+        composable(
+            route = Screen.ShoppingLists.route,
+            arguments = listOf(navArgument("apartmentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.shopping.presentation.lists.ShoppingListsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToListDetails = { listId -> navController.navigate(Screen.ShoppingListDetails.createRoute(apartmentId, listId)) },
+                onNavigateToAddList = { navController.navigate(Screen.AddEditShoppingList.createRoute(apartmentId)) }
+            )
+        }
+
+        composable(
+            route = Screen.ShoppingListDetails.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("listId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            val listId = backStackEntry.arguments?.getString("listId") ?: ""
+            com.example.feature.shopping.presentation.details.ShoppingListDetailsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAddItem = { _ -> navController.navigate(Screen.AddEditShoppingItem.createRoute(apartmentId, listId)) },
+                onNavigateToEditItem = { _, itemId -> navController.navigate(Screen.AddEditShoppingItem.createRoute(apartmentId, listId, itemId)) },
+                onNavigateToPurchaseItem = { _, itemId -> navController.navigate(Screen.PurchaseItem.createRoute(apartmentId, listId, itemId)) }
+            )
+        }
+
+        composable(
+            route = Screen.AddEditShoppingList.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("listId") { type = NavType.StringType; nullable = true }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.shopping.presentation.add_edit_list.AddEditShoppingListScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AddEditShoppingItem.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("listId") { type = NavType.StringType },
+                navArgument("itemId") { type = NavType.StringType; nullable = true }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            val listId = backStackEntry.arguments?.getString("listId") ?: ""
+            com.example.feature.shopping.presentation.add_edit_item.AddEditShoppingItemScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.PurchaseItem.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("listId") { type = NavType.StringType },
+                navArgument("itemId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            val listId = backStackEntry.arguments?.getString("listId") ?: ""
+            val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
+            com.example.feature.shopping.presentation.purchase_item.PurchaseItemScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }
+

@@ -40,7 +40,8 @@ fun HomeDashboardScreen(
     onNavigateToApartment: () -> Unit,
     onNavigateToMemberDetails: (String) -> Unit,
     onNavigateToRecurringBills: () -> Unit,
-    onNavigateToRecurringBillDetails: (String) -> Unit
+    onNavigateToRecurringBillDetails: (String) -> Unit,
+    onNavigateToShoppingLists: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
