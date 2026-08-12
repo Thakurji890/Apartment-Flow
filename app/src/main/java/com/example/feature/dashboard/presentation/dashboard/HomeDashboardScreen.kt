@@ -41,7 +41,8 @@ fun HomeDashboardScreen(
     onNavigateToMemberDetails: (String) -> Unit,
     onNavigateToRecurringBills: () -> Unit,
     onNavigateToRecurringBillDetails: (String) -> Unit,
-    onNavigateToShoppingLists: () -> Unit
+    onNavigateToShoppingLists: () -> Unit,
+    onNavigateToChores: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -139,7 +140,9 @@ fun HomeDashboardScreen(
                         onAddExpense = onNavigateToAddExpense,
                         onSettleUp = onNavigateToSettlements,
                         onViewExpenses = onNavigateToExpenses,
-                        onApartment = onNavigateToApartment
+                        onApartment = onNavigateToApartment,
+                        onNavigateToShoppingLists = onNavigateToShoppingLists,
+                        onNavigateToChores = onNavigateToChores
                     )
                 }
 
@@ -417,7 +420,9 @@ fun QuickActionsRow(
     onAddExpense: () -> Unit,
     onSettleUp: () -> Unit,
     onViewExpenses: () -> Unit,
-    onApartment: () -> Unit
+    onApartment: () -> Unit,
+    onNavigateToShoppingLists: () -> Unit,
+    onNavigateToChores: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -427,6 +432,8 @@ fun QuickActionsRow(
         QuickActionItem(icon = Icons.Default.CheckCircle, label = "Settle", onClick = onSettleUp)
         QuickActionItem(icon = Icons.Default.List, label = "List", onClick = onViewExpenses)
         QuickActionItem(icon = Icons.Default.Settings, label = "Apartment", onClick = onApartment)
+        QuickActionItem(icon = Icons.Default.ShoppingCart, label = "Shop", onClick = onNavigateToShoppingLists)
+        QuickActionItem(icon = Icons.Default.CheckCircle, label = "Chores", onClick = onNavigateToChores)
     }
 }
 

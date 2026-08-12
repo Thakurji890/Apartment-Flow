@@ -183,7 +183,8 @@ fun AppNavigation(navController: NavHostController) {
                 onNavigateToMemberDetails = { /* TODO: Member details route */ },
                 onNavigateToRecurringBills = { navController.navigate(Screen.RecurringBillList.createRoute(apartmentId)) },
                 onNavigateToRecurringBillDetails = { billId -> navController.navigate(Screen.RecurringBillDetails.createRoute(apartmentId, billId)) },
-                onNavigateToShoppingLists = { navController.navigate(Screen.ShoppingLists.createRoute(apartmentId)) }
+                onNavigateToShoppingLists = { navController.navigate(Screen.ShoppingLists.createRoute(apartmentId)) },
+                onNavigateToChores = { navController.navigate(Screen.ChoreList.createRoute(apartmentId)) }
             )
         }
         
@@ -416,6 +417,112 @@ fun AppNavigation(navController: NavHostController) {
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
+        composable(
+            route = Screen.ChoreList.route,
+            arguments = listOf(navArgument("apartmentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.chore.presentation.list.ChoreListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAddChore = { navController.navigate(Screen.AddEditChore.createRoute(apartmentId)) },
+                onNavigateToChoreDetails = { choreId -> navController.navigate(Screen.ChoreDetails.createRoute(apartmentId, choreId)) },
+                onNavigateToSummary = { navController.navigate(Screen.FairnessSummary.createRoute(apartmentId)) }
+            )
+        }
+
+        composable(
+            route = Screen.AddEditChore.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("choreId") { type = NavType.StringType; nullable = true }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.chore.presentation.add_edit.AddEditChoreScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.ChoreDetails.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("choreId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.chore.presentation.details.ChoreDetailsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEditChore = { choreId -> 
+                    navController.navigate(Screen.AddEditChore.createRoute(apartmentId, choreId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.FairnessSummary.route,
+            arguments = listOf(navArgument("apartmentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.chore.presentation.summary.FairnessSummaryScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.ChoreList.route,
+            arguments = listOf(navArgument("apartmentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.chore.presentation.list.ChoreListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAddChore = { navController.navigate(Screen.AddEditChore.createRoute(apartmentId)) },
+                onNavigateToChoreDetails = { choreId -> navController.navigate(Screen.ChoreDetails.createRoute(apartmentId, choreId)) },
+                onNavigateToSummary = { navController.navigate(Screen.FairnessSummary.createRoute(apartmentId)) }
+            )
+        }
+
+        composable(
+            route = Screen.AddEditChore.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("choreId") { type = NavType.StringType; nullable = true }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.chore.presentation.add_edit.AddEditChoreScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.ChoreDetails.route,
+            arguments = listOf(
+                navArgument("apartmentId") { type = NavType.StringType },
+                navArgument("choreId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.chore.presentation.details.ChoreDetailsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEditChore = { choreId -> 
+                    navController.navigate(Screen.AddEditChore.createRoute(apartmentId, choreId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.FairnessSummary.route,
+            arguments = listOf(navArgument("apartmentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val apartmentId = backStackEntry.arguments?.getString("apartmentId") ?: ""
+            com.example.feature.chore.presentation.summary.FairnessSummaryScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }
+
+
 
