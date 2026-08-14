@@ -141,6 +141,13 @@ fun AppNavigation(navController: NavHostController) {
             )
         }
         
+        composable(Screen.Notifications.route) {
+            com.example.feature.notification.presentation.list.NotificationsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToDeepLink = { /* Implement deeper linking parsing here if needed */ }
+            )
+        }
+        
         composable(Screen.JoinApartment.route) {
             JoinApartmentScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -184,7 +191,8 @@ fun AppNavigation(navController: NavHostController) {
                 onNavigateToRecurringBills = { navController.navigate(Screen.RecurringBillList.createRoute(apartmentId)) },
                 onNavigateToRecurringBillDetails = { billId -> navController.navigate(Screen.RecurringBillDetails.createRoute(apartmentId, billId)) },
                 onNavigateToShoppingLists = { navController.navigate(Screen.ShoppingLists.createRoute(apartmentId)) },
-                onNavigateToChores = { navController.navigate(Screen.ChoreList.createRoute(apartmentId)) }
+                onNavigateToChores = { navController.navigate(Screen.ChoreList.createRoute(apartmentId)) },
+                onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) }
             )
         }
         

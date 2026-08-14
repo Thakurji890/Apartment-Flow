@@ -42,7 +42,8 @@ fun HomeDashboardScreen(
     onNavigateToRecurringBills: () -> Unit,
     onNavigateToRecurringBillDetails: (String) -> Unit,
     onNavigateToShoppingLists: () -> Unit,
-    onNavigateToChores: () -> Unit
+    onNavigateToChores: () -> Unit,
+    onNavigateToNotifications: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
