@@ -43,7 +43,8 @@ fun HomeDashboardScreen(
     onNavigateToRecurringBillDetails: (String) -> Unit,
     onNavigateToShoppingLists: () -> Unit,
     onNavigateToChores: () -> Unit,
-    onNavigateToNotifications: () -> Unit
+    onNavigateToNotifications: () -> Unit,
+    onNavigateToAnalytics: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -147,6 +148,21 @@ fun HomeDashboardScreen(
                     )
                 }
 
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().clickable { onNavigateToAnalytics() },
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    ) {
+                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("View Analytics & Reports", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text("See charts, trends, and category breakdowns", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                            }
+                            Icon(Icons.Default.ArrowForward, contentDescription = "View Analytics", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+                    }
+                }
+                
                 item {
                     MonthlySummaryCard(
                         state = state,

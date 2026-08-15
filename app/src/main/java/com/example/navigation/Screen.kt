@@ -107,6 +107,9 @@ sealed class Screen(val route: String) {
     }
 
     object Notifications : Screen("notifications")
+    object Analytics : Screen("analytics/{apartmentId}") {
+        fun createRoute(apartmentId: String) = "analytics/$apartmentId"
+    }
     object FairnessSummary : Screen("fairness_summary/{apartmentId}") {
         fun createRoute(apartmentId: String) = "fairness_summary/$apartmentId"
     }

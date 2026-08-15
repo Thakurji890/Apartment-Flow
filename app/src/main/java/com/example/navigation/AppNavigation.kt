@@ -175,6 +175,15 @@ fun AppNavigation(navController: NavHostController) {
         }
 
         composable(
+            route = Screen.Analytics.route,
+            arguments = listOf(navArgument("apartmentId") { type = NavType.StringType })
+        ) {
+            com.example.feature.analytics.presentation.AnalyticsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        composable(
             route = Screen.HomeDashboard.route,
             arguments = listOf(navArgument("apartmentId") { type = NavType.StringType })
         ) { backStackEntry ->
@@ -192,7 +201,8 @@ fun AppNavigation(navController: NavHostController) {
                 onNavigateToRecurringBillDetails = { billId -> navController.navigate(Screen.RecurringBillDetails.createRoute(apartmentId, billId)) },
                 onNavigateToShoppingLists = { navController.navigate(Screen.ShoppingLists.createRoute(apartmentId)) },
                 onNavigateToChores = { navController.navigate(Screen.ChoreList.createRoute(apartmentId)) },
-                onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) }
+                onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
+                onNavigateToAnalytics = { navController.navigate(Screen.Analytics.createRoute(apartmentId)) }
             )
         }
         
