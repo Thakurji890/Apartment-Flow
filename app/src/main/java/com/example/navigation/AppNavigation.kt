@@ -25,13 +25,18 @@ import com.example.feature.auth.presentation.welcome.WelcomeScreen
 import com.example.feature.settlement.presentation.create.CreateSettlementScreen
 import com.example.feature.settlement.presentation.details.SettlementDetailsScreen
 import com.example.feature.settlement.presentation.list.SettlementListScreen
+import com.example.feature.apartmentmanager.ui.ApartmentManagementScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route
+        startDestination = Screen.ApartmentManager.route
     ) {
+        composable(Screen.ApartmentManager.route) {
+            ApartmentManagementScreen()
+        }
+
         composable(Screen.Splash.route) {
             SplashScreen(
                 onNavigateToOnboarding = {

@@ -7,6 +7,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.example.feature.auth.data.repository.AuthRepositoryImpl
 import com.example.feature.auth.domain.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,6 +28,14 @@ object AppModule {
         return FirebaseAuth.getInstance()
     }
 
+
+    @Provides
+    @Singleton
+    fun provideFirebaseStorage(): FirebaseStorage {
+        return FirebaseStorage.getInstance()
+    }
+
+
     @Provides
     @Singleton
     fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
@@ -39,5 +49,11 @@ object AppModule {
         dataStore: DataStore<Preferences>
     ): AuthRepository {
         return AuthRepositoryImpl(auth, dataStore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideApartmentDataManager(@ApplicationContext context: Context): com.example.feature.apartmentmanager.data.ApartmentDataManager {
+        return com.example.feature.apartmentmanager.data.ApartmentDataManager(context)
     }
 }
