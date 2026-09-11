@@ -1,5 +1,17 @@
 package com.example.feature.apartmentmanager.model
 
+enum class SettlementStatus {
+    PENDING,
+    APPROVED,
+    REJECTED
+}
+
+enum class ExpenseStatus {
+    PENDING,
+    APPROVED,
+    REJECTED
+}
+
 data class ApartmentRoommate(
     val id: String,
     val name: String,
@@ -15,7 +27,11 @@ data class ApartmentExpense(
     val amount: Double,
     val paidByRoommateId: String,
     val sharedByRoommateIds: List<String>,
-    val notes: String = ""
+    val notes: String = "",
+    val status: ExpenseStatus = ExpenseStatus.APPROVED,
+    val approvedByAdminId: String? = null,
+    val approvedAt: String? = null,
+    val rejectionReason: String? = null
 ) {
     val sharingCount: Int
         get() = sharedByRoommateIds.size
@@ -30,7 +46,11 @@ data class ApartmentSettlement(
     val fromRoommateId: String,
     val toRoommateId: String,
     val amount: Double,
-    val note: String = ""
+    val note: String = "",
+    val status: SettlementStatus = SettlementStatus.APPROVED,
+    val approvedByAdminId: String? = null,
+    val approvedAt: String? = null,
+    val rejectionReason: String? = null
 )
 
 data class ApartmentProfile(
@@ -60,4 +80,22 @@ data class DebtTransfer(
     val fromRoommate: ApartmentRoommate,
     val toRoommate: ApartmentRoommate,
     val amount: Double
+)
+
+enum class NotificationCategory {
+    PURCHASE,
+    SETTLEMENT,
+    ADMIN_ACTION,
+    GENERAL
+}
+
+data class ApartmentNotification(
+    val id: String,
+    val timestamp: Long = System.currentTimeMillis(),
+    val title: String,
+    val message: String,
+    val category: NotificationCategory,
+    val authorName: String = "System",
+    val requiresAdminAction: Boolean = false,
+    val isRead: Boolean = false
 )

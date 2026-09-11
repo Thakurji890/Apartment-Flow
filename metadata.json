@@ -1,6 +1,6 @@
 {
   "name": "Apartment Flow",
-  "description": "An elegant roommate expense tracker, bills dashboard, and settlement app.",
+  "description": "Roommate expense manager with admin settlement approvals, live activity notifications, and balance optimization.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

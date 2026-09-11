@@ -1,24 +1,30 @@
 package com.example.feature.apartmentmanager.ui
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.feature.apartmentmanager.model.*
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +35,8 @@ fun AddEditExpenseDialog(
     onDismiss: () -> Unit,
     onSave: (date: String, item: String, amount: Double, paidById: String, sharedByIds: List<String>, notes: String) -> Unit
 ) {
+    BackHandler { onDismiss() }
+
     val today = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()) }
     var date by remember { mutableStateOf(expense?.date ?: today) }
     var item by remember { mutableStateOf(expense?.item ?: "") }
@@ -60,17 +68,29 @@ fun AddEditExpenseDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                // Header with Back Button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = if (expense != null) "Edit Expense" else "Add Grocery / Expense",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    IconButton(onClick = onDismiss) {
+                    Row(
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (expense != null) "Edit Expense" else "Add Grocery / Expense",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 }
@@ -270,14 +290,14 @@ fun AddEditExpenseDialog(
                     )
                 }
 
-                // Action Buttons
+                // Action Buttons with Back option
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                    OutlinedButton(onClick = onDismiss) {
+                        Text("Back")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -310,12 +330,15 @@ fun AddEditExpenseDialog(
 fun AddSettlementDialog(
     roommates: List<ApartmentRoommate>,
     currencySymbol: String,
+    isAdmin: Boolean = false,
     prefillFromId: String? = null,
     prefillToId: String? = null,
     prefillAmount: Double? = null,
     onDismiss: () -> Unit,
     onSave: (date: String, fromId: String, toId: String, amount: Double, note: String) -> Unit
 ) {
+    BackHandler { onDismiss() }
+
     val today = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()) }
     var date by remember { mutableStateOf(today) }
     var fromId by remember { mutableStateOf(prefillFromId ?: roommates.firstOrNull()?.id ?: "") }
@@ -344,18 +367,64 @@ fun AddSettlementDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                // Header with Back Button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Record Cash Settlement",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    IconButton(onClick = onDismiss) {
+                    Row(
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Column {
+                            Text(
+                                text = if (isAdmin) "Record Settlement (Admin)" else "Submit Settlement",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = if (isAdmin) "Auto-approved into balance sheet" else "Sent to Admin for approval",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                }
+
+                // Status notice
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isAdmin) Color(0xFF2E7D32).copy(alpha = 0.1f)
+                    else MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            if (isAdmin) Icons.Default.VerifiedUser else Icons.Default.NotificationImportant,
+                            contentDescription = null,
+                            tint = if (isAdmin) Color(0xFF2E7D32) else MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isAdmin) "👑 As Admin, this settlement is approved directly and updates balances instantly."
+                            else "⏳ Roommate submission: Only an Admin can approve this transfer. Admin and roommates receive instant notifications.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (isAdmin) Color(0xFF1B5E20) else MaterialTheme.colorScheme.onTertiaryContainer
+                        )
                     }
                 }
 
@@ -466,14 +535,14 @@ fun AddSettlementDialog(
                     )
                 }
 
-                // Actions
+                // Actions with Back Button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                    OutlinedButton(onClick = onDismiss) {
+                        Text("Back")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -490,8 +559,298 @@ fun AddSettlementDialog(
                             onSave(date, fromId, toId, amt, note.trim())
                         }
                     ) {
-                        Text("Record Settlement")
+                        Text(if (isAdmin) "Approve & Record" else "Submit for Approval")
                     }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ApartmentNotificationsDialog(
+    notifications: List<ApartmentNotification>,
+    onDismiss: () -> Unit,
+    onMarkAllAsRead: () -> Unit,
+    onClearAll: () -> Unit,
+    onNavigateToSettlements: () -> Unit
+) {
+    BackHandler { onDismiss() }
+
+    var selectedCategory by remember { mutableStateOf("ALL") }
+
+    val filteredList = remember(notifications, selectedCategory) {
+        when (selectedCategory) {
+            "PURCHASE" -> notifications.filter { it.category == NotificationCategory.PURCHASE }
+            "SETTLEMENT" -> notifications.filter { it.category == NotificationCategory.SETTLEMENT }
+            "ADMIN" -> notifications.filter { it.requiresAdminAction || it.category == NotificationCategory.ADMIN_ACTION }
+            else -> notifications
+        }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.85f)
+                .padding(vertical = 12.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                // Title with Back Button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Column {
+                            Text(
+                                text = "Activity & Notifications",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Real-time updates for admin & roommates",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Actions: Mark read & Clear
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = onMarkAllAsRead,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Icon(Icons.Default.DoneAll, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Mark all read", style = MaterialTheme.typography.labelSmall)
+                    }
+
+                    TextButton(
+                        onClick = onClearAll,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Icon(Icons.Default.DeleteSweep, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Clear log", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+
+                // Filter tabs with horizontal scroll
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FilterChip(
+                        selected = selectedCategory == "ALL",
+                        onClick = { selectedCategory = "ALL" },
+                        label = { Text("All (${notifications.size})", style = MaterialTheme.typography.labelSmall) }
+                    )
+                    FilterChip(
+                        selected = selectedCategory == "PURCHASE",
+                        onClick = { selectedCategory = "PURCHASE" },
+                        label = { Text("Purchases", style = MaterialTheme.typography.labelSmall) }
+                    )
+                    FilterChip(
+                        selected = selectedCategory == "SETTLEMENT",
+                        onClick = { selectedCategory = "SETTLEMENT" },
+                        label = { Text("Settlements", style = MaterialTheme.typography.labelSmall) }
+                    )
+                    FilterChip(
+                        selected = selectedCategory == "ADMIN",
+                        onClick = { selectedCategory = "ADMIN" },
+                        label = { Text("Admin Actions", style = MaterialTheme.typography.labelSmall) }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Notification Items List
+                if (filteredList.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                Icons.Default.NotificationsNone,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "No notifications yet",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                } else {
+                    androidx.compose.foundation.lazy.LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(filteredList.size, key = { filteredList[it].id }) { index ->
+                            val item = filteredList[index]
+                            val timeStr = remember(item.timestamp) {
+                                val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+                                sdf.format(Date(item.timestamp))
+                            }
+
+                            Card(
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (!item.isRead) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    // Category icon
+                                    val (icon, color) = when (item.category) {
+                                        NotificationCategory.PURCHASE -> Pair(Icons.Default.ShoppingCart, Color(0xFF006A6A))
+                                        NotificationCategory.SETTLEMENT -> Pair(Icons.Default.Payments, Color(0xFFC26100))
+                                        NotificationCategory.ADMIN_ACTION -> Pair(Icons.Default.AdminPanelSettings, Color(0xFF4A6572))
+                                        NotificationCategory.GENERAL -> Pair(Icons.Default.Info, Color(0xFF425E91))
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(color.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            icon,
+                                            contentDescription = null,
+                                            tint = color,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = item.title,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            if (!item.isRead) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(8.dp)
+                                                        .clip(CircleShape)
+                                                        .background(MaterialTheme.colorScheme.primary)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(2.dp))
+
+                                        Text(
+                                            text = item.message,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = timeStr,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                            )
+
+                                            if (item.requiresAdminAction) {
+                                                Surface(
+                                                    onClick = {
+                                                        onDismiss()
+                                                        onNavigateToSettlements()
+                                                    },
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    color = MaterialTheme.colorScheme.errorContainer
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text(
+                                                            text = "Review in Settlements →",
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = MaterialTheme.colorScheme.onErrorContainer
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Back")
                 }
             }
         }
@@ -504,6 +863,8 @@ fun AddEditRoommateDialog(
     onDismiss: () -> Unit,
     onSave: (name: String, notes: String, isAdmin: Boolean) -> Unit
 ) {
+    BackHandler { onDismiss() }
+
     var name by remember { mutableStateOf(roommate?.name ?: "") }
     var notes by remember { mutableStateOf(roommate?.notes ?: "") }
     var isAdmin by remember { mutableStateOf(roommate?.isAdmin ?: false) }
@@ -521,17 +882,29 @@ fun AddEditRoommateDialog(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                // Header with Back Button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = if (roommate != null) "Edit Roommate" else "Add New Roommate",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    IconButton(onClick = onDismiss) {
+                    Row(
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (roommate != null) "Edit Roommate" else "Add New Roommate",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 }
@@ -565,7 +938,7 @@ fun AddEditRoommateDialog(
                     Column {
                         Text("Apartment Admin", fontWeight = FontWeight.SemiBold)
                         Text(
-                            "Can edit apartment details, add/remove roommates",
+                            "Can edit apartment details, approve settlements, add/remove roommates",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -582,10 +955,11 @@ fun AddEditRoommateDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                    OutlinedButton(onClick = onDismiss) {
+                        Text("Back")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -611,6 +985,8 @@ fun EditApartmentProfileDialog(
     onDismiss: () -> Unit,
     onSave: (name: String, flatNumber: String, currencySymbol: String, inviteCode: String) -> Unit
 ) {
+    BackHandler { onDismiss() }
+
     var name by remember { mutableStateOf(profile.name) }
     var flatNumber by remember { mutableStateOf(profile.flatNumber) }
     var currencySymbol by remember { mutableStateOf(profile.currencySymbol) }
@@ -628,17 +1004,29 @@ fun EditApartmentProfileDialog(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                // Header with Back Button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Apartment Admin Controls",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    IconButton(onClick = onDismiss) {
+                    Row(
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Apartment Admin Controls",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 }
@@ -683,10 +1071,11 @@ fun EditApartmentProfileDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                    OutlinedButton(onClick = onDismiss) {
+                        Text("Back")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(

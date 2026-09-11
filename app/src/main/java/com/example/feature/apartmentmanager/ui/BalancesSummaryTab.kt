@@ -1,12 +1,11 @@
 package com.example.feature.apartmentmanager.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.feature.apartmentmanager.model.*
 import kotlin.math.abs
@@ -31,19 +31,23 @@ fun BalancesSummaryTab(
     onQuickSettle: (fromId: String, toId: String, amount: Double) -> Unit,
     onAddExpenseClick: () -> Unit
 ) {
+    val currency = state.profile.currencySymbol
     var selectedRoommateForDetail by remember { mutableStateOf<RoommateBalanceSummary?>(null) }
 
-    val currency = state.profile.currencySymbol
-    val debtors = balanceSummaries.filter { it.netBalance < -0.01 }
-    val creditors = balanceSummaries.filter { it.netBalance > 0.01 }
-    val settled = balanceSummaries.filter { abs(it.netBalance) <= 0.01 }
+    val debtors = remember(balanceSummaries) {
+        balanceSummaries.filter { it.netBalance < -0.01 }.sortedBy { it.netBalance }
+    }
+
+    val creditors = remember(balanceSummaries) {
+        balanceSummaries.filter { it.netBalance > 0.01 }.sortedByDescending { it.netBalance }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // --- Hero Overview Card ---
+        // --- Total Apartment Pool Spending Card ---
         item {
             Card(
                 colors = CardDefaults.cardColors(
@@ -53,50 +57,57 @@ fun BalancesSummaryTab(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Apartment,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = state.profile.name,
-                                style = MaterialTheme.typography.titleLarge,
+                                text = "${state.profile.name} • ${state.profile.flatNumber}",
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
-                            Text(
-                                text = "${state.profile.flatNumber} • ${state.roommates.size} Roommates",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                            )
                         }
+
                         Surface(
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                text = "Admin Managed",
+                                text = "${state.roommates.size} Roommates",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                             )
                         }
                     }
 
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
                     ) {
-                        Column {
+                        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                             Text(
-                                text = "Total Groceries Pool",
+                                text = "Total Shared Groceries Spent",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                             )
@@ -125,7 +136,7 @@ fun BalancesSummaryTab(
             }
         }
 
-        // --- Who Needs to Pay vs Who is Owed Money (Matching Sheet Cards) ---
+        // --- Who Needs to Pay vs Who is Owed Money ---
         item {
             Text(
                 text = "Settlement Status Overview",
@@ -142,7 +153,7 @@ fun BalancesSummaryTab(
                 // People Who Need to Pay Card
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFEBEE) // Soft Red
+                        containerColor = Color(0xFFFFEBEE)
                     ),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.weight(1f)
@@ -184,13 +195,17 @@ fun BalancesSummaryTab(
                                         text = d.roommate.name,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = Color(0xFF1E1E1E)
+                                        color = Color(0xFF1E1E1E),
+                                        modifier = Modifier.weight(1f, fill = false).padding(end = 4.dp),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
                                         text = "$currency${"%.2f".format(abs(d.netBalance))}",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFFC62828)
+                                        color = Color(0xFFC62828),
+                                        maxLines = 1
                                     )
                                 }
                             }
@@ -201,7 +216,7 @@ fun BalancesSummaryTab(
                 // People Who Are Owed Money Card
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFE8F5E9) // Soft Green
+                        containerColor = Color(0xFFE8F5E9)
                     ),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.weight(1f)
@@ -243,13 +258,17 @@ fun BalancesSummaryTab(
                                         text = c.roommate.name,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = Color(0xFF1E1E1E)
+                                        color = Color(0xFF1E1E1E),
+                                        modifier = Modifier.weight(1f, fill = false).padding(end = 4.dp),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
                                         text = "$currency${"%.2f".format(c.netBalance)}",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF2E7D32)
+                                        color = Color(0xFF2E7D32),
+                                        maxLines = 1
                                     )
                                 }
                             }
@@ -310,11 +329,16 @@ fun BalancesSummaryTab(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Text(
                                         text = transfer.fromRoommate.name,
                                         fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.bodyMedium
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
                                         text = " pays ",
@@ -324,7 +348,9 @@ fun BalancesSummaryTab(
                                     Text(
                                         text = transfer.toRoommate.name,
                                         fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.bodyMedium
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
 
@@ -345,7 +371,7 @@ fun BalancesSummaryTab(
                                             )
                                         },
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                        modifier = Modifier.height(32.dp)
+                                        modifier = Modifier.height(34.dp)
                                     ) {
                                         Text("Settle", style = MaterialTheme.typography.labelSmall)
                                     }
@@ -357,27 +383,30 @@ fun BalancesSummaryTab(
             }
         }
 
-        // --- Roommate Summary Ledger Table (Matching Table 1) ---
+        // --- Roommate Balance Breakdown Header ---
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Roommate Balance Sheet",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Tap row for breakdown",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column {
+                    Text(
+                        text = "Individual Net Balances",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Groceries Paid vs Share - Settlements",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
 
-        items(balanceSummaries) { summary ->
+        // Roommate Cards List
+        items(balanceSummaries, key = { it.roommate.id }) { summary ->
             RoommateSummaryCard(
                 summary = summary,
                 currency = currency,
@@ -386,34 +415,48 @@ fun BalancesSummaryTab(
         }
     }
 
-    // --- Details Modal Bottom Sheet ---
+    // --- Details Modal Bottom Sheet / Dialog with BackHandler ---
     if (selectedRoommateForDetail != null) {
         val s = selectedRoommateForDetail!!
+        BackHandler { selectedRoommateForDetail = null }
+
         AlertDialog(
             onDismissRequest = { selectedRoommateForDetail = null },
             title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color(s.roommate.colorHex)),
-                        contentAlignment = Alignment.Center
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = s.roommate.name.take(1).uppercase(),
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color(s.roommate.colorHex)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = s.roommate.name.take(1).uppercase(),
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(s.roommate.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                if (s.roommate.isAdmin) "Admin • Flat Coordinator" else "Roommate",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(s.roommate.name, fontWeight = FontWeight.Bold)
-                        Text(
-                            if (s.roommate.isAdmin) "Admin • Flat Coordinator" else "Roommate",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    IconButton(onClick = { selectedRoommateForDetail = null }) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 }
             },
@@ -458,20 +501,15 @@ fun BalancesSummaryTab(
                         Text(
                             text = "Status: ${s.status}",
                             modifier = Modifier.padding(8.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = when {
-                                s.netBalance > 0.01 -> Color(0xFF2E7D32)
-                                s.netBalance < -0.01 -> Color(0xFFC62828)
-                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                            }
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { selectedRoommateForDetail = null }) {
-                    Text("Close")
+                Button(onClick = { selectedRoommateForDetail = null }) {
+                    Text("Back")
                 }
             }
         )
@@ -485,12 +523,12 @@ fun RoommateSummaryCard(
     onClick: () -> Unit
 ) {
     Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .clickable { onClick() }
     ) {
         Row(
             modifier = Modifier
@@ -499,7 +537,10 @@ fun RoommateSummaryCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Box(
                     modifier = Modifier
                         .size(42.dp)
@@ -522,7 +563,9 @@ fun RoommateSummaryCard(
                         Text(
                             text = summary.roommate.name,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         if (summary.roommate.isAdmin) {
                             Spacer(modifier = Modifier.width(6.dp))
@@ -546,7 +589,9 @@ fun RoommateSummaryCard(
                     Text(
                         text = "Paid: $currency${"%.2f".format(summary.totalPaidGroceries)} • Share: $currency${"%.2f".format(summary.totalOwedShare)}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -570,7 +615,8 @@ fun RoommateSummaryCard(
                     text = formattedNet,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = netColor
+                    color = netColor,
+                    maxLines = 1
                 )
 
                 Surface(
@@ -586,7 +632,8 @@ fun RoommateSummaryCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = netColor,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        maxLines = 1
                     )
                 }
             }

@@ -1,11 +1,12 @@
 package com.example.feature.apartmentmanager.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,16 +15,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.feature.apartmentmanager.model.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.feature.apartmentmanager.model.NotificationCategory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ApartmentManagementScreen(
     viewModel: ApartmentManagerViewModel = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val balanceSummaries = remember(state.expenses, state.settlements, state.roommates) {
+        viewModel.getBalanceSummaries()
+    }
+    val settlementSuggestions = remember(state.expenses, state.settlements, state.roommates) {
+        viewModel.getDebtSettlementSuggestions()
+    }
+    val totalPoolSpending = remember(state.expenses) {
+        viewModel.getTotalPoolSpending()
+    }
+    val activeRoommate = state.activeRoommate
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state.statusMessage) {
@@ -33,20 +47,10 @@ fun ApartmentManagementScreen(
         }
     }
 
-    val balanceSummaries = remember(state.roommates, state.expenses, state.settlements) {
-        viewModel.getBalanceSummaries()
+    // Universal Back Navigation: if not on Balances tab (tab 0), hardware Back takes user back to tab 0
+    BackHandler(enabled = state.selectedTab != 0) {
+        viewModel.selectTab(0)
     }
-
-    val settlementSuggestions = remember(balanceSummaries) {
-        viewModel.getDebtSettlementSuggestions()
-    }
-
-    val totalPoolSpending = remember(state.expenses) {
-        viewModel.getTotalPoolSpending()
-    }
-
-    val activeRoommate = state.roommates.find { it.id == state.activeRoommateId }
-        ?: state.roommates.firstOrNull()
 
     var userDropdownExpanded by remember { mutableStateOf(false) }
 
@@ -54,26 +58,70 @@ fun ApartmentManagementScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Column {
-                            Text(
-                                text = state.profile.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = state.profile.flatNumber,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                navigationIcon = {
+                    if (state.selectedTab != 0) {
+                        IconButton(onClick = { viewModel.selectTab(0) }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back to Balances",
+                                tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }
                 },
+                title = {
+                    Column {
+                        val tabTitle = when (state.selectedTab) {
+                            1 -> "Expenses & Groceries"
+                            2 -> "Settlements"
+                            3 -> "Admin Controls"
+                            else -> state.profile.name
+                        }
+                        val tabSubtitle = when (state.selectedTab) {
+                            1 -> "${state.expenses.size} purchases • ${state.profile.name}"
+                            2 -> "${state.settlements.size} records • ${state.pendingSettlementCount} pending"
+                            3 -> "Flat ${state.profile.flatNumber} • Admin Settings"
+                            else -> "Flat ${state.profile.flatNumber}"
+                        }
+                        Text(
+                            text = tabTitle,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = tabSubtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                },
                 actions = {
+                    // Notification Activity Bell with Unread Badge
+                    IconButton(onClick = { viewModel.openNotificationsDialog() }) {
+                        BadgedBox(
+                            badge = {
+                                if (state.unreadNotificationCount > 0) {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.error,
+                                        contentColor = MaterialTheme.colorScheme.onError
+                                    ) {
+                                        Text(state.unreadNotificationCount.toString())
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = "Apartment Activity and Notifications",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+
                     // Active Roommate Identity Pill with Dropdown
                     Box {
                         Surface(
@@ -105,7 +153,10 @@ fun ApartmentManagementScreen(
                                     text = activeRoommate?.name ?: "User",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onPrimary,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.widthIn(max = 75.dp)
                                 )
                                 Spacer(modifier = Modifier.width(2.dp))
                                 Icon(
@@ -180,7 +231,22 @@ fun ApartmentManagementScreen(
                 NavigationBarItem(
                     selected = state.selectedTab == 2,
                     onClick = { viewModel.selectTab(2) },
-                    icon = { Icon(Icons.Default.SyncAlt, contentDescription = "Settlements") },
+                    icon = {
+                        BadgedBox(
+                            badge = {
+                                if (state.pendingSettlementCount > 0) {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.error,
+                                        contentColor = MaterialTheme.colorScheme.onError
+                                    ) {
+                                        Text(state.pendingSettlementCount.toString())
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.SyncAlt, contentDescription = "Settlements")
+                        }
+                    },
                     label = { Text("Settlements") }
                 )
                 NavigationBarItem(
@@ -219,6 +285,8 @@ fun ApartmentManagementScreen(
                 2 -> SettlementsTab(
                     state = state,
                     onAddSettlement = { viewModel.openAddSettlementDialog() },
+                    onApproveSettlement = { viewModel.approveSettlement(it) },
+                    onRejectSettlement = { id, reason -> viewModel.rejectSettlement(id, reason) },
                     onDeleteSettlement = { viewModel.deleteSettlement(it) }
                 )
                 3 -> AdminControlTab(
@@ -236,7 +304,19 @@ fun ApartmentManagementScreen(
         }
     }
 
-    // --- Dialogs ---
+    // --- Dialogs with Back Navigation & Non-overlapping Layouts ---
+    if (state.showNotificationsDialog) {
+        ApartmentNotificationsDialog(
+            notifications = state.notifications,
+            onDismiss = { viewModel.closeNotificationsDialog() },
+            onMarkAllAsRead = { viewModel.markAllNotificationsAsRead() },
+            onClearAll = { viewModel.clearNotifications() },
+            onNavigateToSettlements = {
+                viewModel.selectTab(2)
+            }
+        )
+    }
+
     if (state.showAddExpenseDialog) {
         AddEditExpenseDialog(
             expense = state.editingExpense,
@@ -253,6 +333,7 @@ fun ApartmentManagementScreen(
         AddSettlementDialog(
             roommates = state.roommates,
             currencySymbol = state.profile.currencySymbol,
+            isAdmin = state.isActiveUserAdmin,
             prefillFromId = state.settlementPrefillFromId,
             prefillToId = state.settlementPrefillToId,
             prefillAmount = state.settlementPrefillAmount,
@@ -284,6 +365,8 @@ fun ApartmentManagementScreen(
     }
 
     if (state.showResetConfirmationDialog) {
+        BackHandler { viewModel.closeResetConfirmationDialog() }
+
         AlertDialog(
             onDismissRequest = { viewModel.closeResetConfirmationDialog() },
             title = { Text("Reset to Original Sheet Data?") },
@@ -298,7 +381,7 @@ fun ApartmentManagementScreen(
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.closeResetConfirmationDialog() }) {
-                    Text("Cancel")
+                    Text("Back")
                 }
             }
         )

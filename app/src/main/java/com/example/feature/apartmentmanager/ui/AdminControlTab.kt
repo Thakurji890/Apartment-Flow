@@ -4,11 +4,14 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,7 +44,7 @@ fun AdminControlTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Admin Banner
@@ -78,7 +81,7 @@ fun AdminControlTab(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Manage roommates, household details, and expense settings",
+                            text = "Manage roommates, household details, and settlements",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
@@ -110,8 +113,11 @@ fun AdminControlTab(
                     )
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         state.roommates.forEach { rm ->
                             val isSelected = state.activeRoommateId == rm.id
@@ -152,7 +158,7 @@ fun AdminControlTab(
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
-                        IconButton(onClick = onEditApartment) {
+                        IconButton(onClick = onEditApartment, modifier = Modifier.size(48.dp)) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit Profile")
                         }
                     }
@@ -205,7 +211,7 @@ fun AdminControlTab(
             }
         }
 
-        // Roommates Directory (Sheet Table 3)
+        // Roommates Directory
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -241,7 +247,10 @@ fun AdminControlTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Surface(
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.surfaceVariant,
@@ -299,17 +308,17 @@ fun AdminControlTab(
                         }
                     }
 
-                    Row {
-                        IconButton(onClick = { onEditRoommate(rm) }, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(18.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { onEditRoommate(rm) }, modifier = Modifier.size(48.dp)) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(20.dp))
                         }
                         if (state.roommates.size > 1) {
-                            IconButton(onClick = { roommateToDelete = rm }, modifier = Modifier.size(32.dp)) {
+                            IconButton(onClick = { roommateToDelete = rm }, modifier = Modifier.size(48.dp)) {
                                 Icon(
                                     Icons.Default.Delete,
                                     contentDescription = "Delete",
                                     tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
@@ -388,6 +397,8 @@ fun AdminControlTab(
     }
 
     if (roommateToDelete != null) {
+        BackHandler { roommateToDelete = null }
+
         AlertDialog(
             onDismissRequest = { roommateToDelete = null },
             title = { Text("Remove Roommate?") },
@@ -405,7 +416,7 @@ fun AdminControlTab(
             },
             dismissButton = {
                 TextButton(onClick = { roommateToDelete = null }) {
-                    Text("Cancel")
+                    Text("Back")
                 }
             }
         )

@@ -29,6 +29,9 @@ class ApartmentDataManager(context: Context) {
     private val _settlements = MutableStateFlow<List<ApartmentSettlement>>(emptyList())
     val settlements: StateFlow<List<ApartmentSettlement>> = _settlements.asStateFlow()
 
+    private val _notifications = MutableStateFlow<List<ApartmentNotification>>(emptyList())
+    val notifications: StateFlow<List<ApartmentNotification>> = _notifications.asStateFlow()
+
     private val _activeRoommateId = MutableStateFlow("1") // Defaults to Aniket (Admin)
     val activeRoommateId: StateFlow<String> = _activeRoommateId.asStateFlow()
 
@@ -109,6 +112,12 @@ class ApartmentDataManager(context: Context) {
                 val list = mutableListOf<ApartmentSettlement>()
                 for (i in 0 until array.length()) {
                     val obj = array.getJSONObject(i)
+                    val statusStr = obj.optString("status", "APPROVED")
+                    val status = try {
+                        SettlementStatus.valueOf(statusStr)
+                    } catch (e: Exception) {
+                        SettlementStatus.APPROVED
+                    }
                     list.add(
                         ApartmentSettlement(
                             id = obj.getString("id"),
@@ -116,11 +125,44 @@ class ApartmentDataManager(context: Context) {
                             fromRoommateId = obj.getString("from"),
                             toRoommateId = obj.getString("to"),
                             amount = obj.getDouble("amount"),
-                            note = obj.optString("note", "")
+                            note = obj.optString("note", ""),
+                            status = status,
+                            approvedByAdminId = if (obj.has("approvedBy")) obj.optString("approvedBy") else null,
+                            approvedAt = if (obj.has("approvedAt")) obj.optString("approvedAt") else null,
+                            rejectionReason = if (obj.has("rejectionReason")) obj.optString("rejectionReason") else null
                         )
                     )
                 }
                 _settlements.value = list
+            }
+
+            // Load Notifications
+            val notifJson = prefs.getString("notifications", null)
+            if (notifJson != null) {
+                val array = JSONArray(notifJson)
+                val list = mutableListOf<ApartmentNotification>()
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    val catStr = obj.optString("category", "GENERAL")
+                    val cat = try {
+                        NotificationCategory.valueOf(catStr)
+                    } catch (e: Exception) {
+                        NotificationCategory.GENERAL
+                    }
+                    list.add(
+                        ApartmentNotification(
+                            id = obj.getString("id"),
+                            timestamp = obj.optLong("timestamp", System.currentTimeMillis()),
+                            title = obj.getString("title"),
+                            message = obj.getString("message"),
+                            category = cat,
+                            authorName = obj.optString("authorName", "System"),
+                            requiresAdminAction = obj.optBoolean("requiresAdminAction", false),
+                            isRead = obj.optBoolean("isRead", false)
+                        )
+                    )
+                }
+                _notifications.value = list
             }
 
             _activeRoommateId.value = prefs.getString("active_roommate_id", "1") ?: "1"
@@ -182,9 +224,30 @@ class ApartmentDataManager(context: Context) {
             obj.put("to", set.toRoommateId)
             obj.put("amount", set.amount)
             obj.put("note", set.note)
+            obj.put("status", set.status.name)
+            set.approvedByAdminId?.let { obj.put("approvedBy", it) }
+            set.approvedAt?.let { obj.put("approvedAt", it) }
+            set.rejectionReason?.let { obj.put("rejectionReason", it) }
             setArray.put(obj)
         }
         editor.putString("settlements", setArray.toString())
+
+        // Save Notifications
+        val notifArray = JSONArray()
+        _notifications.value.forEach { n ->
+            val obj = JSONObject()
+            obj.put("id", n.id)
+            obj.put("timestamp", n.timestamp)
+            obj.put("title", n.title)
+            obj.put("message", n.message)
+            obj.put("category", n.category.name)
+            obj.put("authorName", n.authorName)
+            obj.put("requiresAdminAction", n.requiresAdminAction)
+            obj.put("isRead", n.isRead)
+            notifArray.put(obj)
+        }
+        editor.putString("notifications", notifArray.toString())
+
         editor.putString("active_roommate_id", _activeRoommateId.value)
 
         editor.apply()
@@ -207,19 +270,44 @@ class ApartmentDataManager(context: Context) {
         val color = colors[(_roommates.value.size) % colors.size]
         val newRoommate = ApartmentRoommate(newId, name, notes, isAdmin, color)
         _roommates.value = _roommates.value + newRoommate
+
+        val adder = _roommates.value.find { it.id == _activeRoommateId.value }?.name ?: "Admin"
+        addNotification(
+            title = "New Roommate Added",
+            message = "$name joined the apartment (added by $adder).",
+            category = NotificationCategory.GENERAL,
+            authorName = adder
+        )
         saveData()
     }
 
     fun updateRoommate(roommate: ApartmentRoommate) {
         _roommates.value = _roommates.value.map { if (it.id == roommate.id) roommate else it }
+        val updater = _roommates.value.find { it.id == _activeRoommateId.value }?.name ?: "Admin"
+        addNotification(
+            title = "Roommate Profile Updated",
+            message = "${roommate.name}'s details were updated by $updater.",
+            category = NotificationCategory.GENERAL,
+            authorName = updater
+        )
         saveData()
     }
 
     fun deleteRoommate(roommateId: String) {
         if (_roommates.value.size <= 1) return // Keep at least one
+        val rm = _roommates.value.find { it.id == roommateId }
         _roommates.value = _roommates.value.filter { it.id != roommateId }
         if (_activeRoommateId.value == roommateId) {
             _activeRoommateId.value = _roommates.value.firstOrNull()?.id ?: ""
+        }
+        val remover = _roommates.value.find { it.id == _activeRoommateId.value }?.name ?: "Admin"
+        if (rm != null) {
+            addNotification(
+                title = "Roommate Removed",
+                message = "${rm.name} was removed from the apartment roster by $remover.",
+                category = NotificationCategory.GENERAL,
+                authorName = remover
+            )
         }
         saveData()
     }
@@ -244,41 +332,212 @@ class ApartmentDataManager(context: Context) {
         )
         // Add to the front so newest appears first
         _expenses.value = listOf(expense) + _expenses.value
+
+        val payer = _roommates.value.find { it.id == paidByRoommateId }?.name ?: "Roommate"
+        val currency = _apartmentProfile.value.currencySymbol
+        addNotification(
+            title = "New Purchase Logged",
+            message = "$payer purchased '$item' for $currency${"%.2f".format(amount)} (Split among ${sharedByRoommateIds.size} roommates).",
+            category = NotificationCategory.PURCHASE,
+            authorName = payer
+        )
+
         saveData()
     }
 
     fun updateExpense(expense: ApartmentExpense) {
         _expenses.value = _expenses.value.map { if (it.id == expense.id) expense else it }
+        val updater = _roommates.value.find { it.id == _activeRoommateId.value }?.name ?: "Admin"
+        val currency = _apartmentProfile.value.currencySymbol
+        addNotification(
+            title = "Purchase Updated",
+            message = "$updater modified purchase '${expense.item}' ($currency${"%.2f".format(expense.amount)}).",
+            category = NotificationCategory.PURCHASE,
+            authorName = updater
+        )
         saveData()
     }
 
     fun deleteExpense(expenseId: String) {
+        val exp = _expenses.value.find { it.id == expenseId }
         _expenses.value = _expenses.value.filter { it.id != expenseId }
+        val remover = _roommates.value.find { it.id == _activeRoommateId.value }?.name ?: "Admin"
+        val currency = _apartmentProfile.value.currencySymbol
+        if (exp != null) {
+            addNotification(
+                title = "Purchase Deleted",
+                message = "$remover deleted '${exp.item}' ($currency${"%.2f".format(exp.amount)}).",
+                category = NotificationCategory.PURCHASE,
+                authorName = remover
+            )
+        }
         saveData()
     }
 
-    // --- Settlements CRUD ---
+    // --- Settlements CRUD & Approval Workflow ---
     fun addSettlement(
         date: String,
         fromRoommateId: String,
         toRoommateId: String,
         amount: Double,
-        note: String = ""
+        note: String = "",
+        autoApproveIfAdmin: Boolean = true
     ) {
+        val activeUser = _roommates.value.find { it.id == _activeRoommateId.value }
+        val isAdmin = activeUser?.isAdmin == true
+        val status = if (isAdmin && autoApproveIfAdmin) SettlementStatus.APPROVED else SettlementStatus.PENDING
+        val today = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+
         val settlement = ApartmentSettlement(
             id = UUID.randomUUID().toString().take(8),
             date = date,
             fromRoommateId = fromRoommateId,
             toRoommateId = toRoommateId,
             amount = amount,
-            note = note
+            note = note,
+            status = status,
+            approvedByAdminId = if (status == SettlementStatus.APPROVED) activeUser?.id else null,
+            approvedAt = if (status == SettlementStatus.APPROVED) today else null
         )
         _settlements.value = listOf(settlement) + _settlements.value
+
+        val fromName = _roommates.value.find { it.id == fromRoommateId }?.name ?: "Roommate"
+        val toName = _roommates.value.find { it.id == toRoommateId }?.name ?: "Roommate"
+        val currency = _apartmentProfile.value.currencySymbol
+
+        if (status == SettlementStatus.PENDING) {
+            addNotification(
+                title = "Settlement Awaiting Admin Approval",
+                message = "$fromName submitted payment of $currency${"%.2f".format(amount)} to $toName. Admin approval is required to update balances.",
+                category = NotificationCategory.SETTLEMENT,
+                authorName = fromName,
+                requiresAdminAction = true
+            )
+        } else {
+            addNotification(
+                title = "Settlement Recorded & Approved",
+                message = "Admin ${activeUser?.name ?: "Admin"} recorded and approved $fromName's payment of $currency${"%.2f".format(amount)} to $toName.",
+                category = NotificationCategory.SETTLEMENT,
+                authorName = activeUser?.name ?: "Admin"
+            )
+        }
+
         saveData()
     }
 
+    fun approveSettlement(settlementId: String, adminId: String): Boolean {
+        val admin = _roommates.value.find { it.id == adminId }
+        if (admin == null || !admin.isAdmin) return false
+
+        val today = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+        var target: ApartmentSettlement? = null
+
+        _settlements.value = _settlements.value.map { s ->
+            if (s.id == settlementId) {
+                target = s.copy(
+                    status = SettlementStatus.APPROVED,
+                    approvedByAdminId = adminId,
+                    approvedAt = today,
+                    rejectionReason = null
+                )
+                target!!
+            } else s
+        }
+
+        target?.let { s ->
+            val fromName = _roommates.value.find { it.id == s.fromRoommateId }?.name ?: "Roommate"
+            val toName = _roommates.value.find { it.id == s.toRoommateId }?.name ?: "Roommate"
+            val currency = _apartmentProfile.value.currencySymbol
+            addNotification(
+                title = "Settlement Approved by Admin",
+                message = "Admin ${admin.name} approved $fromName's payment of $currency${"%.2f".format(s.amount)} to $toName. Ledger balances updated!",
+                category = NotificationCategory.ADMIN_ACTION,
+                authorName = admin.name
+            )
+        }
+        saveData()
+        return true
+    }
+
+    fun rejectSettlement(settlementId: String, adminId: String, reason: String = ""): Boolean {
+        val admin = _roommates.value.find { it.id == adminId }
+        if (admin == null || !admin.isAdmin) return false
+
+        var target: ApartmentSettlement? = null
+
+        _settlements.value = _settlements.value.map { s ->
+            if (s.id == settlementId) {
+                target = s.copy(
+                    status = SettlementStatus.REJECTED,
+                    approvedByAdminId = adminId,
+                    rejectionReason = reason.ifBlank { "Declined by Admin" }
+                )
+                target!!
+            } else s
+        }
+
+        target?.let { s ->
+            val fromName = _roommates.value.find { it.id == s.fromRoommateId }?.name ?: "Roommate"
+            val toName = _roommates.value.find { it.id == s.toRoommateId }?.name ?: "Roommate"
+            val currency = _apartmentProfile.value.currencySymbol
+            val noteReason = if (reason.isNotBlank()) " Reason: $reason" else ""
+            addNotification(
+                title = "Settlement Rejected by Admin",
+                message = "Admin ${admin.name} rejected $fromName's payment of $currency${"%.2f".format(s.amount)} to $toName.$noteReason",
+                category = NotificationCategory.ADMIN_ACTION,
+                authorName = admin.name
+            )
+        }
+        saveData()
+        return true
+    }
+
     fun deleteSettlement(settlementId: String) {
+        val s = _settlements.value.find { it.id == settlementId }
         _settlements.value = _settlements.value.filter { it.id != settlementId }
+        val remover = _roommates.value.find { it.id == _activeRoommateId.value }?.name ?: "Admin"
+        val currency = _apartmentProfile.value.currencySymbol
+        if (s != null) {
+            val fromName = _roommates.value.find { it.id == s.fromRoommateId }?.name ?: "Roommate"
+            val toName = _roommates.value.find { it.id == s.toRoommateId }?.name ?: "Roommate"
+            addNotification(
+                title = "Settlement Deleted",
+                message = "$remover deleted payment record of $currency${"%.2f".format(s.amount)} ($fromName → $toName).",
+                category = NotificationCategory.SETTLEMENT,
+                authorName = remover
+            )
+        }
+        saveData()
+    }
+
+    // --- Notification Helpers ---
+    fun addNotification(
+        title: String,
+        message: String,
+        category: NotificationCategory,
+        authorName: String = "System",
+        requiresAdminAction: Boolean = false
+    ) {
+        val notif = ApartmentNotification(
+            id = UUID.randomUUID().toString().take(8),
+            timestamp = System.currentTimeMillis(),
+            title = title,
+            message = message,
+            category = category,
+            authorName = authorName,
+            requiresAdminAction = requiresAdminAction,
+            isRead = false
+        )
+        _notifications.value = listOf(notif) + _notifications.value
+    }
+
+    fun markAllNotificationsAsRead() {
+        _notifications.value = _notifications.value.map { it.copy(isRead = true) }
+        saveData()
+    }
+
+    fun clearNotifications() {
+        _notifications.value = emptyList()
         saveData()
     }
 
@@ -299,14 +558,14 @@ class ApartmentDataManager(context: Context) {
                 .filter { it.sharedByRoommateIds.contains(rm.id) && it.sharingCount > 0 }
                 .sumOf { it.shareEach }
 
-            // Paid to Others (Settlements where from == rm.id)
+            // Paid to Others (ONLY Approved Settlements where from == rm.id)
             val paidToOthers = sets
-                .filter { it.fromRoommateId == rm.id }
+                .filter { it.fromRoommateId == rm.id && it.status == SettlementStatus.APPROVED }
                 .sumOf { it.amount }
 
-            // Received from Others (Settlements where to == rm.id)
+            // Received from Others (ONLY Approved Settlements where to == rm.id)
             val receivedFromOthers = sets
-                .filter { it.toRoommateId == rm.id }
+                .filter { it.toRoommateId == rm.id && it.status == SettlementStatus.APPROVED }
                 .sumOf { it.amount }
 
             // Net Balance = (Total Paid + Paid To Others) - (Total Owed + Received From Others)
@@ -451,46 +710,79 @@ class ApartmentDataManager(context: Context) {
         )
         _expenses.value = defaultExpenses
 
-        // The exact 36 settlements from Table 4
+        // The exact 36 settlements from Table 4 (all verified and approved by Admin Aniket)
         val defaultSettlements = listOf(
-            ApartmentSettlement("s1", "21/07/2026", "3", "1", 37.50, ""),
-            ApartmentSettlement("s2", "21/07/2026", "5", "1", 37.50, ""),
-            ApartmentSettlement("s3", "22/07/2026", "3", "1", 52.00, ""),
-            ApartmentSettlement("s4", "22/07/2026", "5", "1", 52.00, ""),
-            ApartmentSettlement("s5", "22/07/2026", "2", "1", 20.00, ""),
-            ApartmentSettlement("s6", "21/07/2026", "5", "1", 50.00, ""),
-            ApartmentSettlement("s7", "28/07/2026", "5", "4", 77.00, ""),
-            ApartmentSettlement("s8", "31/07/2026", "4", "1", 15.00, ""),
-            ApartmentSettlement("s9", "31/07/2026", "5", "1", 15.00, ""),
-            ApartmentSettlement("s10", "01/08/2026", "3", "1", 40.00, ""),
-            ApartmentSettlement("s11", "02/08/2026", "5", "4", 30.00, ""),
-            ApartmentSettlement("s12", "03/08/2026", "2", "1", 55.00, ""),
-            ApartmentSettlement("s13", "04/08/2026", "5", "4", 70.00, ""),
-            ApartmentSettlement("s14", "05/08/2026", "5", "2", 10.00, ""),
-            ApartmentSettlement("s15", "07/08/2026", "5", "2", 90.00, ""),
-            ApartmentSettlement("s16", "07/08/2026", "3", "2", 10.00, ""),
-            ApartmentSettlement("s17", "31/07/2026", "1", "2", 213.50, ""),
-            ApartmentSettlement("s18", "11/08/2026", "5", "1", 10.00, ""),
-            ApartmentSettlement("s19", "11/08/2026", "5", "4", 10.00, ""),
-            ApartmentSettlement("s20", "12/08/2026", "5", "1", 153.00, ""),
-            ApartmentSettlement("s21", "12/08/2026", "1", "2", 46.00, ""),
-            ApartmentSettlement("s22", "12/08/2026", "3", "1", 300.00, ""),
-            ApartmentSettlement("s23", "12/08/2026", "1", "2", 164.08, ""),
-            ApartmentSettlement("s24", "14/08/2026", "2", "5", 130.00, ""),
-            ApartmentSettlement("s25", "17/08/2026", "3", "1", 30.00, ""),
-            ApartmentSettlement("s26", "21/08/2026", "1", "5", 12.50, ""),
-            ApartmentSettlement("s27", "22/08/2026", "3", "2", 34.00, ""),
-            ApartmentSettlement("s28", "22/08/2026", "5", "2", 34.00, ""),
-            ApartmentSettlement("s29", "22/08/2026", "1", "2", 100.00, ""),
-            ApartmentSettlement("s30", "24/08/2026", "4", "1", 15.00, ""),
-            ApartmentSettlement("s31", "26/08/2026", "4", "1", 55.00, ""),
-            ApartmentSettlement("s32", "27/08/2026", "4", "1", 160.00, ""),
-            ApartmentSettlement("s33", "01/09/2026", "3", "4", 200.00, ""),
-            ApartmentSettlement("s34", "01/09/2026", "2", "4", 98.00, ""),
-            ApartmentSettlement("s35", "10/09/2026", "5", "1", 20.00, ""),
-            ApartmentSettlement("s36", "10/09/2026", "3", "1", 12.00, "")
+            ApartmentSettlement("s1", "21/07/2026", "3", "1", 37.50, "", SettlementStatus.APPROVED, "1", "21/07/2026"),
+            ApartmentSettlement("s2", "21/07/2026", "5", "1", 37.50, "", SettlementStatus.APPROVED, "1", "21/07/2026"),
+            ApartmentSettlement("s3", "22/07/2026", "3", "1", 52.00, "", SettlementStatus.APPROVED, "1", "22/07/2026"),
+            ApartmentSettlement("s4", "22/07/2026", "5", "1", 52.00, "", SettlementStatus.APPROVED, "1", "22/07/2026"),
+            ApartmentSettlement("s5", "22/07/2026", "2", "1", 20.00, "", SettlementStatus.APPROVED, "1", "22/07/2026"),
+            ApartmentSettlement("s6", "21/07/2026", "5", "1", 50.00, "", SettlementStatus.APPROVED, "1", "21/07/2026"),
+            ApartmentSettlement("s7", "28/07/2026", "5", "4", 77.00, "", SettlementStatus.APPROVED, "1", "28/07/2026"),
+            ApartmentSettlement("s8", "31/07/2026", "4", "1", 15.00, "", SettlementStatus.APPROVED, "1", "31/07/2026"),
+            ApartmentSettlement("s9", "31/07/2026", "5", "1", 15.00, "", SettlementStatus.APPROVED, "1", "31/07/2026"),
+            ApartmentSettlement("s10", "01/08/2026", "3", "1", 40.00, "", SettlementStatus.APPROVED, "1", "01/08/2026"),
+            ApartmentSettlement("s11", "02/08/2026", "5", "4", 30.00, "", SettlementStatus.APPROVED, "1", "02/08/2026"),
+            ApartmentSettlement("s12", "03/08/2026", "2", "1", 55.00, "", SettlementStatus.APPROVED, "1", "03/08/2026"),
+            ApartmentSettlement("s13", "04/08/2026", "5", "4", 70.00, "", SettlementStatus.APPROVED, "1", "04/08/2026"),
+            ApartmentSettlement("s14", "05/08/2026", "5", "2", 10.00, "", SettlementStatus.APPROVED, "1", "05/08/2026"),
+            ApartmentSettlement("s15", "07/08/2026", "5", "2", 90.00, "", SettlementStatus.APPROVED, "1", "07/08/2026"),
+            ApartmentSettlement("s16", "07/08/2026", "3", "2", 10.00, "", SettlementStatus.APPROVED, "1", "07/08/2026"),
+            ApartmentSettlement("s17", "31/07/2026", "1", "2", 213.50, "", SettlementStatus.APPROVED, "1", "31/07/2026"),
+            ApartmentSettlement("s18", "11/08/2026", "5", "1", 10.00, "", SettlementStatus.APPROVED, "1", "11/08/2026"),
+            ApartmentSettlement("s19", "11/08/2026", "5", "4", 10.00, "", SettlementStatus.APPROVED, "1", "11/08/2026"),
+            ApartmentSettlement("s20", "12/08/2026", "5", "1", 153.00, "", SettlementStatus.APPROVED, "1", "12/08/2026"),
+            ApartmentSettlement("s21", "12/08/2026", "1", "2", 46.00, "", SettlementStatus.APPROVED, "1", "12/08/2026"),
+            ApartmentSettlement("s22", "12/08/2026", "3", "1", 300.00, "", SettlementStatus.APPROVED, "1", "12/08/2026"),
+            ApartmentSettlement("s23", "12/08/2026", "1", "2", 164.08, "", SettlementStatus.APPROVED, "1", "12/08/2026"),
+            ApartmentSettlement("s24", "14/08/2026", "2", "5", 130.00, "", SettlementStatus.APPROVED, "1", "14/08/2026"),
+            ApartmentSettlement("s25", "17/08/2026", "3", "1", 30.00, "", SettlementStatus.APPROVED, "1", "17/08/2026"),
+            ApartmentSettlement("s26", "21/08/2026", "1", "5", 12.50, "", SettlementStatus.APPROVED, "1", "21/08/2026"),
+            ApartmentSettlement("s27", "22/08/2026", "3", "2", 34.00, "", SettlementStatus.APPROVED, "1", "22/08/2026"),
+            ApartmentSettlement("s28", "22/08/2026", "5", "2", 34.00, "", SettlementStatus.APPROVED, "1", "22/08/2026"),
+            ApartmentSettlement("s29", "22/08/2026", "1", "2", 100.00, "", SettlementStatus.APPROVED, "1", "22/08/2026"),
+            ApartmentSettlement("s30", "24/08/2026", "4", "1", 15.00, "", SettlementStatus.APPROVED, "1", "24/08/2026"),
+            ApartmentSettlement("s31", "26/08/2026", "4", "1", 55.00, "", SettlementStatus.APPROVED, "1", "26/08/2026"),
+            ApartmentSettlement("s32", "27/08/2026", "4", "1", 160.00, "", SettlementStatus.APPROVED, "1", "27/08/2026"),
+            ApartmentSettlement("s33", "01/09/2026", "3", "4", 200.00, "", SettlementStatus.APPROVED, "1", "01/09/2026"),
+            ApartmentSettlement("s34", "01/09/2026", "2", "4", 98.00, "", SettlementStatus.APPROVED, "1", "01/09/2026"),
+            ApartmentSettlement("s35", "10/09/2026", "5", "1", 20.00, "", SettlementStatus.APPROVED, "1", "10/09/2026"),
+            ApartmentSettlement("s36", "10/09/2026", "3", "1", 12.00, "", SettlementStatus.APPROVED, "1", "10/09/2026")
         )
         _settlements.value = defaultSettlements
+
+        // Initial default activity notifications
+        val now = System.currentTimeMillis()
+        val defaultNotifs = listOf(
+            ApartmentNotification(
+                id = "n1",
+                timestamp = now - 1000 * 60 * 15,
+                title = "Flat 402 Initialized",
+                message = "Apartment Flat 402 ledger synchronized with 5 roommates and 48 purchase records.",
+                category = NotificationCategory.GENERAL,
+                authorName = "Aniket (Admin)",
+                isRead = false
+            ),
+            ApartmentNotification(
+                id = "n2",
+                timestamp = now - 1000 * 60 * 10,
+                title = "All 36 Past Settlements Approved",
+                message = "Admin Aniket verified and approved all historical payments from the apartment ledger.",
+                category = NotificationCategory.ADMIN_ACTION,
+                authorName = "Aniket (Admin)",
+                isRead = false
+            ),
+            ApartmentNotification(
+                id = "n3",
+                timestamp = now - 1000 * 60 * 5,
+                title = "Recent Purchase Logged",
+                message = "Aniket purchased 'rice and mixture' for ₹60.00 (Split among 5 roommates).",
+                category = NotificationCategory.PURCHASE,
+                authorName = "Aniket",
+                isRead = false
+            )
+        )
+        _notifications.value = defaultNotifs
 
         saveData()
     }

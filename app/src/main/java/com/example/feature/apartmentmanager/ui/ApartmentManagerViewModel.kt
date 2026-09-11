@@ -16,6 +16,7 @@ data class ApartmentUiState(
     val roommates: List<ApartmentRoommate> = emptyList(),
     val expenses: List<ApartmentExpense> = emptyList(),
     val settlements: List<ApartmentSettlement> = emptyList(),
+    val notifications: List<ApartmentNotification> = emptyList(),
     val activeRoommateId: String = "1",
     val selectedTab: Int = 0, // 0: Balances, 1: Expenses, 2: Settlements, 3: Admin
     val expenseFilterRoommateId: String? = null,
@@ -31,8 +32,21 @@ data class ApartmentUiState(
     val editingRoommate: ApartmentRoommate? = null,
     val showEditApartmentDialog: Boolean = false,
     val showResetConfirmationDialog: Boolean = false,
+    val showNotificationsDialog: Boolean = false,
     val statusMessage: String? = null
-)
+) {
+    val activeRoommate: ApartmentRoommate?
+        get() = roommates.find { it.id == activeRoommateId }
+
+    val isActiveUserAdmin: Boolean
+        get() = activeRoommate?.isAdmin == true
+
+    val unreadNotificationCount: Int
+        get() = notifications.count { !it.isRead }
+
+    val pendingSettlementCount: Int
+        get() = settlements.count { it.status == SettlementStatus.PENDING }
+}
 
 @HiltViewModel
 class ApartmentManagerViewModel @Inject constructor(
@@ -61,6 +75,12 @@ class ApartmentManagerViewModel @Inject constructor(
                     )
                 }
             }.collect()
+        }
+
+        viewModelScope.launch {
+            dataManager.notifications.collect { notifs ->
+                _uiState.update { it.copy(notifications = notifs) }
+            }
         }
     }
 
@@ -182,22 +202,66 @@ class ApartmentManagerViewModel @Inject constructor(
         amount: Double,
         note: String
     ) {
+        val isAdmin = _uiState.value.isActiveUserAdmin
         dataManager.addSettlement(
             date = date,
             fromRoommateId = fromId,
             toRoommateId = toId,
             amount = amount,
-            note = note
+            note = note,
+            autoApproveIfAdmin = isAdmin
         )
         val fromName = _uiState.value.roommates.find { it.id == fromId }?.name ?: "Roommate"
         val toName = _uiState.value.roommates.find { it.id == toId }?.name ?: "Roommate"
-        _uiState.update { it.copy(statusMessage = "Recorded settlement: $fromName paid $toName") }
+        val msg = if (isAdmin) {
+            "Recorded & approved settlement: $fromName paid $toName"
+        } else {
+            "Submitted for Admin Approval: $fromName paid $toName"
+        }
+        _uiState.update { it.copy(statusMessage = msg) }
         closeSettlementDialog()
+    }
+
+    fun approveSettlement(settlementId: String) {
+        val adminId = _uiState.value.activeRoommateId
+        val success = dataManager.approveSettlement(settlementId, adminId)
+        if (success) {
+            _uiState.update { it.copy(statusMessage = "Settlement approved by Admin!") }
+        } else {
+            _uiState.update { it.copy(statusMessage = "Only an Admin can approve settlements") }
+        }
+    }
+
+    fun rejectSettlement(settlementId: String, reason: String = "") {
+        val adminId = _uiState.value.activeRoommateId
+        val success = dataManager.rejectSettlement(settlementId, adminId, reason)
+        if (success) {
+            _uiState.update { it.copy(statusMessage = "Settlement rejected by Admin") }
+        } else {
+            _uiState.update { it.copy(statusMessage = "Only an Admin can reject settlements") }
+        }
     }
 
     fun deleteSettlement(settlementId: String) {
         dataManager.deleteSettlement(settlementId)
         _uiState.update { it.copy(statusMessage = "Settlement removed") }
+    }
+
+    // --- Notification Dialog & Controls ---
+    fun openNotificationsDialog() {
+        _uiState.update { it.copy(showNotificationsDialog = true) }
+    }
+
+    fun closeNotificationsDialog() {
+        _uiState.update { it.copy(showNotificationsDialog = false) }
+    }
+
+    fun markAllNotificationsAsRead() {
+        dataManager.markAllNotificationsAsRead()
+    }
+
+    fun clearNotifications() {
+        dataManager.clearNotifications()
     }
 
     // --- Roommate Dialog & CRUD ---
