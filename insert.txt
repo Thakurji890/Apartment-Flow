@@ -1,8 +1,0 @@
-                if (state.recurringBills.isNotEmpty()) {
-                    item {
-                        SectionHeader(title = "Upcoming Bills", onActionClick = { /* Navigate to bills list */ })
-                    }
-                    items(state.recurringBills.take(3)) { bill ->
-                        RecurringBillItem(bill = bill, onClick = { /* Navigate to bill details */ })
-                    }
-                }

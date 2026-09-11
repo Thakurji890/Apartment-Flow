@@ -1,2 +1,0 @@
-sed -i 's/import com.example.feature.dashboard.domain.usecase.DashboardUseCases/import com.example.feature.dashboard.domain.usecase.DashboardUseCases\nimport com.example.feature.dashboard.domain.model.ActivityItem\nimport com.example.feature.recurringbill.domain.model.RecurringBill/g' app/src/main/java/com/example/feature/dashboard/presentation/dashboard/DashboardViewModel.kt
-sed -i 's/com.example.feature.recurringbill.domain.model.RecurringBill/RecurringBill/g' app/src/main/java/com/example/feature/dashboard/presentation/dashboard/DashboardViewModel.kt

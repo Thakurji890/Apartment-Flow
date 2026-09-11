@@ -1,3 +1,0 @@
-
-    fun getRecurringBills(apartmentId: String): Flow<Resource<List<RecurringBill>>> =
-        recurringBillRepository.getRecurringBills(apartmentId)
