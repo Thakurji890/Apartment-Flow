@@ -28,6 +28,9 @@ interface ExpenseDao {
 
     @Query("UPDATE expenses SET deleted = 1 WHERE expenseId = :expenseId")
     suspend fun deleteExpenseLocally(expenseId: String)
+
+    @Query("UPDATE expenses SET status = :status, isSynced = :isSynced, updatedAt = :updatedAt WHERE expenseId = :expenseId")
+    suspend fun updateExpenseStatus(expenseId: String, status: String, isSynced: Boolean = false, updatedAt: Long = System.currentTimeMillis())
     
     @Query("SELECT * FROM expenses WHERE isSynced = 0")
     suspend fun getUnsyncedExpenses(): List<ExpenseEntity>

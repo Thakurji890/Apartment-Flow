@@ -22,5 +22,9 @@ interface ExpenseRepository {
     
     suspend fun deleteExpense(expenseId: String): Resource<Unit>
     
+    suspend fun approveExpense(expenseId: String, adminId: String): Resource<Unit>
+
+    suspend fun rejectExpense(expenseId: String, adminId: String, reason: String = ""): Resource<Unit>
+
     suspend fun syncExpenses(apartmentId: String): Resource<Unit>
 }

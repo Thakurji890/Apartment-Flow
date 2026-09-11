@@ -162,6 +162,70 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun approveExpense(expenseId: String, adminId: String): Resource<Unit> {
+        return try {
+            val expenseRef = expensesCollection.document(expenseId)
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(expenseRef)
+                if (!snapshot.exists()) {
+                    throw Exception("Expense not found")
+                }
+
+                val currentStatus = snapshot.getString("status")
+                if (currentStatus == "APPROVED") {
+                    throw Exception("Expense is already approved")
+                }
+
+                val now = System.currentTimeMillis()
+                transaction.update(expenseRef, "status", "APPROVED")
+                transaction.update(expenseRef, "approvedByAdminId", adminId)
+                transaction.update(expenseRef, "approvedAt", now)
+                transaction.update(expenseRef, "updatedAt", now)
+                transaction.update(expenseRef, "rejectionReason", null)
+            }.await()
+
+            // Update local cache
+            try {
+                dao.updateExpenseStatus(expenseId, "APPROVED", isSynced = true)
+            } catch (e: Exception) {
+                // Ignore local fallback error
+            }
+
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to approve expense")
+        }
+    }
+
+    override suspend fun rejectExpense(expenseId: String, adminId: String, reason: String): Resource<Unit> {
+        return try {
+            val expenseRef = expensesCollection.document(expenseId)
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(expenseRef)
+                if (!snapshot.exists()) {
+                    throw Exception("Expense not found")
+                }
+
+                val now = System.currentTimeMillis()
+                transaction.update(expenseRef, "status", "REJECTED")
+                transaction.update(expenseRef, "approvedByAdminId", adminId)
+                transaction.update(expenseRef, "rejectionReason", reason.ifBlank { "Rejected by admin" })
+                transaction.update(expenseRef, "updatedAt", now)
+            }.await()
+
+            // Update local cache
+            try {
+                dao.updateExpenseStatus(expenseId, "REJECTED", isSynced = true)
+            } catch (e: Exception) {
+                // Ignore local fallback error
+            }
+
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to reject expense")
+        }
+    }
+
     override suspend fun syncExpenses(apartmentId: String): Resource<Unit> {
         return try {
             // 1. Fetch remote changes

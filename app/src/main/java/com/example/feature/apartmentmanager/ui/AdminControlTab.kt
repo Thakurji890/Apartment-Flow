@@ -37,10 +37,21 @@ fun AdminControlTab(
     onAddRoommate: () -> Unit,
     onEditRoommate: (ApartmentRoommate) -> Unit,
     onDeleteRoommate: (String) -> Unit,
-    onResetToDefault: () -> Unit
+    onResetToDefault: () -> Unit,
+    onApproveExpense: (String) -> Unit = {},
+    onRejectExpense: (String, String) -> Unit = { _, _ -> },
+    onApproveSettlement: (String) -> Unit = {},
+    onRejectSettlement: (String, String) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     var roommateToDelete by remember { mutableStateOf<ApartmentRoommate?>(null) }
+    val pendingExpenses = remember(state.expenses) {
+        state.expenses.filter { it.status == ExpenseStatus.PENDING }
+    }
+    val pendingSettlements = remember(state.settlements) {
+        state.settlements.filter { it.status == SettlementStatus.PENDING }
+    }
+    val currency = state.profile.currencySymbol
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -81,10 +92,180 @@ fun AdminControlTab(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Manage roommates, household details, and settlements",
+                            text = "Manage roommates, household details, and approvals",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
+                    }
+                }
+            }
+        }
+
+        // Pending Approvals Section (Expenses & Settlements)
+        if (pendingExpenses.isNotEmpty() || pendingSettlements.isNotEmpty()) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.PendingActions,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Pending Admin Approvals (${pendingExpenses.size + pendingSettlements.size})",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+
+                        // Pending Expenses
+                        if (pendingExpenses.isNotEmpty()) {
+                            Text(
+                                text = "Pending Expenses (${pendingExpenses.size})",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            pendingExpenses.forEach { exp ->
+                                val payerName = state.roommates.find { it.id == exp.paidByRoommateId }?.name ?: "Roommate"
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = MaterialTheme.colorScheme.surface,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                                Text(exp.item, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                                                Text("Paid by $payerName on ${exp.date}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            }
+                                            Text(
+                                                "$currency${"%.2f".format(exp.amount)}",
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                style = MaterialTheme.typography.titleSmall
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Button(
+                                                onClick = { onApproveExpense(exp.id) },
+                                                modifier = Modifier.weight(1f).height(36.dp),
+                                                shape = RoundedCornerShape(8.dp),
+                                                contentPadding = PaddingValues(0.dp)
+                                            ) {
+                                                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Approve", style = MaterialTheme.typography.labelMedium)
+                                            }
+
+                                            OutlinedButton(
+                                                onClick = { onRejectExpense(exp.id, "Declined by Admin") },
+                                                modifier = Modifier.weight(1f).height(36.dp),
+                                                shape = RoundedCornerShape(8.dp),
+                                                contentPadding = PaddingValues(0.dp),
+                                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                            ) {
+                                                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Reject", style = MaterialTheme.typography.labelMedium)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Pending Settlements
+                        if (pendingSettlements.isNotEmpty()) {
+                            Text(
+                                text = "Pending Settlements (${pendingSettlements.size})",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            pendingSettlements.forEach { s ->
+                                val fromName = state.roommates.find { it.id == s.fromRoommateId }?.name ?: "Roommate"
+                                val toName = state.roommates.find { it.id == s.toRoommateId }?.name ?: "Roommate"
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = MaterialTheme.colorScheme.surface,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                                Text("$fromName → $toName", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                                                Text("Recorded on ${s.date}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            }
+                                            Text(
+                                                "$currency${"%.2f".format(s.amount)}",
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                style = MaterialTheme.typography.titleSmall
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Button(
+                                                onClick = { onApproveSettlement(s.id) },
+                                                modifier = Modifier.weight(1f).height(36.dp),
+                                                shape = RoundedCornerShape(8.dp),
+                                                contentPadding = PaddingValues(0.dp)
+                                            ) {
+                                                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Approve", style = MaterialTheme.typography.labelMedium)
+                                            }
+
+                                            OutlinedButton(
+                                                onClick = { onRejectSettlement(s.id, "Declined by Admin") },
+                                                modifier = Modifier.weight(1f).height(36.dp),
+                                                shape = RoundedCornerShape(8.dp),
+                                                contentPadding = PaddingValues(0.dp),
+                                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                            ) {
+                                                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Reject", style = MaterialTheme.typography.labelMedium)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

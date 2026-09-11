@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.feature.apartmentmanager.data.ApartmentDataManager
 import com.example.feature.apartmentmanager.model.*
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -46,11 +48,15 @@ data class ApartmentUiState(
 
     val pendingSettlementCount: Int
         get() = settlements.count { it.status == SettlementStatus.PENDING }
+
+    val pendingExpenseCount: Int
+        get() = expenses.count { it.status == ExpenseStatus.PENDING }
 }
 
 @HiltViewModel
 class ApartmentManagerViewModel @Inject constructor(
-    private val dataManager: ApartmentDataManager
+    private val dataManager: ApartmentDataManager,
+    private val firestore: FirebaseFirestore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ApartmentUiState())
@@ -139,20 +145,10 @@ class ApartmentManagerViewModel @Inject constructor(
         notes: String
     ) {
         val currentEdit = _uiState.value.editingExpense
+        val isAdmin = _uiState.value.isActiveUserAdmin
+        val adminId = _uiState.value.activeRoommateId
         if (currentEdit != null) {
-            dataManager.updateExpense(
-                currentEdit.copy(
-                    date = date,
-                    item = item,
-                    amount = amount,
-                    paidByRoommateId = paidById,
-                    sharedByRoommateIds = sharedByIds,
-                    notes = notes
-                )
-            )
-            _uiState.update { it.copy(statusMessage = "Expense updated: $item") }
-        } else {
-            dataManager.addExpense(
+            val updated = currentEdit.copy(
                 date = date,
                 item = item,
                 amount = amount,
@@ -160,14 +156,130 @@ class ApartmentManagerViewModel @Inject constructor(
                 sharedByRoommateIds = sharedByIds,
                 notes = notes
             )
-            _uiState.update { it.copy(statusMessage = "Added expense: $item") }
+            dataManager.updateExpense(updated)
+            val msg = if (isAdmin) {
+                "Expense updated and approved: $item"
+            } else {
+                "Expense changes submitted for Admin approval: $item"
+            }
+            _uiState.update { it.copy(statusMessage = msg) }
+
+            // Sync update to Firestore
+            viewModelScope.launch {
+                try {
+                    firestore.collection("expenses").document(updated.id).update(
+                        mapOf(
+                            "date" to date,
+                            "item" to item,
+                            "amount" to amount,
+                            "paidBy" to paidById,
+                            "sharedBy" to sharedByIds,
+                            "notes" to notes,
+                            "status" to if (isAdmin) "APPROVED" else "PENDING",
+                            "updatedAt" to System.currentTimeMillis()
+                        )
+                    ).await()
+                } catch (e: Exception) {
+                    // Handled gracefully for offline mode
+                }
+            }
+        } else {
+            val autoApprove = isAdmin
+            dataManager.addExpense(
+                date = date,
+                item = item,
+                amount = amount,
+                paidByRoommateId = paidById,
+                sharedByRoommateIds = sharedByIds,
+                notes = notes,
+                autoApproveIfAdmin = autoApprove
+            )
+            val msg = if (isAdmin) {
+                "Added & approved expense: $item"
+            } else {
+                "Submitted for Admin Approval: $item"
+            }
+            _uiState.update { it.copy(statusMessage = msg) }
         }
         closeExpenseDialog()
+    }
+
+    fun approveExpense(expenseId: String) {
+        val adminId = _uiState.value.activeRoommateId
+        val isAdmin = _uiState.value.isActiveUserAdmin
+        if (!isAdmin) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only an Admin can approve expenses") }
+            return
+        }
+
+        val success = dataManager.approveExpense(expenseId, adminId)
+        if (success) {
+            _uiState.update { it.copy(statusMessage = "Expense approved by Admin!") }
+
+            // Update status in Firestore
+            viewModelScope.launch {
+                try {
+                    val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                    firestore.collection("expenses").document(expenseId).update(
+                        mapOf(
+                            "status" to "APPROVED",
+                            "approvedByAdminId" to adminId,
+                            "approvedAt" to today,
+                            "updatedAt" to System.currentTimeMillis(),
+                            "rejectionReason" to null
+                        )
+                    ).await()
+                } catch (e: Exception) {
+                    // Handled gracefully for offline mode
+                }
+            }
+        } else {
+            _uiState.update { it.copy(statusMessage = "Failed to approve expense") }
+        }
+    }
+
+    fun rejectExpense(expenseId: String, reason: String = "") {
+        val adminId = _uiState.value.activeRoommateId
+        val isAdmin = _uiState.value.isActiveUserAdmin
+        if (!isAdmin) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only an Admin can reject expenses") }
+            return
+        }
+
+        val success = dataManager.rejectExpense(expenseId, adminId, reason)
+        if (success) {
+            _uiState.update { it.copy(statusMessage = "Expense rejected by Admin") }
+
+            // Update status in Firestore
+            viewModelScope.launch {
+                try {
+                    firestore.collection("expenses").document(expenseId).update(
+                        mapOf(
+                            "status" to "REJECTED",
+                            "approvedByAdminId" to adminId,
+                            "rejectionReason" to reason.ifBlank { "Declined by Admin" },
+                            "updatedAt" to System.currentTimeMillis()
+                        )
+                    ).await()
+                } catch (e: Exception) {
+                    // Handled gracefully for offline mode
+                }
+            }
+        } else {
+            _uiState.update { it.copy(statusMessage = "Failed to reject expense") }
+        }
     }
 
     fun deleteExpense(expenseId: String) {
         dataManager.deleteExpense(expenseId)
         _uiState.update { it.copy(statusMessage = "Expense removed") }
+        viewModelScope.launch {
+            try {
+                firestore.collection("expenses").document(expenseId).delete().await()
+            } catch (e: Exception) {
+                // Handled gracefully
+            }
+        }
     }
 
     // --- Settlement Dialog & CRUD ---

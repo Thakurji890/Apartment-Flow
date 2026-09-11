@@ -93,9 +93,75 @@ class ExpenseDetailsViewModel @Inject constructor(
                 }
                 is Resource.Error -> {
                     _isLoading.value = false
-                    _eventFlow.emit(ExpenseDetailsEvent.ShowSnackbar(result.message))
+                    _eventFlow.emit(ExpenseDetailsEvent.ShowSnackbar(result.message ?: "Failed to delete expense"))
                 }
                 else -> {}
+            }
+        }
+    }
+
+    fun approveExpense() {
+        viewModelScope.launch {
+            val userId = auth.currentUser?.uid
+            if (userId == null) {
+                _eventFlow.emit(ExpenseDetailsEvent.ShowSnackbar("User not authenticated"))
+                return@launch
+            }
+
+            val currentMember = _members.value.find { it.userId == userId }
+            val isAdmin = currentMember?.role == com.example.feature.apartment.domain.model.Role.ADMIN ||
+                          currentMember?.role == com.example.feature.apartment.domain.model.Role.OWNER
+            if (!isAdmin) {
+                _eventFlow.emit(ExpenseDetailsEvent.ShowSnackbar("Only admin users can approve pending expenses"))
+                return@launch
+            }
+
+            _isLoading.value = true
+            when (val result = expenseUseCases.approveExpense(expenseId, userId)) {
+                is Resource.Success -> {
+                    _isLoading.value = false
+                    _eventFlow.emit(ExpenseDetailsEvent.ShowSnackbar("Expense approved successfully"))
+                }
+                is Resource.Error -> {
+                    _isLoading.value = false
+                    _eventFlow.emit(ExpenseDetailsEvent.ShowSnackbar(result.message ?: "Failed to approve expense"))
+                }
+                else -> {
+                    _isLoading.value = false
+                }
+            }
+        }
+    }
+
+    fun rejectExpense(reason: String = "") {
+        viewModelScope.launch {
+            val userId = auth.currentUser?.uid
+            if (userId == null) {
+                _eventFlow.emit(ExpenseDetailsEvent.ShowSnackbar("User not authenticated"))
+                return@launch
+            }
+
+            val currentMember = _members.value.find { it.userId == userId }
+            val isAdmin = currentMember?.role == com.example.feature.apartment.domain.model.Role.ADMIN ||
+                          currentMember?.role == com.example.feature.apartment.domain.model.Role.OWNER
+            if (!isAdmin) {
+                _eventFlow.emit(ExpenseDetailsEvent.ShowSnackbar("Only admin users can reject pending expenses"))
+                return@launch
+            }
+
+            _isLoading.value = true
+            when (val result = expenseUseCases.rejectExpense(expenseId, userId, reason)) {
+                is Resource.Success -> {
+                    _isLoading.value = false
+                    _eventFlow.emit(ExpenseDetailsEvent.ShowSnackbar("Expense rejected by admin"))
+                }
+                is Resource.Error -> {
+                    _isLoading.value = false
+                    _eventFlow.emit(ExpenseDetailsEvent.ShowSnackbar(result.message ?: "Failed to reject expense"))
+                }
+                else -> {
+                    _isLoading.value = false
+                }
             }
         }
     }

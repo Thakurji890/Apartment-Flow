@@ -225,7 +225,22 @@ fun ApartmentManagementScreen(
                 NavigationBarItem(
                     selected = state.selectedTab == 1,
                     onClick = { viewModel.selectTab(1) },
-                    icon = { Icon(Icons.Default.ShoppingCart, contentDescription = "Expenses") },
+                    icon = {
+                        BadgedBox(
+                            badge = {
+                                if (state.pendingExpenseCount > 0) {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.tertiary,
+                                        contentColor = MaterialTheme.colorScheme.onTertiary
+                                    ) {
+                                        Text(state.pendingExpenseCount.toString())
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.ShoppingCart, contentDescription = "Expenses")
+                        }
+                    },
                     label = { Text("Expenses") }
                 )
                 NavigationBarItem(
@@ -280,7 +295,9 @@ fun ApartmentManagementScreen(
                     onSearchQueryChange = { viewModel.setSearchQuery(it) },
                     onAddExpense = { viewModel.openAddExpenseDialog() },
                     onEditExpense = { viewModel.openEditExpenseDialog(it) },
-                    onDeleteExpense = { viewModel.deleteExpense(it) }
+                    onDeleteExpense = { viewModel.deleteExpense(it) },
+                    onApproveExpense = { viewModel.approveExpense(it) },
+                    onRejectExpense = { id, reason -> viewModel.rejectExpense(id, reason) }
                 )
                 2 -> SettlementsTab(
                     state = state,
@@ -298,7 +315,11 @@ fun ApartmentManagementScreen(
                     onAddRoommate = { viewModel.openAddRoommateDialog() },
                     onEditRoommate = { viewModel.openEditRoommateDialog(it) },
                     onDeleteRoommate = { viewModel.deleteRoommate(it) },
-                    onResetToDefault = { viewModel.openResetConfirmationDialog() }
+                    onResetToDefault = { viewModel.openResetConfirmationDialog() },
+                    onApproveExpense = { viewModel.approveExpense(it) },
+                    onRejectExpense = { id, reason -> viewModel.rejectExpense(id, reason) },
+                    onApproveSettlement = { viewModel.approveSettlement(it) },
+                    onRejectSettlement = { id, reason -> viewModel.rejectSettlement(id, reason) }
                 )
             }
         }

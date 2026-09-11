@@ -8,5 +8,7 @@ data class ExpenseUseCases @Inject constructor(
     val insertExpense: InsertExpenseUseCase,
     val updateExpense: UpdateExpenseUseCase,
     val deleteExpense: DeleteExpenseUseCase,
+    val approveExpense: ApproveExpenseUseCase,
+    val rejectExpense: RejectExpenseUseCase,
     val syncExpenses: SyncExpensesUseCase
 )

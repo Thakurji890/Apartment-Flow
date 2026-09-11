@@ -1,5 +1,6 @@
 package com.example.feature.apartmentmanager.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -29,12 +30,17 @@ fun ExpensesGroceriesTab(
     onSearchQueryChange: (String) -> Unit,
     onAddExpense: () -> Unit,
     onEditExpense: (ApartmentExpense) -> Unit,
-    onDeleteExpense: (String) -> Unit
+    onDeleteExpense: (String) -> Unit,
+    onApproveExpense: (String) -> Unit,
+    onRejectExpense: (String, String) -> Unit
 ) {
     val currency = state.profile.currencySymbol
     var expenseToDelete by remember { mutableStateOf<ApartmentExpense?>(null) }
+    var expenseToReject by remember { mutableStateOf<ApartmentExpense?>(null) }
+    var rejectionReasonText by remember { mutableStateOf("") }
+    var statusFilter by remember { mutableStateOf<ExpenseStatus?>(null) }
 
-    val filteredExpenses = remember(state.expenses, state.expenseFilterRoommateId, state.searchQuery) {
+    val filteredExpenses = remember(state.expenses, state.expenseFilterRoommateId, state.searchQuery, statusFilter) {
         state.expenses.filter { exp ->
             val matchesFilter = state.expenseFilterRoommateId == null ||
                     exp.paidByRoommateId == state.expenseFilterRoommateId ||
@@ -45,7 +51,9 @@ fun ExpensesGroceriesTab(
                     exp.notes.contains(state.searchQuery, ignoreCase = true) ||
                     exp.date.contains(state.searchQuery, ignoreCase = true)
 
-            matchesFilter && matchesSearch
+            val matchesStatus = statusFilter == null || exp.status == statusFilter
+
+            matchesFilter && matchesSearch && matchesStatus
         }
     }
 
@@ -77,6 +85,51 @@ fun ExpensesGroceriesTab(
                 shape = RoundedCornerShape(12.dp)
             )
 
+            // Status Filter Chips Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterChip(
+                    selected = statusFilter == null,
+                    onClick = { statusFilter = null },
+                    label = { Text("All Status") }
+                )
+                FilterChip(
+                    selected = statusFilter == ExpenseStatus.PENDING,
+                    onClick = {
+                        statusFilter = if (statusFilter == ExpenseStatus.PENDING) null else ExpenseStatus.PENDING
+                    },
+                    label = { Text("Pending (${state.pendingExpenseCount})") },
+                    leadingIcon = {
+                        Icon(Icons.Default.HourglassTop, contentDescription = null, modifier = Modifier.size(16.dp))
+                    }
+                )
+                FilterChip(
+                    selected = statusFilter == ExpenseStatus.APPROVED,
+                    onClick = {
+                        statusFilter = if (statusFilter == ExpenseStatus.APPROVED) null else ExpenseStatus.APPROVED
+                    },
+                    label = { Text("Approved") },
+                    leadingIcon = {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                    }
+                )
+                FilterChip(
+                    selected = statusFilter == ExpenseStatus.REJECTED,
+                    onClick = {
+                        statusFilter = if (statusFilter == ExpenseStatus.REJECTED) null else ExpenseStatus.REJECTED
+                    },
+                    label = { Text("Rejected") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Cancel, contentDescription = null, modifier = Modifier.size(16.dp))
+                    }
+                )
+            }
+
             // Roommate Filter Chips Row
             Row(
                 modifier = Modifier
@@ -88,7 +141,7 @@ fun ExpensesGroceriesTab(
                 FilterChip(
                     selected = state.expenseFilterRoommateId == null,
                     onClick = { onFilterRoommate(null) },
-                    label = { Text("All (${state.expenses.size})") }
+                    label = { Text("All Members (${state.expenses.size})") }
                 )
 
                 state.roommates.forEach { rm ->
@@ -106,6 +159,66 @@ fun ExpensesGroceriesTab(
                             )
                         }
                     )
+                }
+            }
+
+            // Admin Pending Banner Notice
+            if (state.pendingExpenseCount > 0) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (state.isActiveUserAdmin)
+                            MaterialTheme.colorScheme.tertiaryContainer
+                        else
+                            MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.HourglassTop,
+                            contentDescription = null,
+                            tint = if (state.isActiveUserAdmin)
+                                MaterialTheme.colorScheme.onTertiaryContainer
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (state.isActiveUserAdmin)
+                                    "${state.pendingExpenseCount} Pending Expense Approval(s)"
+                                else
+                                    "${state.pendingExpenseCount} Expense(s) Awaiting Admin Approval",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (state.isActiveUserAdmin)
+                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = if (state.isActiveUserAdmin)
+                                    "Review and tap Approve below to update ledger balances."
+                                else
+                                    "Your admin must approve these before balances are calculated.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (state.isActiveUserAdmin)
+                                    MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                            )
+                        }
+                        if (statusFilter != ExpenseStatus.PENDING) {
+                            TextButton(onClick = { statusFilter = ExpenseStatus.PENDING }) {
+                                Text("Filter")
+                            }
+                        }
+                    }
                 }
             }
 
@@ -169,16 +282,68 @@ fun ExpensesGroceriesTab(
                         payer = payer,
                         roommates = state.roommates,
                         currency = currency,
+                        isAdmin = state.isActiveUserAdmin,
                         onEdit = { onEditExpense(expense) },
-                        onDelete = { expenseToDelete = expense }
+                        onDelete = { expenseToDelete = expense },
+                        onApprove = { onApproveExpense(expense.id) },
+                        onReject = {
+                            expenseToReject = expense
+                            rejectionReasonText = ""
+                        }
                     )
                 }
             }
         }
     }
 
+    // Reject Dialog
+    if (expenseToReject != null) {
+        val exp = expenseToReject!!
+        val payerName = state.roommates.find { it.id == exp.paidByRoommateId }?.name ?: "Roommate"
+        BackHandler { expenseToReject = null }
+
+        AlertDialog(
+            onDismissRequest = { expenseToReject = null },
+            icon = { Icon(Icons.Default.Cancel, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text("Reject Expense?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Reject '${exp.item}' ($currency${"%.2f".format(exp.amount)}) by $payerName?",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    OutlinedTextField(
+                        value = rejectionReasonText,
+                        onValueChange = { rejectionReasonText = it },
+                        label = { Text("Reason (Optional)") },
+                        placeholder = { Text("e.g. Duplicate entry, wrong split") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onRejectExpense(exp.id, rejectionReasonText)
+                        expenseToReject = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Reject")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { expenseToReject = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     // Delete Confirmation Dialog
     if (expenseToDelete != null) {
+        BackHandler { expenseToDelete = null }
         AlertDialog(
             onDismissRequest = { expenseToDelete = null },
             title = { Text("Delete Expense?") },
@@ -209,12 +374,21 @@ fun ExpenseCard(
     payer: ApartmentRoommate?,
     roommates: List<ApartmentRoommate>,
     currency: String,
+    isAdmin: Boolean,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onApprove: () -> Unit,
+    onReject: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(
+            containerColor = when (expense.status) {
+                ExpenseStatus.PENDING -> MaterialTheme.colorScheme.surface
+                ExpenseStatus.APPROVED -> MaterialTheme.colorScheme.surface
+                ExpenseStatus.REJECTED -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
+            }
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -251,6 +425,93 @@ fun ExpenseCard(
                 )
             }
 
+            // Status Badge Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                when (expense.status) {
+                    ExpenseStatus.PENDING -> {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.tertiaryContainer
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.HourglassTop,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Pending Admin Approval",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
+                        }
+                    }
+                    ExpenseStatus.APPROVED -> {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Approved",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                    ExpenseStatus.REJECTED -> {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.errorContainer
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Cancel,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Rejected: ${expense.rejectionReason ?: "By Admin"}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.error,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
 
             // Paid By & Split Summary Row
@@ -279,38 +540,33 @@ fun ExpenseCard(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(10.dp)
+                                    .size(16.dp)
                                     .clip(CircleShape)
-                                    .background(Color(payer?.colorHex ?: 0xFF006A6AL))
+                                    .background(Color(payer?.colorHex ?: 0xFF6200EEL))
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = payer?.name ?: "Unknown",
                                 style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }
                     }
                 }
 
-                // Share each badge
-                Surface(
-                    color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
+                // Sharing stats pill
+                Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "${expense.sharingCount} sharing • $currency${"%.2f".format(expense.shareEach)} ea",
+                        text = "${expense.sharingCount} split (${currency}${"%.2f".format(expense.shareEach)} ea)",
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
 
-            // Roommates Sharing Matrix Badges
+            // Shared By Avatars / Badges
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -360,7 +616,51 @@ fun ExpenseCard(
                 )
             }
 
-            // Actions row
+            // Admin Approval Action Bar for Pending Expenses
+            if (expense.status == ExpenseStatus.PENDING) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                if (isAdmin) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Button(
+                            onClick = onApprove,
+                            modifier = Modifier.weight(1f).height(40.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Approve", fontWeight = FontWeight.Bold)
+                        }
+
+                        OutlinedButton(
+                            onClick = onReject,
+                            modifier = Modifier.weight(1f).height(40.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Reject", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "⏳ Awaiting Admin Approval — balances will update once approved.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                    )
+                }
+            }
+
+            // Actions row (Edit & Delete)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,

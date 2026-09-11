@@ -35,6 +35,8 @@ object ExpenseModule {
             insertExpense = InsertExpenseUseCase(repository),
             updateExpense = UpdateExpenseUseCase(repository),
             deleteExpense = DeleteExpenseUseCase(repository),
+            approveExpense = ApproveExpenseUseCase(repository),
+            rejectExpense = RejectExpenseUseCase(repository),
             syncExpenses = SyncExpensesUseCase(repository)
         )
     }

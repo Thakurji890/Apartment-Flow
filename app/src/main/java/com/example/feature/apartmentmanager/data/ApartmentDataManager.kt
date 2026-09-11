@@ -90,6 +90,12 @@ class ApartmentDataManager(context: Context) {
                     for (j in 0 until sharedArray.length()) {
                         sharedList.add(sharedArray.getString(j))
                     }
+                    val statusStr = obj.optString("status", "APPROVED")
+                    val expStatus = try {
+                        ExpenseStatus.valueOf(statusStr)
+                    } catch (e: Exception) {
+                        ExpenseStatus.APPROVED
+                    }
                     list.add(
                         ApartmentExpense(
                             id = obj.getString("id"),
@@ -98,7 +104,11 @@ class ApartmentDataManager(context: Context) {
                             amount = obj.getDouble("amount"),
                             paidByRoommateId = obj.getString("paidBy"),
                             sharedByRoommateIds = sharedList,
-                            notes = obj.optString("notes", "")
+                            notes = obj.optString("notes", ""),
+                            status = expStatus,
+                            approvedByAdminId = if (obj.has("approvedBy")) obj.optString("approvedBy") else null,
+                            approvedAt = if (obj.has("approvedAt")) obj.optString("approvedAt") else null,
+                            rejectionReason = if (obj.has("rejectionReason")) obj.optString("rejectionReason") else null
                         )
                     )
                 }
@@ -210,6 +220,10 @@ class ApartmentDataManager(context: Context) {
             exp.sharedByRoommateIds.forEach { sharedArray.put(it) }
             obj.put("sharedBy", sharedArray)
             obj.put("notes", exp.notes)
+            obj.put("status", exp.status.name)
+            exp.approvedByAdminId?.let { obj.put("approvedBy", it) }
+            exp.approvedAt?.let { obj.put("approvedAt", it) }
+            exp.rejectionReason?.let { obj.put("rejectionReason", it) }
             expArray.put(obj)
         }
         editor.putString("expenses", expArray.toString())
@@ -312,15 +326,21 @@ class ApartmentDataManager(context: Context) {
         saveData()
     }
 
-    // --- Expenses CRUD ---
+    // --- Expenses CRUD & Approval Workflow ---
     fun addExpense(
         date: String,
         item: String,
         amount: Double,
         paidByRoommateId: String,
         sharedByRoommateIds: List<String>,
-        notes: String = ""
+        notes: String = "",
+        autoApproveIfAdmin: Boolean = true
     ) {
+        val activeUser = _roommates.value.find { it.id == _activeRoommateId.value }
+        val isAdmin = activeUser?.isAdmin == true
+        val status = if (isAdmin && autoApproveIfAdmin) ExpenseStatus.APPROVED else ExpenseStatus.PENDING
+        val today = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+
         val expense = ApartmentExpense(
             id = UUID.randomUUID().toString().take(8),
             date = date,
@@ -328,34 +348,145 @@ class ApartmentDataManager(context: Context) {
             amount = amount,
             paidByRoommateId = paidByRoommateId,
             sharedByRoommateIds = sharedByRoommateIds,
-            notes = notes
+            notes = notes,
+            status = status,
+            approvedByAdminId = if (status == ExpenseStatus.APPROVED) activeUser?.id else null,
+            approvedAt = if (status == ExpenseStatus.APPROVED) today else null
         )
         // Add to the front so newest appears first
         _expenses.value = listOf(expense) + _expenses.value
 
         val payer = _roommates.value.find { it.id == paidByRoommateId }?.name ?: "Roommate"
         val currency = _apartmentProfile.value.currencySymbol
-        addNotification(
-            title = "New Purchase Logged",
-            message = "$payer purchased '$item' for $currency${"%.2f".format(amount)} (Split among ${sharedByRoommateIds.size} roommates).",
-            category = NotificationCategory.PURCHASE,
-            authorName = payer
-        )
+
+        if (status == ExpenseStatus.PENDING) {
+            addNotification(
+                title = "Purchase Awaiting Admin Approval",
+                message = "$payer submitted purchase '$item' for $currency${"%.2f".format(amount)} (Split among ${sharedByRoommateIds.size} roommates). Admin approval is required to update balances.",
+                category = NotificationCategory.PURCHASE,
+                authorName = payer,
+                requiresAdminAction = true
+            )
+        } else {
+            addNotification(
+                title = "New Purchase Logged & Approved",
+                message = "Admin ${activeUser?.name ?: "Admin"} recorded purchase '$item' for $currency${"%.2f".format(amount)} (Split among ${sharedByRoommateIds.size} roommates).",
+                category = NotificationCategory.PURCHASE,
+                authorName = activeUser?.name ?: "Admin"
+            )
+        }
 
         saveData()
     }
 
     fun updateExpense(expense: ApartmentExpense) {
-        _expenses.value = _expenses.value.map { if (it.id == expense.id) expense else it }
-        val updater = _roommates.value.find { it.id == _activeRoommateId.value }?.name ?: "Admin"
+        val activeUser = _roommates.value.find { it.id == _activeRoommateId.value }
+        val isAdmin = activeUser?.isAdmin == true
+        val today = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+
+        // If non-admin changes an expense, it reverts to pending for admin approval
+        val updatedExpense = if (!isAdmin) {
+            expense.copy(
+                status = ExpenseStatus.PENDING,
+                approvedByAdminId = null,
+                approvedAt = null,
+                rejectionReason = null
+            )
+        } else {
+            expense.copy(
+                status = ExpenseStatus.APPROVED,
+                approvedByAdminId = activeUser.id,
+                approvedAt = today,
+                rejectionReason = null
+            )
+        }
+
+        _expenses.value = _expenses.value.map { if (it.id == expense.id) updatedExpense else it }
+        val updater = activeUser?.name ?: "Roommate"
         val currency = _apartmentProfile.value.currencySymbol
-        addNotification(
-            title = "Purchase Updated",
-            message = "$updater modified purchase '${expense.item}' ($currency${"%.2f".format(expense.amount)}).",
-            category = NotificationCategory.PURCHASE,
-            authorName = updater
-        )
+
+        if (updatedExpense.status == ExpenseStatus.PENDING) {
+            addNotification(
+                title = "Purchase Edit Awaiting Admin Approval",
+                message = "$updater modified purchase '${expense.item}' ($currency${"%.2f".format(expense.amount)}). Admin approval is required.",
+                category = NotificationCategory.PURCHASE,
+                authorName = updater,
+                requiresAdminAction = true
+            )
+        } else {
+            addNotification(
+                title = "Purchase Updated by Admin",
+                message = "Admin $updater modified purchase '${expense.item}' ($currency${"%.2f".format(expense.amount)}).",
+                category = NotificationCategory.PURCHASE,
+                authorName = updater
+            )
+        }
         saveData()
+    }
+
+    fun approveExpense(expenseId: String, adminId: String): Boolean {
+        val admin = _roommates.value.find { it.id == adminId }
+        if (admin == null || !admin.isAdmin) return false
+
+        val today = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+        var target: ApartmentExpense? = null
+
+        _expenses.value = _expenses.value.map { e ->
+            if (e.id == expenseId) {
+                target = e.copy(
+                    status = ExpenseStatus.APPROVED,
+                    approvedByAdminId = adminId,
+                    approvedAt = today,
+                    rejectionReason = null
+                )
+                target!!
+            } else e
+        }
+
+        target?.let { e ->
+            val payer = _roommates.value.find { it.id == e.paidByRoommateId }?.name ?: "Roommate"
+            val currency = _apartmentProfile.value.currencySymbol
+            addNotification(
+                title = "Purchase Approved by Admin",
+                message = "Admin ${admin.name} approved $payer's purchase '${e.item}' ($currency${"%.2f".format(e.amount)}). Ledger balances updated!",
+                category = NotificationCategory.ADMIN_ACTION,
+                authorName = admin.name
+            )
+        }
+        saveData()
+        return true
+    }
+
+    fun rejectExpense(expenseId: String, adminId: String, reason: String = ""): Boolean {
+        val admin = _roommates.value.find { it.id == adminId }
+        if (admin == null || !admin.isAdmin) return false
+
+        var target: ApartmentExpense? = null
+
+        _expenses.value = _expenses.value.map { e ->
+            if (e.id == expenseId) {
+                target = e.copy(
+                    status = ExpenseStatus.REJECTED,
+                    approvedByAdminId = adminId,
+                    rejectionReason = reason.ifBlank { "Declined by Admin" }
+                )
+                target!!
+            } else e
+        }
+
+        target?.let { e ->
+            val payer = _roommates.value.find { it.id == e.paidByRoommateId }?.name ?: "Roommate"
+            val currency = _apartmentProfile.value.currencySymbol
+            val noteReason = if (reason.isNotBlank()) " Reason: $reason" else ""
+            addNotification(
+                title = "Purchase Rejected by Admin",
+                message = "Admin ${admin.name} rejected $payer's purchase '${e.item}' ($currency${"%.2f".format(e.amount)}).$noteReason",
+                category = NotificationCategory.ADMIN_ACTION,
+                authorName = admin.name
+            )
+        }
+        saveData()
+        return true
     }
 
     fun deleteExpense(expenseId: String) {
@@ -544,7 +675,7 @@ class ApartmentDataManager(context: Context) {
     // --- Balance Calculations (Matches Spreadsheet Table 1) ---
     fun getBalanceSummaries(): List<RoommateBalanceSummary> {
         val rms = _roommates.value
-        val exps = _expenses.value
+        val exps = _expenses.value.filter { it.status == ExpenseStatus.APPROVED }
         val sets = _settlements.value
 
         return rms.map { rm ->
