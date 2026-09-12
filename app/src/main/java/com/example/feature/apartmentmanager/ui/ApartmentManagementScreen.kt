@@ -287,6 +287,9 @@ fun ApartmentManagementScreen(
                     onQuickSettle = { fromId, toId, amount ->
                         viewModel.openAddSettlementDialog(fromId, toId, amount)
                     },
+                    onBatchSettleAll = { transfers ->
+                        viewModel.recordBatchSettlements(transfers)
+                    },
                     onAddExpenseClick = { viewModel.openAddExpenseDialog() }
                 )
                 1 -> ExpensesGroceriesTab(
@@ -344,8 +347,8 @@ fun ApartmentManagementScreen(
             roommates = state.roommates,
             currencySymbol = state.profile.currencySymbol,
             onDismiss = { viewModel.closeExpenseDialog() },
-            onSave = { date, item, amount, paidById, sharedByIds, notes ->
-                viewModel.saveExpense(date, item, amount, paidById, sharedByIds, notes)
+            onSave = { date, item, amount, paidById, sharedByIds, notes, category ->
+                viewModel.saveExpense(date, item, amount, paidById, sharedByIds, notes, category)
             }
         )
     }
@@ -379,8 +382,8 @@ fun ApartmentManagementScreen(
         EditApartmentProfileDialog(
             profile = state.profile,
             onDismiss = { viewModel.closeEditApartmentDialog() },
-            onSave = { name, flatNumber, currencySymbol, inviteCode ->
-                viewModel.updateApartmentProfile(name, flatNumber, currencySymbol, inviteCode)
+            onSave = { name, flatNumber, currencySymbol, currencyCode, inviteCode ->
+                viewModel.updateApartmentProfile(name, flatNumber, currencySymbol, currencyCode, inviteCode)
             }
         )
     }

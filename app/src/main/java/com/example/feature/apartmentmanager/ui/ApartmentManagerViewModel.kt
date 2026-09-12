@@ -19,6 +19,7 @@ data class ApartmentUiState(
     val expenses: List<ApartmentExpense> = emptyList(),
     val settlements: List<ApartmentSettlement> = emptyList(),
     val notifications: List<ApartmentNotification> = emptyList(),
+    val envelopeBudgets: List<SharedEnvelopeBudget> = emptyList(),
     val activeRoommateId: String = "1",
     val selectedTab: Int = 0, // 0: Balances, 1: Expenses, 2: Settlements, 3: Admin
     val expenseFilterRoommateId: String? = null,
@@ -88,6 +89,12 @@ class ApartmentManagerViewModel @Inject constructor(
                 _uiState.update { it.copy(notifications = notifs) }
             }
         }
+
+        viewModelScope.launch {
+            dataManager.envelopeBudgets.collect { budgets ->
+                _uiState.update { it.copy(envelopeBudgets = budgets) }
+            }
+        }
     }
 
     fun selectTab(index: Int) {
@@ -142,7 +149,8 @@ class ApartmentManagerViewModel @Inject constructor(
         amount: Double,
         paidById: String,
         sharedByIds: List<String>,
-        notes: String
+        notes: String,
+        category: ExpenseCategory = ExpenseCategory.GROCERIES
     ) {
         val currentEdit = _uiState.value.editingExpense
         val isAdmin = _uiState.value.isActiveUserAdmin
@@ -154,7 +162,8 @@ class ApartmentManagerViewModel @Inject constructor(
                 amount = amount,
                 paidByRoommateId = paidById,
                 sharedByRoommateIds = sharedByIds,
-                notes = notes
+                notes = notes,
+                category = category
             )
             dataManager.updateExpense(updated)
             val msg = if (isAdmin) {
@@ -175,6 +184,7 @@ class ApartmentManagerViewModel @Inject constructor(
                             "paidBy" to paidById,
                             "sharedBy" to sharedByIds,
                             "notes" to notes,
+                            "category" to category.name,
                             "status" to if (isAdmin) "APPROVED" else "PENDING",
                             "updatedAt" to System.currentTimeMillis()
                         )
@@ -192,6 +202,7 @@ class ApartmentManagerViewModel @Inject constructor(
                 paidByRoommateId = paidById,
                 sharedByRoommateIds = sharedByIds,
                 notes = notes,
+                category = category,
                 autoApproveIfAdmin = autoApprove
             )
             val msg = if (isAdmin) {
@@ -334,6 +345,18 @@ class ApartmentManagerViewModel @Inject constructor(
         closeSettlementDialog()
     }
 
+    fun recordBatchSettlements(transfers: List<DebtTransfer>) {
+        if (transfers.isEmpty()) return
+        val count = dataManager.recordBatchSettlements(transfers)
+        val isAdmin = _uiState.value.isActiveUserAdmin
+        val msg = if (isAdmin) {
+            "Recorded & approved batch of $count settlements!"
+        } else {
+            "Submitted batch of $count settlements for Admin Approval!"
+        }
+        _uiState.update { it.copy(statusMessage = msg) }
+    }
+
     fun approveSettlement(settlementId: String) {
         val adminId = _uiState.value.activeRoommateId
         val success = dataManager.approveSettlement(settlementId, adminId)
@@ -415,12 +438,17 @@ class ApartmentManagerViewModel @Inject constructor(
         _uiState.update { it.copy(showEditApartmentDialog = false) }
     }
 
-    fun updateApartmentProfile(name: String, flatNumber: String, currencySymbol: String, inviteCode: String) {
+    fun getDebtSimplificationResult(): com.example.feature.apartmentmanager.domain.DebtSimplificationEngine.SimplificationResult {
+        return dataManager.getDebtSimplificationResult()
+    }
+
+    fun updateApartmentProfile(name: String, flatNumber: String, currencySymbol: String, currencyCode: String = "INR", inviteCode: String) {
         dataManager.updateApartmentProfile(
             ApartmentProfile(
                 name = name.ifBlank { "Apartment Flat 402" },
                 flatNumber = flatNumber.ifBlank { "Flat 402" },
                 currencySymbol = currencySymbol.ifBlank { "₹" },
+                currencyCode = currencyCode.ifBlank { "INR" },
                 inviteCode = inviteCode.ifBlank { "APT402" }
             )
         )
@@ -445,5 +473,24 @@ class ApartmentManagerViewModel @Inject constructor(
                 statusMessage = "Restored original sheet data!"
             ) 
         }
+    }
+
+    // --- Envelope Budget & Spending Controls ---
+    fun getCategorySpending(category: ExpenseCategory): Double {
+        return dataManager.getCategorySpending(category)
+    }
+
+    fun getAllCategorySpending(): Map<ExpenseCategory, Double> {
+        return dataManager.getAllCategorySpending()
+    }
+
+    fun setEnvelopeBudget(category: ExpenseCategory, monthlyCap: Double, alertThresholdPercent: Int = 85, notes: String = "") {
+        dataManager.setEnvelopeBudget(category, monthlyCap, alertThresholdPercent, notes)
+        _uiState.update { it.copy(statusMessage = "Updated budget cap for ${category.displayName}") }
+    }
+
+    fun removeEnvelopeBudget(budgetId: String) {
+        dataManager.removeEnvelopeBudget(budgetId)
+        _uiState.update { it.copy(statusMessage = "Removed envelope budget") }
     }
 }

@@ -364,8 +364,8 @@ fun AdminControlTab(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("Currency Symbol", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(state.profile.currencySymbol, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                            Text("Currency (ISO)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${state.profile.currencyCode} (${state.profile.currencySymbol})", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                         }
 
                         Surface(

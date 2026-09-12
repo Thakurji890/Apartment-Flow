@@ -425,12 +425,37 @@ fun ExpenseCard(
                 )
             }
 
-            // Status Badge Row
+            // Status & Category Badge Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                // Category Tag
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(expense.category.defaultColorHex).copy(alpha = 0.15f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color(expense.category.defaultColorHex))
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = expense.category.displayName,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(expense.category.defaultColorHex)
+                        )
+                    }
+                }
+
                 when (expense.status) {
                     ExpenseStatus.PENDING -> {
                         Surface(

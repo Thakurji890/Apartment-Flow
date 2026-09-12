@@ -28,6 +28,7 @@ data class ApartmentExpense(
     val paidByRoommateId: String,
     val sharedByRoommateIds: List<String>,
     val notes: String = "",
+    val category: ExpenseCategory = ExpenseCategory.GROCERIES,
     val status: ExpenseStatus = ExpenseStatus.APPROVED,
     val approvedByAdminId: String? = null,
     val approvedAt: String? = null,
@@ -57,6 +58,7 @@ data class ApartmentProfile(
     val name: String = "Apartment Flat 402",
     val flatNumber: String = "Flat 402",
     val currencySymbol: String = "₹",
+    val currencyCode: String = "INR",
     val inviteCode: String = "APT402"
 )
 

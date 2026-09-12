@@ -32,6 +32,9 @@ class ApartmentDataManager(context: Context) {
     private val _notifications = MutableStateFlow<List<ApartmentNotification>>(emptyList())
     val notifications: StateFlow<List<ApartmentNotification>> = _notifications.asStateFlow()
 
+    private val _envelopeBudgets = MutableStateFlow<List<SharedEnvelopeBudget>>(emptyList())
+    val envelopeBudgets: StateFlow<List<SharedEnvelopeBudget>> = _envelopeBudgets.asStateFlow()
+
     private val _activeRoommateId = MutableStateFlow("1") // Defaults to Aniket (Admin)
     val activeRoommateId: StateFlow<String> = _activeRoommateId.asStateFlow()
 
@@ -54,6 +57,7 @@ class ApartmentDataManager(context: Context) {
                     name = obj.optString("name", "Apartment Flat 402"),
                     flatNumber = obj.optString("flatNumber", "Flat 402"),
                     currencySymbol = obj.optString("currencySymbol", "₹"),
+                    currencyCode = obj.optString("currencyCode", "INR"),
                     inviteCode = obj.optString("inviteCode", "APT402")
                 )
             }
@@ -96,6 +100,12 @@ class ApartmentDataManager(context: Context) {
                     } catch (e: Exception) {
                         ExpenseStatus.APPROVED
                     }
+                    val catStr = obj.optString("category", "GROCERIES")
+                    val expCat = try {
+                        ExpenseCategory.valueOf(catStr)
+                    } catch (e: Exception) {
+                        ExpenseCategory.GROCERIES
+                    }
                     list.add(
                         ApartmentExpense(
                             id = obj.getString("id"),
@@ -105,6 +115,7 @@ class ApartmentDataManager(context: Context) {
                             paidByRoommateId = obj.getString("paidBy"),
                             sharedByRoommateIds = sharedList,
                             notes = obj.optString("notes", ""),
+                            category = expCat,
                             status = expStatus,
                             approvedByAdminId = if (obj.has("approvedBy")) obj.optString("approvedBy") else null,
                             approvedAt = if (obj.has("approvedAt")) obj.optString("approvedAt") else null,
@@ -175,6 +186,34 @@ class ApartmentDataManager(context: Context) {
                 _notifications.value = list
             }
 
+            // Load Envelope Budgets
+            val budgetsJson = prefs.getString("envelope_budgets", null)
+            if (budgetsJson != null) {
+                val array = JSONArray(budgetsJson)
+                val list = mutableListOf<SharedEnvelopeBudget>()
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    val catStr = obj.optString("category", "GROCERIES")
+                    val cat = try {
+                        ExpenseCategory.valueOf(catStr)
+                    } catch (e: Exception) {
+                        ExpenseCategory.GROCERIES
+                    }
+                    list.add(
+                        SharedEnvelopeBudget(
+                            id = obj.getString("id"),
+                            category = cat,
+                            monthlyCap = obj.getDouble("monthlyCap"),
+                            alertThresholdPercent = obj.optInt("alertThresholdPercent", 80),
+                            notes = obj.optString("notes", "")
+                        )
+                    )
+                }
+                _envelopeBudgets.value = list
+            } else {
+                _envelopeBudgets.value = defaultEnvelopeBudgets()
+            }
+
             _activeRoommateId.value = prefs.getString("active_roommate_id", "1") ?: "1"
 
         } catch (e: Exception) {
@@ -191,6 +230,7 @@ class ApartmentDataManager(context: Context) {
         profObj.put("name", _apartmentProfile.value.name)
         profObj.put("flatNumber", _apartmentProfile.value.flatNumber)
         profObj.put("currencySymbol", _apartmentProfile.value.currencySymbol)
+        profObj.put("currencyCode", _apartmentProfile.value.currencyCode)
         profObj.put("inviteCode", _apartmentProfile.value.inviteCode)
         editor.putString("profile", profObj.toString())
 
@@ -220,6 +260,7 @@ class ApartmentDataManager(context: Context) {
             exp.sharedByRoommateIds.forEach { sharedArray.put(it) }
             obj.put("sharedBy", sharedArray)
             obj.put("notes", exp.notes)
+            obj.put("category", exp.category.name)
             obj.put("status", exp.status.name)
             exp.approvedByAdminId?.let { obj.put("approvedBy", it) }
             exp.approvedAt?.let { obj.put("approvedAt", it) }
@@ -261,6 +302,19 @@ class ApartmentDataManager(context: Context) {
             notifArray.put(obj)
         }
         editor.putString("notifications", notifArray.toString())
+
+        // Save Envelope Budgets
+        val budgetArray = JSONArray()
+        _envelopeBudgets.value.forEach { b ->
+            val obj = JSONObject()
+            obj.put("id", b.id)
+            obj.put("category", b.category.name)
+            obj.put("monthlyCap", b.monthlyCap)
+            obj.put("alertThresholdPercent", b.alertThresholdPercent)
+            obj.put("notes", b.notes)
+            budgetArray.put(obj)
+        }
+        editor.putString("envelope_budgets", budgetArray.toString())
 
         editor.putString("active_roommate_id", _activeRoommateId.value)
 
@@ -334,6 +388,7 @@ class ApartmentDataManager(context: Context) {
         paidByRoommateId: String,
         sharedByRoommateIds: List<String>,
         notes: String = "",
+        category: ExpenseCategory = ExpenseCategory.GROCERIES,
         autoApproveIfAdmin: Boolean = true
     ) {
         val activeUser = _roommates.value.find { it.id == _activeRoommateId.value }
@@ -349,6 +404,7 @@ class ApartmentDataManager(context: Context) {
             paidByRoommateId = paidByRoommateId,
             sharedByRoommateIds = sharedByRoommateIds,
             notes = notes,
+            category = category,
             status = status,
             approvedByAdminId = if (status == ExpenseStatus.APPROVED) activeUser?.id else null,
             approvedAt = if (status == ExpenseStatus.APPROVED) today else null
@@ -556,6 +612,46 @@ class ApartmentDataManager(context: Context) {
         saveData()
     }
 
+    /**
+     * Records all suggested minimal settlements as a batch (smart settlement proposal execution).
+     */
+    fun recordBatchSettlements(transfers: List<DebtTransfer>, note: String = "Month-End Smart Settlement"): Int {
+        if (transfers.isEmpty()) return 0
+        val activeUser = _roommates.value.find { it.id == _activeRoommateId.value }
+        val isAdmin = activeUser?.isAdmin == true
+        val status = if (isAdmin) SettlementStatus.APPROVED else SettlementStatus.PENDING
+        val today = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+        val currency = _apartmentProfile.value.currencySymbol
+
+        val newSettlements = transfers.map { transfer ->
+            ApartmentSettlement(
+                id = UUID.randomUUID().toString().take(8),
+                date = today,
+                fromRoommateId = transfer.fromRoommate.id,
+                toRoommateId = transfer.toRoommate.id,
+                amount = transfer.amount,
+                note = note,
+                status = status,
+                approvedByAdminId = if (status == SettlementStatus.APPROVED) activeUser?.id else null,
+                approvedAt = if (status == SettlementStatus.APPROVED) today else null
+            )
+        }
+
+        _settlements.value = newSettlements + _settlements.value
+
+        val totalAmount = transfers.sumOf { it.amount }
+        val author = activeUser?.name ?: "Admin"
+        addNotification(
+            title = if (isAdmin) "Smart Batch Settlement Recorded" else "Batch Settlement Submitted for Approval",
+            message = "$author initiated batch settlement of ${transfers.size} transactions ($currency${"%.2f".format(totalAmount)}).",
+            category = NotificationCategory.SETTLEMENT,
+            authorName = author,
+            requiresAdminAction = !isAdmin
+        )
+        saveData()
+        return transfers.size
+    }
+
     fun approveSettlement(settlementId: String, adminId: String): Boolean {
         val admin = _roommates.value.find { it.id == adminId }
         if (admin == null || !admin.isAdmin) return false
@@ -716,46 +812,68 @@ class ApartmentDataManager(context: Context) {
 
     fun getDebtSettlementSuggestions(): List<DebtTransfer> {
         val summaries = getBalanceSummaries()
-        val debtors = summaries.filter { it.netBalance < -0.01 }
-            .map { it.roommate to abs(it.netBalance) }
-            .toMutableList()
-        val creditors = summaries.filter { it.netBalance > 0.01 }
-            .map { it.roommate to it.netBalance }
-            .toMutableList()
-
-        val transfers = mutableListOf<DebtTransfer>()
-        var dIndex = 0
-        var cIndex = 0
-
-        while (dIndex < debtors.size && cIndex < creditors.size) {
-            val (debtor, debtAmount) = debtors[dIndex]
-            val (creditor, creditAmount) = creditors[cIndex]
-
-            val settleAmount = minOf(debtAmount, creditAmount)
-            val roundedSettle = (settleAmount * 100.0).roundToInt() / 100.0
-
-            if (roundedSettle > 0.0) {
-                transfers.add(DebtTransfer(fromRoommate = debtor, toRoommate = creditor, amount = roundedSettle))
-            }
-
-            val remainingDebt = debtAmount - settleAmount
-            val remainingCredit = creditAmount - settleAmount
-
-            if (remainingDebt < 0.01) {
-                dIndex++
-            } else {
-                debtors[dIndex] = debtor to remainingDebt
-            }
-
-            if (remainingCredit < 0.01) {
-                cIndex++
-            } else {
-                creditors[cIndex] = creditor to remainingCredit
-            }
-        }
-
-        return transfers
+        return com.example.feature.apartmentmanager.domain.DebtSimplificationEngine.simplifyDebts(summaries).transfers
     }
+
+    fun getDebtSimplificationResult(): com.example.feature.apartmentmanager.domain.DebtSimplificationEngine.SimplificationResult {
+        val summaries = getBalanceSummaries()
+        return com.example.feature.apartmentmanager.domain.DebtSimplificationEngine.simplifyDebts(summaries)
+    }
+
+    // --- Shared Envelope Budget CRUD & Spending Calculations ---
+    fun getCategorySpending(category: ExpenseCategory): Double {
+        return _expenses.value
+            .filter { it.status == ExpenseStatus.APPROVED && it.category == category }
+            .sumOf { it.amount }
+    }
+
+    fun getAllCategorySpending(): Map<ExpenseCategory, Double> {
+        val result = mutableMapOf<ExpenseCategory, Double>()
+        ExpenseCategory.entries.forEach { cat ->
+            result[cat] = getCategorySpending(cat)
+        }
+        return result
+    }
+
+    fun setEnvelopeBudget(category: ExpenseCategory, monthlyCap: Double, alertThresholdPercent: Int = 85, notes: String = "") {
+        val current = _envelopeBudgets.value
+        val existingIndex = current.indexOfFirst { it.category == category }
+        val updated = if (existingIndex >= 0) {
+            current.map {
+                if (it.category == category) it.copy(monthlyCap = monthlyCap, alertThresholdPercent = alertThresholdPercent, notes = notes)
+                else it
+            }
+        } else {
+            current + SharedEnvelopeBudget(
+                id = UUID.randomUUID().toString().take(8),
+                category = category,
+                monthlyCap = monthlyCap,
+                alertThresholdPercent = alertThresholdPercent,
+                notes = notes
+            )
+        }
+        _envelopeBudgets.value = updated
+        val currency = _apartmentProfile.value.currencySymbol
+        addNotification(
+            title = "Household Budget Envelope Set",
+            message = "${category.displayName} budget cap set to $currency${"%.2f".format(monthlyCap)} (Alert at $alertThresholdPercent%).",
+            category = NotificationCategory.ADMIN_ACTION,
+            authorName = "System"
+        )
+        saveData()
+    }
+
+    fun removeEnvelopeBudget(budgetId: String) {
+        _envelopeBudgets.value = _envelopeBudgets.value.filter { it.id != budgetId }
+        saveData()
+    }
+
+    private fun defaultEnvelopeBudgets(): List<SharedEnvelopeBudget> = listOf(
+        SharedEnvelopeBudget(id = "b1", category = ExpenseCategory.GROCERIES, monthlyCap = 7000.0, alertThresholdPercent = 85, notes = "Monthly household groceries & veggies"),
+        SharedEnvelopeBudget(id = "b2", category = ExpenseCategory.UTILITIES, monthlyCap = 2500.0, alertThresholdPercent = 80, notes = "Electricity, water, gas cylinders"),
+        SharedEnvelopeBudget(id = "b3", category = ExpenseCategory.INTERNET_WIFI, monthlyCap = 1200.0, alertThresholdPercent = 90, notes = "High-speed broadband fibre"),
+        SharedEnvelopeBudget(id = "b4", category = ExpenseCategory.HOUSEHOLD_SUPPLIES, monthlyCap = 1000.0, alertThresholdPercent = 80, notes = "Cleaning, detergents, toiletries")
+    )
 
     // --- Reset to the User's Exact 4 Spreadsheets ---
     fun resetToDefaultData() {
@@ -914,6 +1032,7 @@ class ApartmentDataManager(context: Context) {
             )
         )
         _notifications.value = defaultNotifs
+        _envelopeBudgets.value = defaultEnvelopeBudgets()
 
         saveData()
     }

@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.feature.apartmentmanager.domain.DebtSimplificationEngine
 import com.example.feature.apartmentmanager.model.*
 import kotlin.math.abs
 
@@ -29,10 +30,18 @@ fun BalancesSummaryTab(
     settlementSuggestions: List<DebtTransfer>,
     totalPoolSpending: Double,
     onQuickSettle: (fromId: String, toId: String, amount: Double) -> Unit,
+    onBatchSettleAll: (List<DebtTransfer>) -> Unit = {},
     onAddExpenseClick: () -> Unit
 ) {
     val currency = state.profile.currencySymbol
+    val currencyCode = state.profile.currencyCode
     var selectedRoommateForDetail by remember { mutableStateOf<RoommateBalanceSummary?>(null) }
+    var showBatchConfirmDialog by remember { mutableStateOf(false) }
+
+    val simplificationResult = remember(balanceSummaries) {
+        DebtSimplificationEngine.simplifyDebts(balanceSummaries)
+    }
+    val metrics = simplificationResult.metrics
 
     val debtors = remember(balanceSummaries) {
         balanceSummaries.filter { it.netBalance < -0.01 }.sortedBy { it.netBalance }
@@ -278,19 +287,19 @@ fun BalancesSummaryTab(
             }
         }
 
-        // --- Smart Settle-Up Suggestions ---
+        // --- Smart Settle-Up Suggestions & Graph Minimization Engine ---
         if (settlementSuggestions.isNotEmpty()) {
             item {
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                     ),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -298,25 +307,78 @@ fun BalancesSummaryTab(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.Bolt,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primaryContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Bolt,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "Debt Simplification Engine",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Graph-based bilateral minimization",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            ) {
                                 Text(
-                                    text = "Smart Settle Up Path",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
+                                    text = "$currencyCode ($currency)",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
-                            Text(
-                                text = "Minimal Transfers",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                         }
 
+                        // Minimization Metrics Badge Bar
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surface,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("Optimized Transfers", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("${metrics.simplifiedTransactionCount} payments", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                                }
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("Transactions Saved", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("${metrics.transactionsSavedCount} avoided", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32), style = MaterialTheme.typography.bodyMedium)
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text("Debt Volume", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("$currency${"%.2f".format(metrics.totalVolumeSettled)}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+
+                        // Settlement Transfers List
                         settlementSuggestions.forEach { transfer ->
                             Row(
                                 modifier = Modifier
@@ -377,6 +439,17 @@ fun BalancesSummaryTab(
                                     }
                                 }
                             }
+                        }
+
+                        // Smart Settlement Suggestion Action: Settle All at Once
+                        Button(
+                            onClick = { showBatchConfirmDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Propose Batch Settlement (${settlementSuggestions.size} transfers)")
                         }
                     }
                 }
@@ -510,6 +583,75 @@ fun BalancesSummaryTab(
             confirmButton = {
                 Button(onClick = { selectedRoommateForDetail = null }) {
                     Text("Back")
+                }
+            }
+        )
+    }
+
+    // --- Smart Batch Settlement Confirmation Dialog ---
+    if (showBatchConfirmDialog) {
+        BackHandler { showBatchConfirmDialog = false }
+
+        AlertDialog(
+            onDismissRequest = { showBatchConfirmDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.Bolt,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text("Execute Smart Batch Settlement?")
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "The Debt Simplification Engine calculated that all roommate balances can be settled with just ${settlementSuggestions.size} direct payments instead of ${metrics.originalTransactionCountEstimate} bilateral transfers."
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            settlementSuggestions.forEach { t ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("${t.fromRoommate.name} → ${t.toRoommate.name}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                    Text("$currency${"%.2f".format(t.amount)}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        if (state.isActiveUserAdmin)
+                            "As an Admin, these ${settlementSuggestions.size} transactions will be immediately approved and clear all balances."
+                        else
+                            "These ${settlementSuggestions.size} transactions will be submitted to the Admin for approval.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showBatchConfirmDialog = false
+                        onBatchSettleAll(settlementSuggestions)
+                    }
+                ) {
+                    Text(if (state.isActiveUserAdmin) "Approve & Execute All" else "Submit Batch")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showBatchConfirmDialog = false }) {
+                    Text("Cancel")
                 }
             }
         )

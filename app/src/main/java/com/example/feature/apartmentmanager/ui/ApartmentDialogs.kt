@@ -33,7 +33,7 @@ fun AddEditExpenseDialog(
     roommates: List<ApartmentRoommate>,
     currencySymbol: String,
     onDismiss: () -> Unit,
-    onSave: (date: String, item: String, amount: Double, paidById: String, sharedByIds: List<String>, notes: String) -> Unit
+    onSave: (date: String, item: String, amount: Double, paidById: String, sharedByIds: List<String>, notes: String, category: ExpenseCategory) -> Unit
 ) {
     BackHandler { onDismiss() }
 
@@ -42,6 +42,7 @@ fun AddEditExpenseDialog(
     var item by remember { mutableStateOf(expense?.item ?: "") }
     var amountText by remember { mutableStateOf(expense?.amount?.let { "%.2f".format(it) } ?: "") }
     var paidById by remember { mutableStateOf(expense?.paidByRoommateId ?: roommates.firstOrNull()?.id ?: "") }
+    var category by remember { mutableStateOf(expense?.category ?: ExpenseCategory.GROCERIES) }
     var sharedByIds by remember {
         mutableStateOf(
             expense?.sharedByRoommateIds ?: roommates.map { it.id }
@@ -126,6 +127,55 @@ fun AddEditExpenseDialog(
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
+                }
+
+                // Expense Category Selector
+                Text(
+                    text = "Expense Category",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                var categoryDropdownExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = categoryDropdownExpanded,
+                    onExpandedChange = { categoryDropdownExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = category.displayName,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        leadingIcon = { Icon(Icons.Default.Category, contentDescription = null) }
+                    )
+                    ExposedDropdownMenu(
+                        expanded = categoryDropdownExpanded,
+                        onDismissRequest = { categoryDropdownExpanded = false }
+                    ) {
+                        ExpenseCategory.entries.forEach { cat ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(cat.defaultColorHex))
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(cat.displayName)
+                                    }
+                                },
+                                onClick = {
+                                    category = cat
+                                    categoryDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
                 }
 
                 // Paid By Dropdown
@@ -314,7 +364,7 @@ fun AddEditExpenseDialog(
                                 errorMessage = "Please select at least one roommate to share"
                                 return@Button
                             }
-                            onSave(date, item.trim(), amountValue, paidById, sharedByIds, notes.trim())
+                            onSave(date, item.trim(), amountValue, paidById, sharedByIds, notes.trim(), category)
                         }
                     ) {
                         Text(if (expense != null) "Update" else "Save Expense")
@@ -979,18 +1029,26 @@ fun AddEditRoommateDialog(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditApartmentProfileDialog(
     profile: ApartmentProfile,
     onDismiss: () -> Unit,
-    onSave: (name: String, flatNumber: String, currencySymbol: String, inviteCode: String) -> Unit
+    onSave: (name: String, flatNumber: String, currencySymbol: String, currencyCode: String, inviteCode: String) -> Unit
 ) {
     BackHandler { onDismiss() }
 
     var name by remember { mutableStateOf(profile.name) }
     var flatNumber by remember { mutableStateOf(profile.flatNumber) }
     var currencySymbol by remember { mutableStateOf(profile.currencySymbol) }
+    var currencyCode by remember { mutableStateOf(profile.currencyCode) }
     var inviteCode by remember { mutableStateOf(profile.inviteCode) }
+    var currencyDropdownExpanded by remember { mutableStateOf(false) }
+
+    val allCurrencies = remember { CurrencyCatalog.allCurrencies }
+    val selectedCurrency = remember(currencyCode, currencySymbol) {
+        CurrencyCatalog.findByCode(currencyCode) ?: CurrencyCatalog.findBySymbolOrCode(currencySymbol)
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -998,10 +1056,14 @@ fun EditApartmentProfileDialog(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .fillMaxHeight(0.92f)
+                .padding(vertical = 12.dp)
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // Header with Back Button
@@ -1019,7 +1081,7 @@ fun EditApartmentProfileDialog(
                         }
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Apartment Admin Controls",
+                            text = "Apartment Profile & Currency",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -1040,21 +1102,80 @@ fun EditApartmentProfileDialog(
                     singleLine = true
                 )
 
+                OutlinedTextField(
+                    value = flatNumber,
+                    onValueChange = { flatNumber = it },
+                    label = { Text("Flat / Unit #") },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Default.LocationCity, contentDescription = null) },
+                    singleLine = true
+                )
+
+                // Currency Selector Header
+                Text(
+                    text = "Household Currency (Global ISO)",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                ExposedDropdownMenuBox(
+                    expanded = currencyDropdownExpanded,
+                    onExpandedChange = { currencyDropdownExpanded = !currencyDropdownExpanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = "${selectedCurrency.flagEmoji} ${selectedCurrency.code} (${selectedCurrency.symbol}) - ${selectedCurrency.name}",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Select Country Currency") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = currencyDropdownExpanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = currencyDropdownExpanded,
+                        onDismissRequest = { currencyDropdownExpanded = false },
+                        modifier = Modifier.heightIn(max = 280.dp)
+                    ) {
+                        allCurrencies.forEach { curr ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("${curr.flagEmoji} ${curr.code} (${curr.symbol})", fontWeight = FontWeight.Bold)
+                                        Text(curr.name, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                },
+                                onClick = {
+                                    currencyCode = curr.code
+                                    currencySymbol = curr.symbol
+                                    currencyDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Custom Symbol / Code inputs if desired
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     OutlinedTextField(
-                        value = flatNumber,
-                        onValueChange = { flatNumber = it },
-                        label = { Text("Flat / Unit #") },
+                        value = currencyCode,
+                        onValueChange = { currencyCode = it.uppercase() },
+                        label = { Text("ISO Code (e.g. USD)") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = currencySymbol,
                         onValueChange = { currencySymbol = it },
-                        label = { Text("Currency") },
+                        label = { Text("Symbol (e.g. $)") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
@@ -1063,7 +1184,7 @@ fun EditApartmentProfileDialog(
                 OutlinedTextField(
                     value = inviteCode,
                     onValueChange = { inviteCode = it },
-                    label = { Text("Invite Code") },
+                    label = { Text("Household Invite Code") },
                     modifier = Modifier.fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) },
                     singleLine = true
@@ -1080,7 +1201,7 @@ fun EditApartmentProfileDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            onSave(name, flatNumber, currencySymbol, inviteCode)
+                            onSave(name, flatNumber, currencySymbol, currencyCode, inviteCode)
                         }
                     ) {
                         Text("Save Changes")
