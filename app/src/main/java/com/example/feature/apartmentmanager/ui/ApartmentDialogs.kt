@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -19,12 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.feature.apartmentmanager.model.*
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1211,3 +1215,245 @@ fun EditApartmentProfileDialog(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SharedEnvelopeBudgetDialog(
+    budget: SharedEnvelopeBudget? = null,
+    currencySymbol: String,
+    onDismiss: () -> Unit,
+    onSave: (category: ExpenseCategory, monthlyCap: Double, alertThresholdPercent: Int, notes: String) -> Unit,
+    onDelete: ((String) -> Unit)? = null
+) {
+    BackHandler { onDismiss() }
+
+    var category by remember { mutableStateOf(budget?.category ?: ExpenseCategory.GROCERIES) }
+    var monthlyCapText by remember {
+        mutableStateOf(budget?.monthlyCap?.let { "%.0f".format(it) } ?: "5000")
+    }
+    var alertThreshold by remember { mutableStateOf(budget?.alertThresholdPercent ?: 85) }
+    var notes by remember { mutableStateOf(budget?.notes ?: "") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var categoryDropdownExpanded by remember { mutableStateOf(false) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .padding(vertical = 16.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Savings,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = if (budget == null) "New Budget Envelope" else "Edit Budget Envelope",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                }
+
+                if (errorMessage != null) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = errorMessage ?: "",
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+                }
+
+                // Category Selector
+                Text(
+                    text = "Expense Category",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                ExposedDropdownMenuBox(
+                    expanded = categoryDropdownExpanded,
+                    onExpandedChange = { categoryDropdownExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = category.displayName,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        leadingIcon = {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(category.defaultColorHex))
+                            )
+                        }
+                    )
+                    ExposedDropdownMenu(
+                        expanded = categoryDropdownExpanded,
+                        onDismissRequest = { categoryDropdownExpanded = false }
+                    ) {
+                        ExpenseCategory.entries.forEach { cat ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(cat.defaultColorHex))
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(cat.displayName)
+                                    }
+                                },
+                                onClick = {
+                                    category = cat
+                                    categoryDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Monthly Cap Input
+                OutlinedTextField(
+                    value = monthlyCapText,
+                    onValueChange = { monthlyCapText = it },
+                    label = { Text("Monthly Spending Cap ($currencySymbol)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    leadingIcon = { Text(currencySymbol, fontWeight = FontWeight.Bold) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                // Alert Threshold
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Warning Alert Threshold",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "$alertThreshold%",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Slider(
+                        value = alertThreshold.toFloat(),
+                        onValueChange = { alertThreshold = it.roundToInt() },
+                        valueRange = 50f..100f,
+                        steps = 9
+                    )
+                    Text(
+                        text = "The household will receive an alert notification when category expenses reach $alertThreshold% of the cap.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Notes / Description
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Notes / Envelope Scope (Optional)") },
+                    placeholder = { Text("e.g. Milk, bread, monthly veggies") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 2
+                )
+
+                // Actions
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (budget != null && onDelete != null) {
+                        IconButton(
+                            onClick = {
+                                onDelete(budget.id)
+                                onDismiss()
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Delete Envelope",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onDismiss) {
+                            Text("Cancel")
+                        }
+                        Button(
+                            onClick = {
+                                val cap = monthlyCapText.toDoubleOrNull()
+                                if (cap == null || cap <= 0) {
+                                    errorMessage = "Please enter a valid monthly cap amount"
+                                    return@Button
+                                }
+                                onSave(category, cap, alertThreshold, notes.trim())
+                                onDismiss()
+                            }
+                        ) {
+                            Text(if (budget == null) "Create Envelope" else "Save")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

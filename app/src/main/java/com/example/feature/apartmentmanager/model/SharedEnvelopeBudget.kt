@@ -46,4 +46,8 @@ data class SharedEnvelopeBudget(
     fun isOverLimit(spentAmount: Double): Boolean {
         return monthlyCap > 0.0 && spentAmount >= monthlyCap
     }
+
+    fun isExceeded(spentAmount: Double): Boolean {
+        return isOverLimit(spentAmount)
+    }
 }

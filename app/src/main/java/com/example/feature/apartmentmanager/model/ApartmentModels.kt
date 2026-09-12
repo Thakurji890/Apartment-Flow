@@ -59,7 +59,8 @@ data class ApartmentProfile(
     val flatNumber: String = "Flat 402",
     val currencySymbol: String = "₹",
     val currencyCode: String = "INR",
-    val inviteCode: String = "APT402"
+    val inviteCode: String = "APT402",
+    val monthlyRent: Double = 45000.0
 )
 
 data class RoommateBalanceSummary(

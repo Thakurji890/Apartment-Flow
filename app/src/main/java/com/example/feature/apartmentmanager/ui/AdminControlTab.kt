@@ -41,7 +41,9 @@ fun AdminControlTab(
     onApproveExpense: (String) -> Unit = {},
     onRejectExpense: (String, String) -> Unit = { _, _ -> },
     onApproveSettlement: (String) -> Unit = {},
-    onRejectSettlement: (String, String) -> Unit = { _, _ -> }
+    onRejectSettlement: (String, String) -> Unit = { _, _ -> },
+    onOpenEnvelopeBudget: (SharedEnvelopeBudget?) -> Unit = {},
+    onOpenRentCalculator: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var roommateToDelete by remember { mutableStateOf<ApartmentRoommate?>(null) }
@@ -502,6 +504,185 @@ fun AdminControlTab(
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Household Budgeting & Rent Logic Section
+        item {
+            Text(
+                text = "Household Budgeting & Rent Logic",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Envelope Budgets Sub-Card
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Savings,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Shared Envelope Budgets",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Monthly category limits & alert thresholds",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        FilledTonalButton(
+                            onClick = { onOpenEnvelopeBudget(null) }
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Add Cap")
+                        }
+                    }
+
+                    if (state.envelopeBudgets.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            state.envelopeBudgets.forEach { budget ->
+                                val spent = state.expenses
+                                    .filter { it.status == ExpenseStatus.APPROVED && it.category == budget.category }
+                                    .sumOf { it.amount }
+                                val progress = budget.calculateProgress(spent)
+                                val isNear = budget.isNearLimit(spent)
+                                val isExceeded = budget.isExceeded(spent)
+
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onOpenEnvelopeBudget(budget) }
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(10.dp)
+                                                        .clip(CircleShape)
+                                                        .background(Color(budget.category.defaultColorHex))
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    budget.category.displayName,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = "${state.profile.currencySymbol}${"%.0f".format(spent)} / ${state.profile.currencySymbol}${"%.0f".format(budget.monthlyCap)} (${"%.0f".format(progress * 100)}%)",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = when {
+                                                    isExceeded -> MaterialTheme.colorScheme.error
+                                                    isNear -> Color(0xFFF57C00)
+                                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                                }
+                                            )
+                                        }
+
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = "Edit",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                    // Proportional Rent Calculator Launcher
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f).padding(end = 8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.tertiaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Calculate,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Proportional Rent Calculator",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Unequal splits: room sq.ft, private bath, or income ratios",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Button(
+                            onClick = onOpenRentCalculator,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                        ) {
+                            Text("Launch")
                         }
                     }
                 }

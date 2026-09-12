@@ -100,6 +100,15 @@ fun ApartmentManagementScreen(
                     }
                 },
                 actions = {
+                    // Proportional Rent Splitter Shortcut
+                    IconButton(onClick = { viewModel.openRentCalculatorDialog() }) {
+                        Icon(
+                            Icons.Default.Calculate,
+                            contentDescription = "Proportional Rent Splitter",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+
                     // Notification Activity Bell with Unread Badge
                     IconButton(onClick = { viewModel.openNotificationsDialog() }) {
                         BadgedBox(
@@ -290,7 +299,9 @@ fun ApartmentManagementScreen(
                     onBatchSettleAll = { transfers ->
                         viewModel.recordBatchSettlements(transfers)
                     },
-                    onAddExpenseClick = { viewModel.openAddExpenseDialog() }
+                    onAddExpenseClick = { viewModel.openAddExpenseDialog() },
+                    onOpenRentCalculator = { viewModel.openRentCalculatorDialog() },
+                    onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) }
                 )
                 1 -> ExpensesGroceriesTab(
                     state = state,
@@ -322,7 +333,9 @@ fun ApartmentManagementScreen(
                     onApproveExpense = { viewModel.approveExpense(it) },
                     onRejectExpense = { id, reason -> viewModel.rejectExpense(id, reason) },
                     onApproveSettlement = { viewModel.approveSettlement(it) },
-                    onRejectSettlement = { id, reason -> viewModel.rejectSettlement(id, reason) }
+                    onRejectSettlement = { id, reason -> viewModel.rejectSettlement(id, reason) },
+                    onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) },
+                    onOpenRentCalculator = { viewModel.openRentCalculatorDialog() }
                 )
             }
         }
@@ -407,6 +420,32 @@ fun ApartmentManagementScreen(
                 TextButton(onClick = { viewModel.closeResetConfirmationDialog() }) {
                     Text("Back")
                 }
+            }
+        )
+    }
+
+    if (state.showEnvelopeBudgetDialog) {
+        SharedEnvelopeBudgetDialog(
+            budget = state.editingEnvelopeBudget,
+            currencySymbol = state.profile.currencySymbol,
+            onDismiss = { viewModel.closeEnvelopeBudgetDialog() },
+            onSave = { category, monthlyCap, alertThresholdPercent, notes ->
+                viewModel.setEnvelopeBudget(category, monthlyCap, alertThresholdPercent, notes)
+            },
+            onDelete = { budgetId ->
+                viewModel.removeEnvelopeBudget(budgetId)
+            }
+        )
+    }
+
+    if (state.showRentCalculatorDialog) {
+        ProportionalRentCalculatorDialog(
+            roommates = state.roommates,
+            initialRent = state.profile.monthlyRent,
+            currencySymbol = state.profile.currencySymbol,
+            onDismiss = { viewModel.closeRentCalculatorDialog() },
+            onRecordExpense = { totalAmount, desc, shares ->
+                viewModel.recordProportionalRentSplit(totalAmount, desc, shares)
             }
         )
     }

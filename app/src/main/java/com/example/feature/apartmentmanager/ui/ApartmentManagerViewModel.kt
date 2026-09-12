@@ -36,6 +36,9 @@ data class ApartmentUiState(
     val showEditApartmentDialog: Boolean = false,
     val showResetConfirmationDialog: Boolean = false,
     val showNotificationsDialog: Boolean = false,
+    val showEnvelopeBudgetDialog: Boolean = false,
+    val editingEnvelopeBudget: SharedEnvelopeBudget? = null,
+    val showRentCalculatorDialog: Boolean = false,
     val statusMessage: String? = null
 ) {
     val activeRoommate: ApartmentRoommate?
@@ -492,5 +495,56 @@ class ApartmentManagerViewModel @Inject constructor(
     fun removeEnvelopeBudget(budgetId: String) {
         dataManager.removeEnvelopeBudget(budgetId)
         _uiState.update { it.copy(statusMessage = "Removed envelope budget") }
+    }
+
+    fun openEnvelopeBudgetDialog(budget: SharedEnvelopeBudget? = null) {
+        _uiState.update { it.copy(showEnvelopeBudgetDialog = true, editingEnvelopeBudget = budget) }
+    }
+
+    fun closeEnvelopeBudgetDialog() {
+        _uiState.update { it.copy(showEnvelopeBudgetDialog = false, editingEnvelopeBudget = null) }
+    }
+
+    fun openRentCalculatorDialog() {
+        _uiState.update { it.copy(showRentCalculatorDialog = true) }
+    }
+
+    fun closeRentCalculatorDialog() {
+        _uiState.update { it.copy(showRentCalculatorDialog = false) }
+    }
+
+    fun recordProportionalRentSplit(totalRent: Double, description: String, shares: List<RoomRentShare>) {
+        val activeId = _uiState.value.activeRoommateId
+        val activeUser = _uiState.value.roommates.find { it.id == activeId }
+        val isAdmin = _uiState.value.isActiveUserAdmin
+        val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+
+        val shareNotes = shares.joinToString("; ") { "${it.roommateName}: ${"%.0f".format(it.calculatedRent)} (${"%.1f".format(it.percentageOfTotal)}%)" }
+        val fullNotes = "$description - $shareNotes"
+
+        dataManager.addExpense(
+            date = today,
+            item = "Rent: $description",
+            amount = totalRent,
+            paidByRoommateId = activeId,
+            sharedByRoommateIds = shares.map { it.roommateId },
+            notes = fullNotes,
+            category = ExpenseCategory.RENT,
+            autoApproveIfAdmin = isAdmin
+        )
+
+        dataManager.addNotification(
+            title = "Proportional Rent Calculated",
+            message = "Rent split calculated for ${_uiState.value.profile.currencySymbol}${"%.2f".format(totalRent)} across ${shares.size} roommates.",
+            category = NotificationCategory.PURCHASE,
+            authorName = activeUser?.name ?: "Roommate"
+        )
+
+        _uiState.update {
+            it.copy(
+                showRentCalculatorDialog = false,
+                statusMessage = "Recorded proportional rent of ${_uiState.value.profile.currencySymbol}${"%.2f".format(totalRent)}"
+            )
+        }
     }
 }

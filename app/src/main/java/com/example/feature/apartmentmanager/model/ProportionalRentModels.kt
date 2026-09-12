@@ -19,6 +19,10 @@ enum class RentSplitStrategy(val label: String, val description: String) {
     HYBRID_CUSTOM(
         "Custom Room Weights",
         "Assign custom point values or weights per room to calculate tailored rent distribution."
+    ),
+    EQUAL(
+        "Equal Split",
+        "Divides the total monthly rent equally across all roommates in the household."
     )
 }
 

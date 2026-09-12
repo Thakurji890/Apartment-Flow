@@ -216,4 +216,29 @@ object ProportionalRentCalculatorEngine {
             shares = shares
         )
     }
+
+    /**
+     * Calculate equal split dividing the total monthly rent equally across all roommates.
+     */
+    fun calculateEqual(
+        totalRent: Double,
+        roommates: List<com.example.feature.apartmentmanager.model.ApartmentRoommate>
+    ): ProportionalRentCalculationResult {
+        if (roommates.isEmpty() || totalRent <= 0.0) {
+            return ProportionalRentCalculationResult(totalRent, RentSplitStrategy.EQUAL, emptyList())
+        }
+        val perPerson = (totalRent / roommates.size * 100.0).roundToInt() / 100.0
+        val percent = 100.0 / roommates.size
+        val shares = roommates.map { rm ->
+            RoomRentShare(
+                roommateId = rm.id,
+                roommateName = rm.name,
+                roomName = "Room",
+                calculatedRent = perPerson,
+                percentageOfTotal = (percent * 10.0).roundToInt() / 10.0,
+                detailNotes = "Equal 1/${roommates.size} share"
+            )
+        }
+        return ProportionalRentCalculationResult(totalRent, RentSplitStrategy.EQUAL, shares)
+    }
 }
