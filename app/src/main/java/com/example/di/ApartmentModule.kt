@@ -1,5 +1,7 @@
 package com.example.di
 
+import android.content.Context
+import com.example.core.util.FirebaseInitializer
 import com.example.feature.apartment.data.repository.ApartmentRepositoryImpl
 import com.example.feature.apartment.domain.repository.ApartmentRepository
 import com.example.feature.apartment.domain.usecase.*
@@ -8,6 +10,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -17,7 +20,8 @@ object ApartmentModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseFirestore(): FirebaseFirestore {
+    fun provideFirebaseFirestore(@ApplicationContext context: Context): FirebaseFirestore {
+        FirebaseInitializer.ensureInitialized(context)
         return FirebaseFirestore.getInstance()
     }
 

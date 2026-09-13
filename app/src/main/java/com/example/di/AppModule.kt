@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.core.util.FirebaseInitializer
 import com.example.feature.auth.data.repository.AuthRepositoryImpl
 import com.example.feature.auth.domain.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -24,14 +25,16 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth {
+    fun provideFirebaseAuth(@ApplicationContext context: Context): FirebaseAuth {
+        FirebaseInitializer.ensureInitialized(context)
         return FirebaseAuth.getInstance()
     }
 
 
     @Provides
     @Singleton
-    fun provideFirebaseStorage(): FirebaseStorage {
+    fun provideFirebaseStorage(@ApplicationContext context: Context): FirebaseStorage {
+        FirebaseInitializer.ensureInitialized(context)
         return FirebaseStorage.getInstance()
     }
 
