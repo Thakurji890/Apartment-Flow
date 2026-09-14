@@ -106,6 +106,12 @@ class ApartmentDataManager(context: Context) {
                     } catch (e: Exception) {
                         ExpenseCategory.GROCERIES
                     }
+                    val syncStateStr = obj.optString("syncState", "SYNCED")
+                    val expSyncState = try {
+                        DataSyncState.valueOf(syncStateStr)
+                    } catch (e: Exception) {
+                        DataSyncState.SYNCED
+                    }
                     list.add(
                         ApartmentExpense(
                             id = obj.getString("id"),
@@ -119,7 +125,8 @@ class ApartmentDataManager(context: Context) {
                             status = expStatus,
                             approvedByAdminId = if (obj.has("approvedBy")) obj.optString("approvedBy") else null,
                             approvedAt = if (obj.has("approvedAt")) obj.optString("approvedAt") else null,
-                            rejectionReason = if (obj.has("rejectionReason")) obj.optString("rejectionReason") else null
+                            rejectionReason = if (obj.has("rejectionReason")) obj.optString("rejectionReason") else null,
+                            syncState = expSyncState
                         )
                     )
                 }
@@ -139,6 +146,12 @@ class ApartmentDataManager(context: Context) {
                     } catch (e: Exception) {
                         SettlementStatus.APPROVED
                     }
+                    val syncStateStr = obj.optString("syncState", "SYNCED")
+                    val setSyncState = try {
+                        DataSyncState.valueOf(syncStateStr)
+                    } catch (e: Exception) {
+                        DataSyncState.SYNCED
+                    }
                     list.add(
                         ApartmentSettlement(
                             id = obj.getString("id"),
@@ -150,7 +163,8 @@ class ApartmentDataManager(context: Context) {
                             status = status,
                             approvedByAdminId = if (obj.has("approvedBy")) obj.optString("approvedBy") else null,
                             approvedAt = if (obj.has("approvedAt")) obj.optString("approvedAt") else null,
-                            rejectionReason = if (obj.has("rejectionReason")) obj.optString("rejectionReason") else null
+                            rejectionReason = if (obj.has("rejectionReason")) obj.optString("rejectionReason") else null,
+                            syncState = setSyncState
                         )
                     )
                 }
@@ -265,6 +279,7 @@ class ApartmentDataManager(context: Context) {
             exp.approvedByAdminId?.let { obj.put("approvedBy", it) }
             exp.approvedAt?.let { obj.put("approvedAt", it) }
             exp.rejectionReason?.let { obj.put("rejectionReason", it) }
+            obj.put("syncState", exp.syncState.name)
             expArray.put(obj)
         }
         editor.putString("expenses", expArray.toString())
@@ -283,6 +298,7 @@ class ApartmentDataManager(context: Context) {
             set.approvedByAdminId?.let { obj.put("approvedBy", it) }
             set.approvedAt?.let { obj.put("approvedAt", it) }
             set.rejectionReason?.let { obj.put("rejectionReason", it) }
+            obj.put("syncState", set.syncState.name)
             setArray.put(obj)
         }
         editor.putString("settlements", setArray.toString())
@@ -389,7 +405,8 @@ class ApartmentDataManager(context: Context) {
         sharedByRoommateIds: List<String>,
         notes: String = "",
         category: ExpenseCategory = ExpenseCategory.GROCERIES,
-        autoApproveIfAdmin: Boolean = true
+        autoApproveIfAdmin: Boolean = true,
+        syncState: DataSyncState = DataSyncState.SYNCED
     ) {
         val activeUser = _roommates.value.find { it.id == _activeRoommateId.value }
         val isAdmin = activeUser?.isAdmin == true
@@ -407,7 +424,8 @@ class ApartmentDataManager(context: Context) {
             category = category,
             status = status,
             approvedByAdminId = if (status == ExpenseStatus.APPROVED) activeUser?.id else null,
-            approvedAt = if (status == ExpenseStatus.APPROVED) today else null
+            approvedAt = if (status == ExpenseStatus.APPROVED) today else null,
+            syncState = syncState
         )
         // Add to the front so newest appears first
         _expenses.value = listOf(expense) + _expenses.value
@@ -568,7 +586,8 @@ class ApartmentDataManager(context: Context) {
         toRoommateId: String,
         amount: Double,
         note: String = "",
-        autoApproveIfAdmin: Boolean = true
+        autoApproveIfAdmin: Boolean = true,
+        syncState: DataSyncState = DataSyncState.SYNCED
     ) {
         val activeUser = _roommates.value.find { it.id == _activeRoommateId.value }
         val isAdmin = activeUser?.isAdmin == true
@@ -584,7 +603,8 @@ class ApartmentDataManager(context: Context) {
             note = note,
             status = status,
             approvedByAdminId = if (status == SettlementStatus.APPROVED) activeUser?.id else null,
-            approvedAt = if (status == SettlementStatus.APPROVED) today else null
+            approvedAt = if (status == SettlementStatus.APPROVED) today else null,
+            syncState = syncState
         )
         _settlements.value = listOf(settlement) + _settlements.value
 
@@ -1035,5 +1055,22 @@ class ApartmentDataManager(context: Context) {
         _envelopeBudgets.value = defaultEnvelopeBudgets()
 
         saveData()
+    }
+
+    fun markAllPendingSynced() {
+        val updatedExpenses = _expenses.value.map {
+            if (it.syncState == DataSyncState.PENDING) it.copy(syncState = DataSyncState.SYNCED) else it
+        }
+        val updatedSettlements = _settlements.value.map {
+            if (it.syncState == DataSyncState.PENDING) it.copy(syncState = DataSyncState.SYNCED) else it
+        }
+        _expenses.value = updatedExpenses
+        _settlements.value = updatedSettlements
+        saveData()
+    }
+
+    fun getPendingSyncCount(): Int {
+        return _expenses.value.count { it.syncState == DataSyncState.PENDING } +
+                _settlements.value.count { it.syncState == DataSyncState.PENDING }
     }
 }

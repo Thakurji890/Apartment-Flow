@@ -6,6 +6,11 @@ enum class SettlementStatus {
     REJECTED
 }
 
+enum class DataSyncState {
+    SYNCED,
+    PENDING
+}
+
 enum class ExpenseStatus {
     PENDING,
     APPROVED,
@@ -32,7 +37,8 @@ data class ApartmentExpense(
     val status: ExpenseStatus = ExpenseStatus.APPROVED,
     val approvedByAdminId: String? = null,
     val approvedAt: String? = null,
-    val rejectionReason: String? = null
+    val rejectionReason: String? = null,
+    val syncState: DataSyncState = DataSyncState.SYNCED
 ) {
     val sharingCount: Int
         get() = sharedByRoommateIds.size
@@ -51,7 +57,8 @@ data class ApartmentSettlement(
     val status: SettlementStatus = SettlementStatus.APPROVED,
     val approvedByAdminId: String? = null,
     val approvedAt: String? = null,
-    val rejectionReason: String? = null
+    val rejectionReason: String? = null,
+    val syncState: DataSyncState = DataSyncState.SYNCED
 )
 
 data class ApartmentProfile(

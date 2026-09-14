@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.core.security.ui.BiometricLockScreen
+import com.example.core.security.ui.SecuritySettingsDialog
 import com.example.feature.apartmentmanager.model.NotificationCategory
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,6 +102,43 @@ fun ApartmentManagementScreen(
                     }
                 },
                 actions = {
+                    // Offline / Cloud Status Indicator Action
+                    IconButton(onClick = { viewModel.openOfflineInfoDialog() }) {
+                        BadgedBox(
+                            badge = {
+                                if (state.pendingSyncCount > 0) {
+                                    Badge(
+                                        containerColor = if (state.isOnline) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error,
+                                        contentColor = MaterialTheme.colorScheme.onError
+                                    ) {
+                                        Text(state.pendingSyncCount.toString())
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (!state.isOnline) {
+                                    Icons.Default.CloudOff
+                                } else if (state.isSyncing) {
+                                    Icons.Default.Sync
+                                } else {
+                                    Icons.Default.CloudDone
+                                },
+                                contentDescription = "Offline / Sync Status",
+                                tint = if (!state.isOnline) Color(0xFFFFCDD2) else MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+
+                    // Biometric App Lock Quick Action
+                    IconButton(onClick = { viewModel.lockAppNow() }) {
+                        Icon(
+                            Icons.Default.Lock,
+                            contentDescription = "Lock App with Biometrics",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+
                     // Proportional Rent Splitter Shortcut
                     IconButton(onClick = { viewModel.openRentCalculatorDialog() }) {
                         Icon(
@@ -282,63 +321,194 @@ fun ApartmentManagementScreen(
             }
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (state.selectedTab) {
-                0 -> BalancesSummaryTab(
-                    state = state,
-                    balanceSummaries = balanceSummaries,
-                    settlementSuggestions = settlementSuggestions,
-                    totalPoolSpending = totalPoolSpending,
-                    onQuickSettle = { fromId, toId, amount ->
-                        viewModel.openAddSettlementDialog(fromId, toId, amount)
-                    },
-                    onBatchSettleAll = { transfers ->
-                        viewModel.recordBatchSettlements(transfers)
-                    },
-                    onAddExpenseClick = { viewModel.openAddExpenseDialog() },
-                    onOpenRentCalculator = { viewModel.openRentCalculatorDialog() },
-                    onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) }
-                )
-                1 -> ExpensesGroceriesTab(
-                    state = state,
-                    onFilterRoommate = { viewModel.setExpenseFilterRoommateId(it) },
-                    onSearchQueryChange = { viewModel.setSearchQuery(it) },
-                    onAddExpense = { viewModel.openAddExpenseDialog() },
-                    onEditExpense = { viewModel.openEditExpenseDialog(it) },
-                    onDeleteExpense = { viewModel.deleteExpense(it) },
-                    onApproveExpense = { viewModel.approveExpense(it) },
-                    onRejectExpense = { id, reason -> viewModel.rejectExpense(id, reason) }
-                )
-                2 -> SettlementsTab(
-                    state = state,
-                    onAddSettlement = { viewModel.openAddSettlementDialog() },
-                    onApproveSettlement = { viewModel.approveSettlement(it) },
-                    onRejectSettlement = { id, reason -> viewModel.rejectSettlement(id, reason) },
-                    onDeleteSettlement = { viewModel.deleteSettlement(it) }
-                )
-                3 -> AdminControlTab(
-                    state = state,
-                    balanceSummaries = balanceSummaries,
-                    settlementSuggestions = settlementSuggestions,
-                    onSetActiveRoommate = { viewModel.setActiveRoommate(it) },
-                    onEditApartment = { viewModel.openEditApartmentDialog() },
-                    onAddRoommate = { viewModel.openAddRoommateDialog() },
-                    onEditRoommate = { viewModel.openEditRoommateDialog(it) },
-                    onDeleteRoommate = { viewModel.deleteRoommate(it) },
-                    onResetToDefault = { viewModel.openResetConfirmationDialog() },
-                    onApproveExpense = { viewModel.approveExpense(it) },
-                    onRejectExpense = { id, reason -> viewModel.rejectExpense(id, reason) },
-                    onApproveSettlement = { viewModel.approveSettlement(it) },
-                    onRejectSettlement = { id, reason -> viewModel.rejectSettlement(id, reason) },
-                    onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) },
-                    onOpenRentCalculator = { viewModel.openRentCalculatorDialog() }
-                )
+            // Offline Mode Banner (Travel Dead Zones)
+            if (!state.isOnline) {
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                Icons.Default.CloudOff,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = if (state.pendingSyncCount > 0)
+                                    "Travel Dead Zone • ${state.pendingSyncCount} record(s) queued for sync"
+                                else
+                                    "Travel Dead Zone • Offline ledger active",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                        TextButton(
+                            onClick = { viewModel.openOfflineInfoDialog() },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        ) {
+                            Text(
+                                "Details",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
+            } else if (state.pendingSyncCount > 0 || state.isSyncing) {
+                Surface(
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                Icons.Default.CloudSync,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = if (state.isSyncing)
+                                    "Syncing offline records with cloud..."
+                                else
+                                    "${state.pendingSyncCount} offline record(s) ready to sync",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                        TextButton(
+                            onClick = { viewModel.syncOfflineRecords(forced = true) },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                            enabled = !state.isSyncing
+                        ) {
+                            Text(
+                                "Sync Now",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                when (state.selectedTab) {
+                    0 -> BalancesSummaryTab(
+                        state = state,
+                        balanceSummaries = balanceSummaries,
+                        settlementSuggestions = settlementSuggestions,
+                        totalPoolSpending = totalPoolSpending,
+                        onQuickSettle = { fromId, toId, amount ->
+                            viewModel.openAddSettlementDialog(fromId, toId, amount)
+                        },
+                        onBatchSettleAll = { transfers ->
+                            viewModel.recordBatchSettlements(transfers)
+                        },
+                        onAddExpenseClick = { viewModel.openAddExpenseDialog() },
+                        onOpenRentCalculator = { viewModel.openRentCalculatorDialog() },
+                        onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) }
+                    )
+                    1 -> ExpensesGroceriesTab(
+                        state = state,
+                        onFilterRoommate = { viewModel.setExpenseFilterRoommateId(it) },
+                        onSearchQueryChange = { viewModel.setSearchQuery(it) },
+                        onAddExpense = { viewModel.openAddExpenseDialog() },
+                        onEditExpense = { viewModel.openEditExpenseDialog(it) },
+                        onDeleteExpense = { viewModel.deleteExpense(it) },
+                        onApproveExpense = { viewModel.approveExpense(it) },
+                        onRejectExpense = { id, reason -> viewModel.rejectExpense(id, reason) }
+                    )
+                    2 -> SettlementsTab(
+                        state = state,
+                        onAddSettlement = { viewModel.openAddSettlementDialog() },
+                        onApproveSettlement = { viewModel.approveSettlement(it) },
+                        onRejectSettlement = { id, reason -> viewModel.rejectSettlement(id, reason) },
+                        onDeleteSettlement = { viewModel.deleteSettlement(it) }
+                    )
+                    3 -> AdminControlTab(
+                        state = state,
+                        balanceSummaries = balanceSummaries,
+                        settlementSuggestions = settlementSuggestions,
+                        onSetActiveRoommate = { viewModel.setActiveRoommate(it) },
+                        onEditApartment = { viewModel.openEditApartmentDialog() },
+                        onAddRoommate = { viewModel.openAddRoommateDialog() },
+                        onEditRoommate = { viewModel.openEditRoommateDialog(it) },
+                        onDeleteRoommate = { viewModel.deleteRoommate(it) },
+                        onResetToDefault = { viewModel.openResetConfirmationDialog() },
+                        onApproveExpense = { viewModel.approveExpense(it) },
+                        onRejectExpense = { id, reason -> viewModel.rejectExpense(id, reason) },
+                        onApproveSettlement = { viewModel.approveSettlement(it) },
+                        onRejectSettlement = { id, reason -> viewModel.rejectSettlement(id, reason) },
+                        onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) },
+                        onOpenRentCalculator = { viewModel.openRentCalculatorDialog() },
+                        onOpenSecuritySettings = { viewModel.openSecuritySettings() },
+                        onOpenOfflineInfo = { viewModel.openOfflineInfoDialog() }
+                    )
+                }
             }
         }
+    }
+
+    // --- Security & Offline Dialogs ---
+    if (state.showSecuritySettingsDialog) {
+        SecuritySettingsDialog(
+            securityManager = viewModel.securityManager,
+            onDismiss = { viewModel.closeSecuritySettings() },
+            onLockNow = {
+                viewModel.closeSecuritySettings()
+                viewModel.lockAppNow()
+            }
+        )
+    }
+
+    if (state.showOfflineInfoDialog) {
+        OfflineInfoDialog(
+            isOnline = state.isOnline,
+            isSyncing = state.isSyncing,
+            pendingSyncCount = state.pendingSyncCount,
+            onSyncNow = { viewModel.syncOfflineRecords(forced = true) },
+            onDismiss = { viewModel.closeOfflineInfoDialog() }
+        )
+    }
+
+    // --- Biometric App Lock Screen Overlay ---
+    if (state.isAppLocked) {
+        BiometricLockScreen(
+            securityManager = viewModel.securityManager
+        )
     }
 
     // --- Dialogs with Back Navigation & Non-overlapping Layouts ---

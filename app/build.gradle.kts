@@ -98,6 +98,7 @@ dependencies {
   ksp(libs.androidx.hilt.compiler)
 
   implementation(libs.androidx.appcompat)
+  implementation(libs.androidx.biometric)
   implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)

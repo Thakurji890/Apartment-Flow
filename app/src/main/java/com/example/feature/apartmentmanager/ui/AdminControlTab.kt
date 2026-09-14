@@ -43,7 +43,9 @@ fun AdminControlTab(
     onApproveSettlement: (String) -> Unit = {},
     onRejectSettlement: (String, String) -> Unit = { _, _ -> },
     onOpenEnvelopeBudget: (SharedEnvelopeBudget?) -> Unit = {},
-    onOpenRentCalculator: () -> Unit = {}
+    onOpenRentCalculator: () -> Unit = {},
+    onOpenSecuritySettings: () -> Unit = {},
+    onOpenOfflineInfo: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var roommateToDelete by remember { mutableStateOf<ApartmentRoommate?>(null) }
@@ -684,6 +686,121 @@ fun AdminControlTab(
                         ) {
                             Text("Launch")
                         }
+                    }
+                }
+            }
+        }
+
+        // Security & Offline Section
+        item {
+            Text(
+                text = "Security & Offline Capabilities",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Biometric Lock row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Fingerprint,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Biometric App Lock",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Protect personal financial ledgers with FaceID, fingerprint, or PIN.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = onOpenSecuritySettings,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Security, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Configure Biometric Lock & PIN")
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                    // Offline-First row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (state.isOnline) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.errorContainer
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                if (state.isOnline) Icons.Default.CloudDone else Icons.Default.CloudOff,
+                                contentDescription = null,
+                                tint = if (state.isOnline) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (state.isOnline) "Offline-First Sync (Live)" else "Travel Dead Zone Mode (Active)",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (state.pendingSyncCount > 0)
+                                    "${state.pendingSyncCount} record(s) queued for auto-sync"
+                                else
+                                    "Split bills and view ledgers in travel dead zones with auto-sync.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = onOpenOfflineInfo,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.CloudSync, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Offline Architecture & Cloud Sync")
                     }
                 }
             }
