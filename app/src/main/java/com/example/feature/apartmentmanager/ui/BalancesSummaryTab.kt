@@ -39,6 +39,7 @@ fun BalancesSummaryTab(
     val currencyCode = state.profile.currencyCode
     var selectedRoommateForDetail by remember { mutableStateOf<RoommateBalanceSummary?>(null) }
     var showBatchConfirmDialog by remember { mutableStateOf(false) }
+    var envelopesExpanded by remember { mutableStateOf(false) }
 
     val simplificationResult = remember(balanceSummaries) {
         DebtSimplificationEngine.simplifyDebts(balanceSummaries)
@@ -55,39 +56,37 @@ fun BalancesSummaryTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // --- Total Apartment Pool Spending Card ---
         item {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
                 ),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Apartment,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
+                        Column {
                             Text(
-                                text = "${state.profile.name} • ${state.profile.flatNumber}",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                text = "Household Spending",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                text = "$currency${"%,.2f".format(totalPoolSpending)}",
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
@@ -96,51 +95,58 @@ fun BalancesSummaryTab(
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(
-                                text = "${state.roommates.size} Roommates",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "${state.roommates.size} Roommates • ${state.expenses.size} Logs",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
                         }
                     }
 
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-
+                    // Quick Primary Actions inside the Hero Card
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                            Text(
-                                text = "Total Shared Groceries Spent",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                            )
-                            Text(
-                                text = "$currency${"%,.2f".format(totalPoolSpending)}",
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
+                        Button(
+                            onClick = onAddExpenseClick,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Add Expense", fontWeight = FontWeight.Bold)
                         }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = "Expenses Logged",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                            )
-                            Text(
-                                text = "${state.expenses.size} purchases",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
+
+                        OutlinedButton(
+                            onClick = {
+                                if (settlementSuggestions.isNotEmpty()) {
+                                    val first = settlementSuggestions.first()
+                                    onQuickSettle(first.fromRoommate.id, first.toRoommate.id, first.amount)
+                                } else {
+                                    val firstRoommate = state.roommates.firstOrNull()
+                                    val secondRoommate = state.roommates.getOrNull(1)
+                                    if (firstRoommate != null && secondRoommate != null) {
+                                        onQuickSettle(firstRoommate.id, secondRoommate.id, 0.0)
+                                    }
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                        ) {
+                            Icon(Icons.Default.SyncAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Settle Up", fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -149,17 +155,35 @@ fun BalancesSummaryTab(
 
         // --- Shared Envelope Budgets & Spending Progress ---
         item {
+            val totalBudgetCap = remember(state.envelopeBudgets) {
+                state.envelopeBudgets.sumOf { it.monthlyCap }
+            }
+            val totalBudgetSpent = remember(state.envelopeBudgets, state.expenses) {
+                state.envelopeBudgets.sumOf { budget ->
+                    state.expenses
+                        .filter { it.status == ExpenseStatus.APPROVED && it.category == budget.category }
+                        .sumOf { it.amount }
+                }
+            }
+            val overallBudgetProgress = if (totalBudgetCap > 0) (totalBudgetSpent / totalBudgetCap).toFloat().coerceIn(0f, 1f) else 0f
+            val warningCount = remember(state.envelopeBudgets, state.expenses) {
+                state.envelopeBudgets.count { budget ->
+                    val spent = state.expenses.filter { it.status == ExpenseStatus.APPROVED && it.category == budget.category }.sumOf { it.amount }
+                    budget.isNearLimit(spent) || budget.isExceeded(spent)
+                }
+            }
+
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(16.dp),
                 border = CardDefaults.outlinedCardBorder(),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -169,7 +193,7 @@ fun BalancesSummaryTab(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
+                                    .size(28.dp)
                                     .clip(CircleShape)
                                     .background(MaterialTheme.colorScheme.primaryContainer),
                                 contentAlignment = Alignment.Center
@@ -178,169 +202,145 @@ fun BalancesSummaryTab(
                                     Icons.Default.Savings,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text(
-                                    text = "Household Envelope Budgets",
+                                    text = "Monthly Envelope Budgets",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Monthly caps & live threshold alerts",
+                                    text = if (totalBudgetCap > 0) "$currency${"%.0f".format(totalBudgetSpent)} of $currency${"%.0f".format(totalBudgetCap)} (${"%.0f".format(overallBudgetProgress * 100)}%)" else "No budgets configured",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
 
-                        TextButton(onClick = { onOpenEnvelopeBudget(null) }) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("New Envelope")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (warningCount > 0) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = Color(0xFFFFF3E0),
+                                    modifier = Modifier.padding(end = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "$warningCount Alert",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFFE65100),
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = { onOpenEnvelopeBudget(null) },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "New Envelope", modifier = Modifier.size(20.dp))
+                            }
                         }
                     }
 
-                    if (state.envelopeBudgets.isEmpty()) {
-                        Text(
-                            text = "No shared envelopes configured yet. Tap 'New Envelope' to set spending caps.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    // Progress bar
+                    if (totalBudgetCap > 0) {
+                        LinearProgressIndicator(
+                            progress = { overallBudgetProgress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
+                            color = if (overallBudgetProgress >= 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
-                    } else {
-                        state.envelopeBudgets.forEach { budget ->
-                            val spent = state.expenses
-                                .filter { it.status == ExpenseStatus.APPROVED && it.category == budget.category }
-                                .sumOf { it.amount }
-                            val progress = budget.calculateProgress(spent)
-                            val isNear = budget.isNearLimit(spent)
-                            val isExceeded = budget.isExceeded(spent)
+                    }
 
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onOpenEnvelopeBudget(budget) }
+                    // Toggle Button to expand or collapse
+                    if (state.envelopeBudgets.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { envelopesExpanded = !envelopesExpanded }
+                                .padding(vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (envelopesExpanded) "Hide Categories ▴" else "View ${state.envelopeBudgets.size} Categories ▾",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Icon(
+                                imageVector = if (envelopesExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        androidx.compose.animation.AnimatedVisibility(visible = envelopesExpanded) {
+                            Column(
+                                modifier = Modifier.padding(top = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Column(
-                                    modifier = Modifier.padding(12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.weight(1f, fill = false)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(10.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Color(budget.category.defaultColorHex))
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = budget.category.displayName,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
+                                state.envelopeBudgets.forEach { budget ->
+                                    val spent = state.expenses
+                                        .filter { it.status == ExpenseStatus.APPROVED && it.category == budget.category }
+                                        .sumOf { it.amount }
+                                    val progress = budget.calculateProgress(spent)
+                                    val isNear = budget.isNearLimit(spent)
+                                    val isExceeded = budget.isExceeded(spent)
 
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = "$currency${"%.0f".format(spent)}",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                                            )
-                                            Text(
-                                                text = " / $currency${"%.0f".format(budget.monthlyCap)}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    }
-
-                                    val barColor = when {
-                                        isExceeded -> MaterialTheme.colorScheme.error
-                                        isNear -> Color(0xFFF57C00)
-                                        else -> MaterialTheme.colorScheme.primary
-                                    }
-
-                                    LinearProgressIndicator(
-                                        progress = { progress.toFloat().coerceIn(0f, 1f) },
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(8.dp)
-                                            .clip(RoundedCornerShape(4.dp)),
-                                        color = barColor,
-                                        trackColor = MaterialTheme.colorScheme.surfaceVariant
-                                    )
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                            .clickable { onOpenEnvelopeBudget(budget) }
                                     ) {
-                                        if (isExceeded) {
-                                            Surface(
-                                                shape = RoundedCornerShape(6.dp),
-                                                color = MaterialTheme.colorScheme.errorContainer
+                                        Column(
+                                            modifier = Modifier.padding(10.dp),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Row(
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(12.dp))
-                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(8.dp)
+                                                            .clip(CircleShape)
+                                                            .background(Color(budget.category.defaultColorHex))
+                                                    )
+                                                    Spacer(modifier = Modifier.width(6.dp))
                                                     Text(
-                                                        text = "Exceeded by $currency${"%.0f".format(spent - budget.monthlyCap)}",
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                                        text = budget.category.displayName,
+                                                        style = MaterialTheme.typography.bodySmall,
                                                         fontWeight = FontWeight.Bold
                                                     )
                                                 }
+                                                Text(
+                                                    text = "$currency${"%.0f".format(spent)} / $currency${"%.0f".format(budget.monthlyCap)}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
                                             }
-                                        } else if (isNear) {
-                                            Surface(
-                                                shape = RoundedCornerShape(6.dp),
-                                                color = Color(0xFFFFF3E0)
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Icon(Icons.Default.PriorityHigh, contentDescription = null, tint = Color(0xFFE65100), modifier = Modifier.size(12.dp))
-                                                    Spacer(modifier = Modifier.width(4.dp))
-                                                    Text(
-                                                        text = "Near ${budget.alertThresholdPercent}% threshold (${"%.0f".format(progress * 100)}%)",
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = Color(0xFFE65100),
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                }
-                                            }
-                                        } else {
-                                            Text(
-                                                text = "${"%.0f".format(progress * 100)}% spent • $currency${"%.0f".format((budget.monthlyCap - spent).coerceAtLeast(0.0))} left",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            LinearProgressIndicator(
+                                                progress = { progress.toFloat().coerceIn(0f, 1f) },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(4.dp)
+                                                    .clip(RoundedCornerShape(2.dp)),
+                                                color = if (isExceeded) MaterialTheme.colorScheme.error else if (isNear) Color(0xFFF57C00) else MaterialTheme.colorScheme.primary,
+                                                trackColor = MaterialTheme.colorScheme.surfaceVariant
                                             )
                                         }
-
-                                        Text(
-                                            text = "Tap to edit",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                                        )
                                     }
                                 }
                             }
@@ -350,42 +350,41 @@ fun BalancesSummaryTab(
             }
         }
 
-        // --- Proportional Rent Splitter Tool Card ---
+        // --- Proportional Rent Splitter Shortcut ---
         item {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
-                ),
-                shape = RoundedCornerShape(20.dp),
+            Surface(
+                onClick = onOpenRentCalculator,
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
                 border = CardDefaults.outlinedCardBorder(),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
-                        modifier = Modifier.weight(1f).padding(end = 12.dp),
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(32.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.tertiary),
+                                .background(MaterialTheme.colorScheme.tertiaryContainer),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 Icons.Default.Calculate,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiary,
-                                modifier = Modifier.size(22.dp)
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
                                 text = "Proportional Rent Splitter",
@@ -395,16 +394,19 @@ fun BalancesSummaryTab(
                             Text(
                                 text = "Split rent by room sq.ft, private bath, or income",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
 
-                    Button(
+                    FilledTonalButton(
                         onClick = onOpenRentCalculator,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier.height(34.dp)
                     ) {
-                        Text("Calculate")
+                        Text("Calculate", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

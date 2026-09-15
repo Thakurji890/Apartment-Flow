@@ -86,13 +86,13 @@ fun ApartmentManagementScreen(
                             1 -> "Expenses & Groceries"
                             2 -> "Settlements"
                             3 -> "Admin Controls"
-                            else -> state.profile.name
+                            else -> "Apartment Flow"
                         }
                         val tabSubtitle = when (state.selectedTab) {
-                            1 -> "${state.expenses.size} purchases • ${state.profile.name}"
+                            1 -> "${state.expenses.size} purchases logged"
                             2 -> "${state.settlements.size} records • ${state.pendingSettlementCount} pending"
                             3 -> "Flat ${state.profile.flatNumber} • Admin Settings"
-                            else -> "Flat ${state.profile.flatNumber}"
+                            else -> "${state.profile.name} • Flat ${state.profile.flatNumber}"
                         }
                         Text(
                             text = tabTitle,
@@ -104,61 +104,18 @@ fun ApartmentManagementScreen(
                         Text(
                             text = tabSubtitle,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
                 },
                 actions = {
-                    // Offline / Cloud Status Indicator Action
-                    IconButton(onClick = { viewModel.openOfflineInfoDialog() }) {
-                        BadgedBox(
-                            badge = {
-                                if (state.pendingSyncCount > 0) {
-                                    Badge(
-                                        containerColor = if (state.isOnline) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error,
-                                        contentColor = MaterialTheme.colorScheme.onError
-                                    ) {
-                                        Text(state.pendingSyncCount.toString())
-                                    }
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = if (!state.isOnline) {
-                                    Icons.Default.CloudOff
-                                } else if (state.isSyncing) {
-                                    Icons.Default.Sync
-                                } else {
-                                    Icons.Default.CloudDone
-                                },
-                                contentDescription = "Offline / Sync Status",
-                                tint = if (!state.isOnline) Color(0xFFFFCDD2) else MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                    }
-
-                    // Biometric App Lock Quick Action
-                    IconButton(onClick = { viewModel.lockAppNow() }) {
-                        Icon(
-                            Icons.Default.Lock,
-                            contentDescription = "Lock App with Biometrics",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-
-                    // Proportional Rent Splitter Shortcut
-                    IconButton(onClick = { viewModel.openRentCalculatorDialog() }) {
-                        Icon(
-                            Icons.Default.Calculate,
-                            contentDescription = "Proportional Rent Splitter",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-
                     // Notification Activity Bell with Unread Badge
-                    IconButton(onClick = { viewModel.openNotificationsDialog() }) {
+                    IconButton(
+                        onClick = { viewModel.openNotificationsDialog() },
+                        modifier = Modifier.size(48.dp)
+                    ) {
                         BadgedBox(
                             badge = {
                                 if (state.unreadNotificationCount > 0) {
@@ -173,19 +130,21 @@ fun ApartmentManagementScreen(
                         ) {
                             Icon(
                                 Icons.Default.Notifications,
-                                contentDescription = "Apartment Activity and Notifications",
+                                contentDescription = "Notifications",
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }
 
-                    // Active Roommate Identity Pill with Dropdown
+                    // Active Roommate Identity Pill with Actions Dropdown
                     Box {
                         Surface(
                             onClick = { userDropdownExpanded = true },
                             shape = RoundedCornerShape(20.dp),
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
-                            modifier = Modifier.padding(end = 8.dp)
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .height(38.dp)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -193,7 +152,7 @@ fun ApartmentManagementScreen(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(20.dp)
+                                        .size(22.dp)
                                         .clip(CircleShape)
                                         .background(Color(activeRoommate?.colorHex ?: 0xFFFFFFFFL)),
                                     contentAlignment = Alignment.Center
@@ -213,7 +172,7 @@ fun ApartmentManagementScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.widthIn(max = 75.dp)
+                                    modifier = Modifier.widthIn(max = 85.dp)
                                 )
                                 Spacer(modifier = Modifier.width(2.dp))
                                 Icon(
@@ -230,25 +189,40 @@ fun ApartmentManagementScreen(
                             onDismissRequest = { userDropdownExpanded = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Switch Viewing Profile:", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold) },
+                                text = { Text("Active Profile", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) },
                                 onClick = {},
                                 enabled = false
                             )
                             state.roommates.forEach { rm ->
                                 DropdownMenuItem(
                                     text = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
                                             Box(
                                                 modifier = Modifier
-                                                    .size(14.dp)
+                                                    .size(18.dp)
                                                     .clip(CircleShape)
                                                     .background(Color(rm.colorHex))
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text(rm.name)
+                                            Text(
+                                                text = rm.name,
+                                                fontWeight = if (rm.id == activeRoommate?.id) FontWeight.Bold else FontWeight.Normal
+                                            )
                                             if (rm.isAdmin) {
                                                 Spacer(modifier = Modifier.width(4.dp))
                                                 Text("(Admin)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                            }
+                                            if (rm.id == activeRoommate?.id) {
+                                                Spacer(modifier = Modifier.weight(1f))
+                                                Icon(
+                                                    Icons.Default.Check,
+                                                    contentDescription = "Active",
+                                                    modifier = Modifier.size(16.dp),
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
                                             }
                                         }
                                     },
@@ -258,6 +232,50 @@ fun ApartmentManagementScreen(
                                     }
                                 )
                             }
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                            // Quick Utilities in Menu
+                            DropdownMenuItem(
+                                text = { Text("Biometric App Lock") },
+                                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(20.dp)) },
+                                onClick = {
+                                    userDropdownExpanded = false
+                                    viewModel.lockAppNow()
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(if (state.isOnline) "Cloud Sync: Online" else "Cloud Sync: Offline")
+                                        if (state.pendingSyncCount > 0) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Badge { Text("${state.pendingSyncCount}") }
+                                        }
+                                    }
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        if (!state.isOnline) Icons.Default.CloudOff else if (state.isSyncing) Icons.Default.Sync else Icons.Default.CloudDone,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                onClick = {
+                                    userDropdownExpanded = false
+                                    viewModel.openOfflineInfoDialog()
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                text = { Text("Rent Splitter Calculator") },
+                                leadingIcon = { Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(20.dp)) },
+                                onClick = {
+                                    userDropdownExpanded = false
+                                    viewModel.openRentCalculatorDialog()
+                                }
+                            )
                         }
                     }
                 },
