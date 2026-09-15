@@ -32,7 +32,6 @@ fun BalancesSummaryTab(
     onQuickSettle: (fromId: String, toId: String, amount: Double) -> Unit,
     onBatchSettleAll: (List<DebtTransfer>) -> Unit = {},
     onAddExpenseClick: () -> Unit,
-    onOpenRentCalculator: () -> Unit = {},
     onOpenEnvelopeBudget: (SharedEnvelopeBudget?) -> Unit = {}
 ) {
     val currency = state.profile.currencySymbol
@@ -345,68 +344,6 @@ fun BalancesSummaryTab(
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-
-        // --- Proportional Rent Splitter Shortcut ---
-        item {
-            Surface(
-                onClick = onOpenRentCalculator,
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-                border = CardDefaults.outlinedCardBorder(),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f).padding(end = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.tertiaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Default.Calculate,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "Proportional Rent Splitter",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Split rent by room sq.ft, private bath, or income",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    FilledTonalButton(
-                        onClick = onOpenRentCalculator,
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        modifier = Modifier.height(34.dp)
-                    ) {
-                        Text("Calculate", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -731,13 +668,30 @@ fun BalancesSummaryTab(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Roommate Net Balances",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Text(
+                                text = "Room DB Synced",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
                     Text(
-                        text = "Individual Net Balances",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Groceries Paid vs Share - Settlements",
+                        text = "Net status from Room database (who owes whom) • Tap card for full breakdown",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

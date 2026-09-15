@@ -267,15 +267,6 @@ fun ApartmentManagementScreen(
                                     viewModel.openOfflineInfoDialog()
                                 }
                             )
-
-                            DropdownMenuItem(
-                                text = { Text("Rent Splitter Calculator") },
-                                leadingIcon = { Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(20.dp)) },
-                                onClick = {
-                                    userDropdownExpanded = false
-                                    viewModel.openRentCalculatorDialog()
-                                }
-                            )
                         }
                     }
                 },
@@ -465,7 +456,6 @@ fun ApartmentManagementScreen(
                             viewModel.recordBatchSettlements(transfers)
                         },
                         onAddExpenseClick = handleAddExpense,
-                        onOpenRentCalculator = { viewModel.openRentCalculatorDialog() },
                         onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) }
                     )
                     1 -> ExpensesGroceriesTab(
@@ -500,7 +490,6 @@ fun ApartmentManagementScreen(
                         onApproveSettlement = { viewModel.approveSettlement(it) },
                         onRejectSettlement = { id, reason -> viewModel.rejectSettlement(id, reason) },
                         onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) },
-                        onOpenRentCalculator = { viewModel.openRentCalculatorDialog() },
                         onOpenSecuritySettings = { viewModel.openSecuritySettings() },
                         onOpenOfflineInfo = { viewModel.openOfflineInfoDialog() }
                     )
@@ -631,18 +620,6 @@ fun ApartmentManagementScreen(
             },
             onDelete = { budgetId ->
                 viewModel.removeEnvelopeBudget(budgetId)
-            }
-        )
-    }
-
-    if (state.showRentCalculatorDialog) {
-        ProportionalRentCalculatorDialog(
-            roommates = state.roommates,
-            initialRent = state.profile.monthlyRent,
-            currencySymbol = state.profile.currencySymbol,
-            onDismiss = { viewModel.closeRentCalculatorDialog() },
-            onRecordExpense = { totalAmount, desc, shares ->
-                viewModel.recordProportionalRentSplit(totalAmount, desc, shares)
             }
         )
     }

@@ -1,6 +1,6 @@
 {
   "name": "Apartment Flow",
-  "description": "Roommate expense manager with admin settlement approvals, live activity notifications, and balance optimization.",
+  "description": "Roommate and friend bill splitter for groceries and shared expenses with simplified settlements and offline-first tracking.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

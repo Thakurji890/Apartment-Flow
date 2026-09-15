@@ -1,6 +1,9 @@
 package com.example.feature.roommate.di
 
+import com.example.feature.roommate.data.local.dao.RoommateDao
+import com.example.feature.roommate.data.repository.RoommateLocalRepositoryImpl
 import com.example.feature.roommate.data.repository.RoommateRepositoryImpl
+import com.example.feature.roommate.domain.repository.RoommateLocalRepository
 import com.example.feature.roommate.domain.repository.RoommateRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
@@ -17,5 +20,11 @@ object RoommateModule {
     @Singleton
     fun provideRoommateRepository(firestore: FirebaseFirestore): RoommateRepository {
         return RoommateRepositoryImpl(firestore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRoommateLocalRepository(roommateDao: RoommateDao): RoommateLocalRepository {
+        return RoommateLocalRepositoryImpl(roommateDao)
     }
 }

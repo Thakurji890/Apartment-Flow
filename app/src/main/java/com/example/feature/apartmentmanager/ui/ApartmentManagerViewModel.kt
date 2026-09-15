@@ -14,6 +14,7 @@ import com.example.feature.apartmentmanager.data.ApartmentDataManager
 import com.example.feature.apartmentmanager.model.*
 import com.example.feature.roommate.data.local.dao.RoommateDao
 import com.example.feature.roommate.data.local.entity.RoommateEntity
+import com.example.feature.roommate.domain.repository.RoommateLocalRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,6 +30,7 @@ import javax.inject.Inject
 data class ApartmentUiState(
     val profile: ApartmentProfile = ApartmentProfile(),
     val roommates: List<ApartmentRoommate> = emptyList(),
+    val dbRoommates: List<RoommateEntity> = emptyList(),
     val expenses: List<ApartmentExpense> = emptyList(),
     val settlements: List<ApartmentSettlement> = emptyList(),
     val notifications: List<ApartmentNotification> = emptyList(),
@@ -51,7 +53,6 @@ data class ApartmentUiState(
     val showNotificationsDialog: Boolean = false,
     val showEnvelopeBudgetDialog: Boolean = false,
     val editingEnvelopeBudget: SharedEnvelopeBudget? = null,
-    val showRentCalculatorDialog: Boolean = false,
     val showSecuritySettingsDialog: Boolean = false,
     val showOfflineInfoDialog: Boolean = false,
     val isAppLocked: Boolean = false,
@@ -84,7 +85,8 @@ class ApartmentManagerViewModel @Inject constructor(
     private val connectivityMonitor: ConnectivityMonitor,
     private val syncManager: SyncManager,
     private val outboxDao: OutboxDao,
-    private val roommateDao: RoommateDao
+    private val roommateDao: RoommateDao,
+    private val roommateLocalRepository: RoommateLocalRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ApartmentUiState())
@@ -133,11 +135,18 @@ class ApartmentManagerViewModel @Inject constructor(
                             colorHex = rm.colorHex
                         )
                     }
-                    roommateDao.insertRoommates(entities)
+                    roommateLocalRepository.insertRoommates(entities)
                 } catch (e: Exception) {
                     // Fallback gracefully
                 }
             }.collect()
+        }
+
+        // Observe Room Local Database Roommates Flow reactively
+        viewModelScope.launch {
+            roommateLocalRepository.getAllRoommates().collect { dbEntities ->
+                _uiState.update { it.copy(dbRoommates = dbEntities) }
+            }
         }
 
         viewModelScope.launch {
@@ -573,10 +582,46 @@ class ApartmentManagerViewModel @Inject constructor(
     fun saveRoommate(name: String, notes: String, isAdmin: Boolean) {
         val editing = _uiState.value.editingRoommate
         if (editing != null) {
-            dataManager.updateRoommate(editing.copy(name = name, notes = notes, isAdmin = isAdmin))
+            val updated = editing.copy(name = name, notes = notes, isAdmin = isAdmin)
+            dataManager.updateRoommate(updated)
+            viewModelScope.launch {
+                try {
+                    val existing = roommateLocalRepository.getRoommateById(updated.id)
+                    val entity = RoommateEntity(
+                        id = updated.id,
+                        name = updated.name,
+                        email = if (updated.notes.contains("@")) updated.notes else "${updated.name.lowercase()}@apartmentflow.app",
+                        balanceStatus = existing?.balanceStatus ?: "Settled",
+                        balanceAmount = existing?.balanceAmount ?: 0.0,
+                        apartmentId = _uiState.value.profile.inviteCode,
+                        isAdmin = updated.isAdmin,
+                        colorHex = updated.colorHex
+                    )
+                    roommateLocalRepository.insertRoommate(entity)
+                } catch (e: Exception) {
+                    // Fallback gracefully
+                }
+            }
             _uiState.update { it.copy(statusMessage = "Roommate updated: $name") }
         } else {
-            dataManager.addRoommate(name = name, notes = notes, isAdmin = isAdmin)
+            val newRm = dataManager.addRoommate(name = name, notes = notes, isAdmin = isAdmin)
+            viewModelScope.launch {
+                try {
+                    val entity = RoommateEntity(
+                        id = newRm.id,
+                        name = newRm.name,
+                        email = if (newRm.notes.contains("@")) newRm.notes else "${newRm.name.lowercase()}@apartmentflow.app",
+                        balanceStatus = "Settled",
+                        balanceAmount = 0.0,
+                        apartmentId = _uiState.value.profile.inviteCode,
+                        isAdmin = newRm.isAdmin,
+                        colorHex = newRm.colorHex
+                    )
+                    roommateLocalRepository.insertRoommate(entity)
+                } catch (e: Exception) {
+                    // Fallback gracefully
+                }
+            }
             _uiState.update { it.copy(statusMessage = "Added new roommate: $name") }
         }
         closeRoommateDialog()
@@ -584,6 +629,13 @@ class ApartmentManagerViewModel @Inject constructor(
 
     fun deleteRoommate(roommateId: String) {
         dataManager.deleteRoommate(roommateId)
+        viewModelScope.launch {
+            try {
+                roommateLocalRepository.deleteRoommateById(roommateId)
+            } catch (e: Exception) {
+                // Fallback gracefully
+            }
+        }
         _uiState.update { it.copy(statusMessage = "Roommate removed") }
     }
 
@@ -658,49 +710,6 @@ class ApartmentManagerViewModel @Inject constructor(
 
     fun closeEnvelopeBudgetDialog() {
         _uiState.update { it.copy(showEnvelopeBudgetDialog = false, editingEnvelopeBudget = null) }
-    }
-
-    fun openRentCalculatorDialog() {
-        _uiState.update { it.copy(showRentCalculatorDialog = true) }
-    }
-
-    fun closeRentCalculatorDialog() {
-        _uiState.update { it.copy(showRentCalculatorDialog = false) }
-    }
-
-    fun recordProportionalRentSplit(totalRent: Double, description: String, shares: List<RoomRentShare>) {
-        val activeId = _uiState.value.activeRoommateId
-        val activeUser = _uiState.value.roommates.find { it.id == activeId }
-        val isAdmin = _uiState.value.isActiveUserAdmin
-        val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-
-        val shareNotes = shares.joinToString("; ") { "${it.roommateName}: ${"%.0f".format(it.calculatedRent)} (${"%.1f".format(it.percentageOfTotal)}%)" }
-        val fullNotes = "$description - $shareNotes"
-
-        dataManager.addExpense(
-            date = today,
-            item = "Rent: $description",
-            amount = totalRent,
-            paidByRoommateId = activeId,
-            sharedByRoommateIds = shares.map { it.roommateId },
-            notes = fullNotes,
-            category = ExpenseCategory.RENT,
-            autoApproveIfAdmin = isAdmin
-        )
-
-        dataManager.addNotification(
-            title = "Proportional Rent Calculated",
-            message = "Rent split calculated for ${_uiState.value.profile.currencySymbol}${"%.2f".format(totalRent)} across ${shares.size} roommates.",
-            category = NotificationCategory.PURCHASE,
-            authorName = activeUser?.name ?: "Roommate"
-        )
-
-        _uiState.update {
-            it.copy(
-                showRentCalculatorDialog = false,
-                statusMessage = "Recorded proportional rent of ${_uiState.value.profile.currencySymbol}${"%.2f".format(totalRent)}"
-            )
-        }
     }
 
     // --- Offline-First Sync & Security Management ---

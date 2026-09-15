@@ -348,7 +348,7 @@ class ApartmentDataManager(context: Context) {
     }
 
     // --- Roommates CRUD ---
-    fun addRoommate(name: String, notes: String = "", isAdmin: Boolean = false) {
+    fun addRoommate(name: String, notes: String = "", isAdmin: Boolean = false): ApartmentRoommate {
         val newId = UUID.randomUUID().toString().take(6)
         val colors = listOf(0xFF006A6AL, 0xFF2E7D32L, 0xFF1565C0L, 0xFFE65100L, 0xFF6A1B9AL, 0xFFC2185BL)
         val color = colors[(_roommates.value.size) % colors.size]
@@ -363,6 +363,7 @@ class ApartmentDataManager(context: Context) {
             authorName = adder
         )
         saveData()
+        return newRoommate
     }
 
     fun updateRoommate(roommate: ApartmentRoommate) {

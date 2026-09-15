@@ -19,6 +19,9 @@ interface RoommateDao {
     @Query("SELECT * FROM roommates WHERE id = :id")
     fun observeRoommateById(id: String): Flow<RoommateEntity?>
 
+    @Query("SELECT COUNT(*) FROM roommates")
+    suspend fun getRoommatesCount(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRoommate(roommate: RoommateEntity)
 
@@ -30,6 +33,9 @@ interface RoommateDao {
 
     @Query("UPDATE roommates SET balanceStatus = :balanceStatus, balanceAmount = :balanceAmount WHERE id = :id")
     suspend fun updateBalanceStatus(id: String, balanceStatus: String, balanceAmount: Double)
+
+    @Delete
+    suspend fun deleteRoommate(roommate: RoommateEntity)
 
     @Query("DELETE FROM roommates WHERE id = :id")
     suspend fun deleteRoommateById(id: String)

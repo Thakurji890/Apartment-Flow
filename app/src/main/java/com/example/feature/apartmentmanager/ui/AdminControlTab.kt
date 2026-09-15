@@ -43,7 +43,6 @@ fun AdminControlTab(
     onApproveSettlement: (String) -> Unit = {},
     onRejectSettlement: (String, String) -> Unit = { _, _ -> },
     onOpenEnvelopeBudget: (SharedEnvelopeBudget?) -> Unit = {},
-    onOpenRentCalculator: () -> Unit = {},
     onOpenSecuritySettings: () -> Unit = {},
     onOpenOfflineInfo: () -> Unit = {}
 ) {
@@ -512,10 +511,10 @@ fun AdminControlTab(
             }
         }
 
-        // Household Budgeting & Rent Logic Section
+        // Household Grocery & Expense Budgets Section
         item {
             Text(
-                text = "Household Budgeting & Rent Logic",
+                text = "Household Grocery & Expense Budgets",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -636,55 +635,6 @@ fun AdminControlTab(
                                     }
                                 }
                             }
-                        }
-                    }
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-                    // Proportional Rent Calculator Launcher
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f).padding(end = 8.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.tertiaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.Calculate,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "Proportional Rent Calculator",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Unequal splits: room sq.ft, private bath, or income ratios",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        Button(
-                            onClick = onOpenRentCalculator,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
-                        ) {
-                            Text("Launch")
                         }
                     }
                 }
