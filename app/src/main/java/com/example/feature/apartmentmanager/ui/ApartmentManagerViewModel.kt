@@ -412,6 +412,14 @@ class ApartmentManagerViewModel @Inject constructor(
     }
 
     fun deleteExpense(expenseId: String) {
+        val isAdmin = _uiState.value.isActiveUserAdmin
+        val activeRoommateId = _uiState.value.activeRoommateId
+        val expense = _uiState.value.expenses.find { it.id == expenseId }
+        if (!isAdmin && (expense == null || expense.paidByRoommateId != activeRoommateId)) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only Admin can delete other roommates' expenses") }
+            return
+        }
+
         dataManager.deleteExpense(expenseId)
         _uiState.update { it.copy(statusMessage = "Expense removed") }
         viewModelScope.launch {
@@ -545,6 +553,13 @@ class ApartmentManagerViewModel @Inject constructor(
     }
 
     fun deleteSettlement(settlementId: String) {
+        val isAdmin = _uiState.value.isActiveUserAdmin
+        val activeRoommateId = _uiState.value.activeRoommateId
+        val settlement = _uiState.value.settlements.find { it.id == settlementId }
+        if (!isAdmin && (settlement == null || settlement.fromRoommateId != activeRoommateId)) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only Admin can delete settlements") }
+            return
+        }
         dataManager.deleteSettlement(settlementId)
         _uiState.update { it.copy(statusMessage = "Settlement removed") }
     }
@@ -580,6 +595,11 @@ class ApartmentManagerViewModel @Inject constructor(
     }
 
     fun saveRoommate(name: String, notes: String, isAdmin: Boolean) {
+        if (!_uiState.value.isActiveUserAdmin) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only Flat Admin can manage roommates") }
+            closeRoommateDialog()
+            return
+        }
         val editing = _uiState.value.editingRoommate
         if (editing != null) {
             val updated = editing.copy(name = name, notes = notes, isAdmin = isAdmin)
@@ -628,6 +648,10 @@ class ApartmentManagerViewModel @Inject constructor(
     }
 
     fun deleteRoommate(roommateId: String) {
+        if (!_uiState.value.isActiveUserAdmin) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only Flat Admin can remove roommates") }
+            return
+        }
         dataManager.deleteRoommate(roommateId)
         viewModelScope.launch {
             try {
@@ -653,6 +677,11 @@ class ApartmentManagerViewModel @Inject constructor(
     }
 
     fun updateApartmentProfile(name: String, flatNumber: String, currencySymbol: String, currencyCode: String = "INR", inviteCode: String) {
+        if (!_uiState.value.isActiveUserAdmin) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only Flat Admin can edit apartment profile") }
+            closeEditApartmentDialog()
+            return
+        }
         dataManager.updateApartmentProfile(
             ApartmentProfile(
                 name = name.ifBlank { "Apartment Flat 402" },
@@ -668,6 +697,10 @@ class ApartmentManagerViewModel @Inject constructor(
 
     // --- Reset to Original Sheet ---
     fun openResetConfirmationDialog() {
+        if (!_uiState.value.isActiveUserAdmin) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only Flat Admin can reset sheet data") }
+            return
+        }
         _uiState.update { it.copy(showResetConfirmationDialog = true) }
     }
 
@@ -676,6 +709,10 @@ class ApartmentManagerViewModel @Inject constructor(
     }
 
     fun resetToDefaultSheetData() {
+        if (!_uiState.value.isActiveUserAdmin) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only Flat Admin can reset sheet data") }
+            return
+        }
         dataManager.resetToDefaultData()
         _uiState.update { 
             it.copy(
@@ -695,11 +732,19 @@ class ApartmentManagerViewModel @Inject constructor(
     }
 
     fun setEnvelopeBudget(category: ExpenseCategory, monthlyCap: Double, alertThresholdPercent: Int = 85, notes: String = "") {
+        if (!_uiState.value.isActiveUserAdmin) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only Flat Admin can set budget caps") }
+            return
+        }
         dataManager.setEnvelopeBudget(category, monthlyCap, alertThresholdPercent, notes)
         _uiState.update { it.copy(statusMessage = "Updated budget cap for ${category.displayName}") }
     }
 
     fun removeEnvelopeBudget(budgetId: String) {
+        if (!_uiState.value.isActiveUserAdmin) {
+            _uiState.update { it.copy(statusMessage = "Permission denied: Only Flat Admin can remove budget caps") }
+            return
+        }
         dataManager.removeEnvelopeBudget(budgetId)
         _uiState.update { it.copy(statusMessage = "Removed envelope budget") }
     }

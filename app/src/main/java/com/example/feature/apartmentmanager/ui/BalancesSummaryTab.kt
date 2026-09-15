@@ -32,13 +32,37 @@ fun BalancesSummaryTab(
     onQuickSettle: (fromId: String, toId: String, amount: Double) -> Unit,
     onBatchSettleAll: (List<DebtTransfer>) -> Unit = {},
     onAddExpenseClick: () -> Unit,
-    onOpenEnvelopeBudget: (SharedEnvelopeBudget?) -> Unit = {}
+    onOpenEnvelopeBudget: (SharedEnvelopeBudget?) -> Unit = {},
+    onNavigateToExpenses: () -> Unit = {}
 ) {
     val currency = state.profile.currencySymbol
     val currencyCode = state.profile.currencyCode
     var selectedRoommateForDetail by remember { mutableStateOf<RoommateBalanceSummary?>(null) }
     var showBatchConfirmDialog by remember { mutableStateOf(false) }
     var envelopesExpanded by remember { mutableStateOf(false) }
+
+    val adminNames = remember(state.roommates) {
+        state.roommates.filter { it.isAdmin }.joinToString { it.name }.ifEmpty { "Flat Admin" }
+    }
+
+    val activeSummary = remember(balanceSummaries, state.activeRoommateId) {
+        balanceSummaries.find { it.roommate.id == state.activeRoommateId }
+    }
+
+    // When the active user is a Roommate (non-admin), show their personal remaining balance & pay-to-others dashboard
+    if (!state.isActiveUserAdmin) {
+        RoommateBalancesView(
+            state = state,
+            activeSummary = activeSummary,
+            settlementSuggestions = settlementSuggestions,
+            currency = currency,
+            adminNames = adminNames,
+            onQuickSettle = onQuickSettle,
+            onAddExpenseClick = onAddExpenseClick,
+            onNavigateToExpenses = onNavigateToExpenses
+        )
+        return
+    }
 
     val simplificationResult = remember(balanceSummaries) {
         DebtSimplificationEngine.simplifyDebts(balanceSummaries)
@@ -1012,5 +1036,646 @@ fun DetailRow(label: String, value: String) {
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun RoommateBalancesView(
+    state: ApartmentUiState,
+    activeSummary: RoommateBalanceSummary?,
+    settlementSuggestions: List<DebtTransfer>,
+    currency: String,
+    adminNames: String,
+    onQuickSettle: (fromId: String, toId: String, amount: Double) -> Unit,
+    onAddExpenseClick: () -> Unit,
+    onNavigateToExpenses: () -> Unit
+) {
+    val activeRoommate = state.activeRoommate
+    val net = activeSummary?.netBalance ?: 0.0
+    val isDebtor = net < -0.01
+    val isCreditor = net > 0.01
+
+    val myOutgoingTransfers = remember(settlementSuggestions, state.activeRoommateId) {
+        settlementSuggestions.filter { it.fromRoommate.id == state.activeRoommateId }
+    }
+    val myIncomingTransfers = remember(settlementSuggestions, state.activeRoommateId) {
+        settlementSuggestions.filter { it.toRoommate.id == state.activeRoommateId }
+    }
+    val expensesDoneByOthers = remember(state.expenses, state.activeRoommateId) {
+        state.expenses.filter { it.paidByRoommateId != state.activeRoommateId }
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // --- Roommate Profile Banner ---
+        item {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(activeRoommate?.colorHex ?: 0xFF4CAF50)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = activeRoommate?.name?.take(1) ?: "R",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "${activeRoommate?.name ?: "Roommate"} (Your Balance)",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Roommate Scope • Admin: $adminNames",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        Text(
+                            text = "Roommate View",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // --- Hero Card: My Remaining Amount ---
+        item {
+            val heroContainerColor = when {
+                isDebtor -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                isCreditor -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            }
+
+            val heroContentColor = when {
+                isDebtor -> MaterialTheme.colorScheme.onErrorContainer
+                isCreditor -> MaterialTheme.colorScheme.onPrimaryContainer
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
+
+            val badgeColor = when {
+                isDebtor -> Color(0xFFC62828)
+                isCreditor -> Color(0xFF2E7D32)
+                else -> MaterialTheme.colorScheme.primary
+            }
+
+            val badgeText = when {
+                isDebtor -> "Payment Needed"
+                isCreditor -> "Owed to You"
+                else -> "All Settled Up"
+            }
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = heroContainerColor),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = when {
+                                    isDebtor -> "Remaining Amount to Pay"
+                                    isCreditor -> "Remaining Amount to Receive"
+                                    else -> "Remaining Amount"
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = heroContentColor.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                text = "$currency${"%,.2f".format(abs(net))}",
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isDebtor) Color(0xFFB71C1C) else heroContentColor
+                            )
+                        }
+
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = when {
+                                        isDebtor -> Icons.Default.ArrowUpward
+                                        isCreditor -> Icons.Default.ArrowDownward
+                                        else -> Icons.Default.CheckCircle
+                                    },
+                                    contentDescription = null,
+                                    tint = badgeColor,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = badgeText,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = badgeColor
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = when {
+                            isDebtor -> "You need to pay $currency${"%.2f".format(abs(net))} to clear your apartment expenses balance."
+                            isCreditor -> "Your flatmates owe you $currency${"%.2f".format(net)} for shared groceries and bills you paid."
+                            else -> "You are completely settled up! You have no outstanding payments or dues."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = heroContentColor.copy(alpha = 0.85f)
+                    )
+
+                    // Personal Breakdown Details Card
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            DetailRow(
+                                label = "Your Grocery & Expense Spending",
+                                value = "$currency${"%.2f".format(activeSummary?.totalPaidGroceries ?: 0.0)}"
+                            )
+                            DetailRow(
+                                label = "Your Fair Share of Bills",
+                                value = "$currency${"%.2f".format(activeSummary?.totalOwedShare ?: 0.0)}"
+                            )
+                            DetailRow(
+                                label = "Settlement Payments Sent",
+                                value = "$currency${"%.2f".format(activeSummary?.paidToOthers ?: 0.0)}"
+                            )
+                            DetailRow(
+                                label = "Settlement Payments Received",
+                                value = "$currency${"%.2f".format(activeSummary?.receivedFromOthers ?: 0.0)}"
+                            )
+                        }
+                    }
+
+                    // Action Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = onAddExpenseClick,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f).height(44.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Add Expense", fontWeight = FontWeight.Bold)
+                        }
+
+                        if (myOutgoingTransfers.isNotEmpty()) {
+                            val first = myOutgoingTransfers.first()
+                            FilledTonalButton(
+                                onClick = {
+                                    onQuickSettle(first.fromRoommate.id, first.toRoommate.id, first.amount)
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.weight(1f).height(44.dp)
+                            ) {
+                                Icon(Icons.Default.SyncAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Pay to Others", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Pay to Others Section (Direct Settle-Up Transfers) ---
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = CardDefaults.outlinedCardBorder(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Pay to Others",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Transfers required to clear your remaining balance",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text(
+                                text = "${myOutgoingTransfers.size} to pay",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    HorizontalDivider()
+
+                    if (myOutgoingTransfers.isEmpty() && myIncomingTransfers.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = Color(0xFF2E7D32),
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "No pending payments for you!",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Your apartment balance is fully settled.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    } else {
+                        // Outgoing transfers (Pay to Others)
+                        if (myOutgoingTransfers.isNotEmpty()) {
+                            Text(
+                                text = "You Need to Pay:",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error
+                            )
+
+                            myOutgoingTransfers.forEach { transfer ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(transfer.toRoommate.colorHex)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = transfer.toRoommate.name.take(1),
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text(
+                                                text = "Pay to ${transfer.toRoommate.name}",
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Text(
+                                                text = "Remaining flat debt",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "$currency${"%.2f".format(transfer.amount)}",
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.error,
+                                            style = MaterialTheme.typography.titleSmall
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Button(
+                                            onClick = {
+                                                onQuickSettle(
+                                                    transfer.fromRoommate.id,
+                                                    transfer.toRoommate.id,
+                                                    transfer.amount
+                                                )
+                                            },
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                            modifier = Modifier.height(34.dp)
+                                        ) {
+                                            Text("Pay Now", style = MaterialTheme.typography.labelSmall)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Incoming transfers (To receive from others)
+                        if (myIncomingTransfers.isNotEmpty()) {
+                            Text(
+                                text = "Others Need to Pay You:",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2E7D32)
+                            )
+
+                            myIncomingTransfers.forEach { transfer ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            Color(0xFFE8F5E9),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(transfer.fromRoommate.colorHex)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = transfer.fromRoommate.name.take(1),
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text(
+                                                text = "${transfer.fromRoommate.name} pays you",
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Text(
+                                                text = "Awaiting settlement",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    Text(
+                                        text = "$currency${"%.2f".format(transfer.amount)}",
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF2E7D32),
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Shared Expenses Done by Others Section ---
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = CardDefaults.outlinedCardBorder(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Expenses Done by Others",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Groceries & household items paid by flatmates",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Text(
+                                text = "${expensesDoneByOthers.size} logged",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    HorizontalDivider()
+
+                    if (expensesDoneByOthers.isEmpty()) {
+                        Text(
+                            text = "No shared expenses logged by other flatmates yet.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    } else {
+                        expensesDoneByOthers.take(4).forEach { exp ->
+                            val payer = state.roommates.find { it.id == exp.paidByRoommateId }
+                            val isIncludedInSplit = exp.sharedByRoommateIds.contains(state.activeRoommateId)
+
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                        Text(
+                                            text = exp.item,
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = "Paid by ${payer?.name ?: "Flatmate"} • ${exp.date}",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            text = "$currency${"%.2f".format(exp.amount)}",
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        if (isIncludedInSplit) {
+                                            Text(
+                                                text = "Your Share: $currency${"%.2f".format(exp.shareEach)}",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        } else {
+                                            Text(
+                                                text = "Not in split",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = onNavigateToExpenses,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.ReceiptLong, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Browse All Expenses in Expenses Tab")
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Flat Admin Authentication Notice ---
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.AdminPanelSettings,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Admin Authentication & Ledger Oversight",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "All pending transactions and apartment administration are authenticated and approved by Flat Admin ($adminNames).",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
     }
 }

@@ -456,7 +456,8 @@ fun ApartmentManagementScreen(
                             viewModel.recordBatchSettlements(transfers)
                         },
                         onAddExpenseClick = handleAddExpense,
-                        onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) }
+                        onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) },
+                        onNavigateToExpenses = { viewModel.selectTab(1) }
                     )
                     1 -> ExpensesGroceriesTab(
                         state = state,
