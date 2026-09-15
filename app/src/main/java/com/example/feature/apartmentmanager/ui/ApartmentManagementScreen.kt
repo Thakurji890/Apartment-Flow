@@ -26,6 +26,7 @@ import com.example.feature.apartmentmanager.model.NotificationCategory
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ApartmentManagementScreen(
+    onNavigateToAddExpense: (() -> Unit)? = null,
     viewModel: ApartmentManagerViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -37,6 +38,14 @@ fun ApartmentManagementScreen(
     }
     val totalPoolSpending = remember(state.expenses) {
         viewModel.getTotalPoolSpending()
+    }
+
+    val handleAddExpense = {
+        if (onNavigateToAddExpense != null) {
+            onNavigateToAddExpense()
+        } else {
+            viewModel.openAddExpenseDialog()
+        }
     }
     val activeRoommate = state.activeRoommate
 
@@ -437,7 +446,7 @@ fun ApartmentManagementScreen(
                         onBatchSettleAll = { transfers ->
                             viewModel.recordBatchSettlements(transfers)
                         },
-                        onAddExpenseClick = { viewModel.openAddExpenseDialog() },
+                        onAddExpenseClick = handleAddExpense,
                         onOpenRentCalculator = { viewModel.openRentCalculatorDialog() },
                         onOpenEnvelopeBudget = { viewModel.openEnvelopeBudgetDialog(it) }
                     )
@@ -445,7 +454,7 @@ fun ApartmentManagementScreen(
                         state = state,
                         onFilterRoommate = { viewModel.setExpenseFilterRoommateId(it) },
                         onSearchQueryChange = { viewModel.setSearchQuery(it) },
-                        onAddExpense = { viewModel.openAddExpenseDialog() },
+                        onAddExpense = handleAddExpense,
                         onEditExpense = { viewModel.openEditExpenseDialog(it) },
                         onDeleteExpense = { viewModel.deleteExpense(it) },
                         onApproveExpense = { viewModel.approveExpense(it) },

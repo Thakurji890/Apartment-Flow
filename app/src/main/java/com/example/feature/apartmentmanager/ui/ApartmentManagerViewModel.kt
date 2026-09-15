@@ -12,6 +12,8 @@ import com.example.core.sync.SyncManager
 import com.example.core.sync.SyncStatus
 import com.example.feature.apartmentmanager.data.ApartmentDataManager
 import com.example.feature.apartmentmanager.model.*
+import com.example.feature.roommate.data.local.dao.RoommateDao
+import com.example.feature.roommate.data.local.entity.RoommateEntity
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -81,7 +83,8 @@ class ApartmentManagerViewModel @Inject constructor(
     val securityManager: SecurityManager,
     private val connectivityMonitor: ConnectivityMonitor,
     private val syncManager: SyncManager,
-    private val outboxDao: OutboxDao
+    private val outboxDao: OutboxDao,
+    private val roommateDao: RoommateDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ApartmentUiState())
@@ -106,6 +109,33 @@ class ApartmentManagerViewModel @Inject constructor(
                         activeRoommateId = activeId,
                         pendingSyncCount = pending
                     )
+                }
+
+                // Persist Roommates and balance statuses to Room Database
+                try {
+                    val summaries = dataManager.getBalanceSummaries()
+                    val entities = roommates.map { rm ->
+                        val summary = summaries.find { it.roommate.id == rm.id }
+                        val netBal = summary?.netBalance ?: 0.0
+                        val balanceStatus = when {
+                            netBal > 0.005 -> "Owed ${profile.currencySymbol}${"%.2f".format(netBal)}"
+                            netBal < -0.005 -> "Owes ${profile.currencySymbol}${"%.2f".format(kotlin.math.abs(netBal))}"
+                            else -> "Settled"
+                        }
+                        RoommateEntity(
+                            id = rm.id,
+                            name = rm.name,
+                            email = if (rm.notes.contains("@")) rm.notes else "${rm.name.lowercase()}@apartmentflow.app",
+                            balanceStatus = balanceStatus,
+                            balanceAmount = netBal,
+                            apartmentId = profile.inviteCode,
+                            isAdmin = rm.isAdmin,
+                            colorHex = rm.colorHex
+                        )
+                    }
+                    roommateDao.insertRoommates(entities)
+                } catch (e: Exception) {
+                    // Fallback gracefully
                 }
             }.collect()
         }

@@ -7,6 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.core.database.AppDatabase
 import com.example.feature.expense.data.local.dao.ExpenseDao
 import com.example.core.sync.OutboxDao
+import com.example.feature.roommate.data.local.dao.RoommateDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,6 +27,27 @@ object DatabaseModule {
         }
     }
 
+    val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `roommates` (" +
+                    "`id` TEXT NOT NULL, " +
+                    "`name` TEXT NOT NULL, " +
+                    "`email` TEXT NOT NULL, " +
+                    "`balanceStatus` TEXT NOT NULL, " +
+                    "`balanceAmount` REAL NOT NULL, " +
+                    "`apartmentId` TEXT NOT NULL, " +
+                    "`phoneNumber` TEXT NOT NULL, " +
+                    "`photoUrl` TEXT, " +
+                    "`isAdmin` INTEGER NOT NULL, " +
+                    "`colorHex` INTEGER NOT NULL, " +
+                    "`createdAt` INTEGER NOT NULL, " +
+                    "`updatedAt` INTEGER NOT NULL, " +
+                    "PRIMARY KEY(`id`))"
+            )
+        }
+    }
+
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -34,7 +56,8 @@ object DatabaseModule {
             AppDatabase::class.java,
             "apartment_flow_db"
         )
-        .addMigrations(MIGRATION_1_2)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+        .fallbackToDestructiveMigration()
         .build()
     }
 
@@ -46,5 +69,10 @@ object DatabaseModule {
     @Provides
     fun provideOutboxDao(database: AppDatabase): OutboxDao {
         return database.outboxDao()
+    }
+
+    @Provides
+    fun provideRoommateDao(database: AppDatabase): RoommateDao {
+        return database.roommateDao()
     }
 }

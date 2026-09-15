@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.feature.apartmentmanager.ui.ApartmentManagementScreen
+import com.example.feature.expense.presentation.add.AddExpenseScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
@@ -13,7 +14,21 @@ fun AppNavigation(navController: NavHostController) {
         startDestination = Screen.ApartmentManager.route
     ) {
         composable(Screen.ApartmentManager.route) {
-            ApartmentManagementScreen()
+            ApartmentManagementScreen(
+                onNavigateToAddExpense = {
+                    navController.navigate(Screen.AddExpense.route)
+                }
+            )
+        }
+        composable(Screen.AddExpense.route) {
+            AddExpenseScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onExpenseAdded = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }
