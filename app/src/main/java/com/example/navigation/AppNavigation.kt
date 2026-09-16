@@ -6,13 +6,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.feature.apartmentmanager.ui.ApartmentManagementScreen
 import com.example.feature.expense.presentation.add.AddExpenseScreen
+import com.example.feature.onboarding.ui.WelcomeScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.ApartmentManager.route
+        startDestination = Screen.Welcome.route
     ) {
+        composable(Screen.Welcome.route) {
+            WelcomeScreen(
+                onGetStartedClick = {
+                    navController.navigate(Screen.ApartmentManager.route) {
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Screen.ApartmentManager.route) {
             ApartmentManagementScreen(
                 onNavigateToAddExpense = {

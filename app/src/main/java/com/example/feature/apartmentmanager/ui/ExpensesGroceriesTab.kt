@@ -283,6 +283,7 @@ fun ExpensesGroceriesTab(
                         roommates = state.roommates,
                         currency = currency,
                         isAdmin = state.isActiveUserAdmin,
+                        activeRoommateId = state.activeRoommateId,
                         onEdit = { onEditExpense(expense) },
                         onDelete = { expenseToDelete = expense },
                         onApprove = { onApproveExpense(expense.id) },
@@ -375,6 +376,7 @@ fun ExpenseCard(
     roommates: List<ApartmentRoommate>,
     currency: String,
     isAdmin: Boolean,
+    activeRoommateId: String,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onApprove: () -> Unit,
@@ -711,26 +713,28 @@ fun ExpenseCard(
             }
 
             // Actions row (Edit & Delete)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onEdit, modifier = Modifier.size(48.dp)) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "Edit",
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                IconButton(onClick = onDelete, modifier = Modifier.size(48.dp)) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.error
-                    )
+            if (isAdmin || expense.paidByRoommateId == activeRoommateId) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onEdit, modifier = Modifier.size(48.dp)) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton(onClick = onDelete, modifier = Modifier.size(48.dp)) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }

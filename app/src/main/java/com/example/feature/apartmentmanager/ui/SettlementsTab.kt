@@ -417,16 +417,18 @@ fun SettlementsTab(
                                     fontWeight = FontWeight.Bold,
                                     color = if (isPending) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                                 )
-                                IconButton(
-                                    onClick = { settlementToDelete = settlement },
-                                    modifier = Modifier.size(48.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = "Delete",
-                                        modifier = Modifier.size(18.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                                    )
+                                if (isAdmin || settlement.fromRoommateId == state.activeRoommateId) {
+                                    IconButton(
+                                        onClick = { settlementToDelete = settlement },
+                                        modifier = Modifier.size(48.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Delete",
+                                            modifier = Modifier.size(18.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                        )
+                                    }
                                 }
                             }
                         }
