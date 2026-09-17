@@ -300,9 +300,11 @@ fun PhoneAuthDialog(
                                 override fun onVerificationFailed(e: FirebaseException) {
                                     isLoading = false
                                     if (e.message?.contains("INVALID_CERT_HASH") == true || e.message?.contains("app verification") == true) {
-                                        errorMsg = "App verification failed. Ensure you've added the SHA-1/SHA-256 fingerprint to your Firebase Project settings."
+                                        errorMsg = "App verification failed. Add the SHA-1 to your Firebase Console."
+                                    } else if (e.message?.contains("BILLING_NOT_ENABLED") == true) {
+                                        errorMsg = "SMS quota exceeded or billing not enabled. Add this number as a 'Test Number' in the Firebase Console to bypass SMS."
                                     } else {
-                                        errorMsg = e.message
+                                        errorMsg = e.message ?: "Verification failed."
                                     }
                                 }
                                 override fun onCodeSent(verId: String, token: PhoneAuthProvider.ForceResendingToken) {
