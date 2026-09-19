@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -26,10 +26,11 @@ jobs:
         run: |
           cp .env.example .env
           cp mock-google-services.json app/google-services.json
-          mkdir -p ~/.android
+          mkdir -p ~/.android ~/.config/.android
           if [ ! -f ~/.android/debug.keystore ]; then
             keytool -genkeypair -alias androiddebugkey -keypass android -keystore ~/.android/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
           fi
+          cp ~/.android/debug.keystore ~/.config/.android/debug.keystore
 
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
