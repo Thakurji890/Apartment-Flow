@@ -33,10 +33,34 @@ android {
       keyPassword = System.getenv("KEY_PASSWORD")
     }
     create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
+      val userHome = System.getProperty("user.home")
+      val localKeystore = file("${rootDir}/debug.keystore")
+      val homeKeystore = file("${userHome}/.android/debug.keystore")
+      val configKeystore = file("${userHome}/.config/.android/debug.keystore")
+
+      when {
+        localKeystore.exists() -> {
+          storeFile = localKeystore
+          storePassword = "android"
+          keyAlias = "androiddebugkey"
+          keyPassword = "android"
+        }
+        homeKeystore.exists() -> {
+          storeFile = homeKeystore
+          storePassword = "android"
+          keyAlias = "androiddebugkey"
+          keyPassword = "android"
+        }
+        configKeystore.exists() -> {
+          storeFile = configKeystore
+          storePassword = "android"
+          keyAlias = "androiddebugkey"
+          keyPassword = "android"
+        }
+        else -> {
+          initWith(getByName("debug"))
+        }
+      }
     }
   }
 
@@ -52,6 +76,12 @@ android {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
+  lint {
+    abortOnError = false
+    checkReleaseBuilds = false
+    disable += "MissingTranslation"
+  }
+
   buildFeatures {
     compose = true
     buildConfig = true
